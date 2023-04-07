@@ -68,32 +68,18 @@ export function fatal(...args: any[]) {
   process.exit(1)
 }
 
-// from https://gist.github.com/supersha/6913695
-export function nohup(
-  cmd: string,
-  options?: ExecOptions | null,
-  callback?:
-    | ((error?: ExecException | null, stdout?: string | Buffer, stderr?: string | Buffer) => void)
-    | undefined
-) {
-  const isWin = process.platform.indexOf('win') === 0
-  if (typeof options === 'function') {
-    callback = options
-    options = null
+// simple string hashing. https://github.com/bryc/code/blob/master/jshash/experimental/cyrb53.js
+export const cyrb53 = (str: string, seed = 0) => {
+  let h1 = 0xdeadbeef ^ seed,
+    h2 = 0x41c6ce57 ^ seed
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i)
+    h1 = Math.imul(h1 ^ ch, 2654435761)
+    h2 = Math.imul(h2 ^ ch, 1597334677)
   }
-  if (isWin) {
-    var cmdEscape = cmd.replace(/"/g, '""'),
-      file = '.nohup.cmd.vbs',
-      script = ''
-    script += 'Dim shell\n'
-    script += 'Set shell=Wscript.CreateObject("WScript.Shell")\n'
-    script += 'shell.Run "cmd.exe /c start /b ' + cmdEscape + '", 0, TRUE'
-    fs.writeFileSync(file, script)
-    exec('cscript.exe /nologo "' + file + '"', options, function () {
-      fs.unlinkSync(file)
-      if (callback) callback()
-    })
-  } else {
-    exec('nohup ' + cmd + ' > /dev/null 2>&1 &', options, callback)
-  }
+
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909)
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909)
+
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0)
 }

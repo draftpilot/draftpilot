@@ -7,6 +7,7 @@ import { fatal } from '@/utils'
 
 import packageJson from '../package.json'
 import play from '@/commands/play'
+import indexer from '@/commands/indexer'
 
 export default function () {
   program
@@ -25,6 +26,8 @@ export default function () {
     .argument('<user>', 'Your user id.')
     .option('--force', 'Force re-registration of the repo')
     .action(actionWrapper(init))
+
+  program.command('index').description('Index your project').action(actionWrapper(indexer))
 
   program.command('play').description('Play').action(actionWrapper(play))
 
