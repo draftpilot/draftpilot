@@ -1,4 +1,9 @@
 node_modules
 dist
 .DS_Store
-.yarn/cache
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
