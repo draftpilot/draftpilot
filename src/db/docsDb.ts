@@ -19,13 +19,13 @@ type DocRow = {
 
 export default class FileDB {
   dbPath: string
-  existing?: boolean
+  dbWasEmpty: boolean = true
   db?: sqlite3.Database
 
   constructor(root: string) {
     this.dbPath = path.join(root, DB_FOLDER)
-    this.existing = fs.existsSync(this.dbPath)
-    if (!this.existing) fs.mkdirSync(this.dbPath)
+    const existing = fs.existsSync(this.dbPath)
+    if (!existing) fs.mkdirSync(this.dbPath)
   }
 
   init = async () => {
@@ -76,6 +76,7 @@ export default class FileDB {
     const rows = await new Promise<DocRow[]>((res, rej) =>
       this.db!.all(`SELECT * FROM docs`, [], promisedResult(res, rej))
     )
+    this.dbWasEmpty = rows.length === 0
 
     for (const row of rows) {
       const doc = allDocs[row.path]
@@ -83,11 +84,11 @@ export default class FileDB {
         docsToDelete.push(row.path)
       } else if (doc.hash !== row.hash) {
         changedDocs.push(doc)
-        delete allDocs[row.path]
       } else {
         doc.vectors = JSON.parse(row.vectors)
         existingDocs.push(doc)
       }
+      delete allDocs[row.path]
     }
 
     verboseLog('docs to delete', docsToDelete)

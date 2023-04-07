@@ -1,38 +1,15 @@
-import DB from '@/db/docsDb'
-import { VectorDB } from '@/db/vectorDb'
+import { Indexer } from '@/db/indexer'
 import { log } from '@/logger'
-import { findGitRoot } from '@/utils'
-import fastGlob from 'fast-glob'
 
-type Options = {
-  force?: boolean
-}
-
-const DEFAULT_GLOB = [
-  '**/*.js',
-  '**/*.ts',
-  '**/*.jsx',
-  '**/*.tsx',
-  '!node_modules/**',
-  '!dist/**',
-  '!build/**',
-]
+type Options = {}
 
 export default async function (options: Options) {
-  const root = findGitRoot()
-  const db = new DB(root)
-  log(db.existing ? 're-indexing your project' : 'generating index for the first time...')
+  const indexer = new Indexer()
+  const { docs, newDocs, existing } = await indexer.load()
 
-  const [_, files] = await Promise.all([db.init(), fastGlob(DEFAULT_GLOB)])
+  log(existing ? 're-indexing your project' : 'generating index for the first time...')
 
-  const result = await db.processFiles(files)
-  if (!result) return
+  await indexer.index(newDocs)
 
-  const vectorDB = new VectorDB()
-  await vectorDB.init(result, (newDocs) => db.saveVectors(newDocs))
-
-  log('done! processed', result.length, 'files')
-
-  const similar = await vectorDB.search('vector', 3)
-  log('similar search:', similar)
+  log('done! processed', docs.length, 'functions, with', newDocs.length, 'changes')
 }

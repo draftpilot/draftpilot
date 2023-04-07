@@ -6,7 +6,10 @@ import { log } from '@/logger'
 
 export class VectorDB {
   db?: HNSWLib
-  embeddings = new OpenAIEmbeddings()
+  embeddings = new OpenAIEmbeddings({
+    verbose: true,
+    stripNewLines: true,
+  })
 
   loadEmbeddings = async (docs: FunctionDoc[]) => {
     const texts = docs.map((d) => d.contents)
@@ -14,14 +17,9 @@ export class VectorDB {
     docs.forEach((d, i) => (d.vectors = vectors[i]))
   }
 
-  init = async (funcDocs: FunctionDoc[], saveVectors: (newDocs: FunctionDoc[]) => void) => {
+  init = async (funcDocs: FunctionDoc[]) => {
     const existingVectors: number[][] = [],
       existingDocs: Document[] = []
-
-    const newDocs: FunctionDoc[] = funcDocs.filter((f) => !f.vectors)
-    log('loading embeddings for', newDocs.length, 'new docs')
-    await this.loadEmbeddings(newDocs)
-    saveVectors(newDocs)
 
     funcDocs.forEach((f) => {
       const doc = { pageContent: f.contents, metadata: { path: f.path } }
@@ -32,11 +30,19 @@ export class VectorDB {
     })
 
     this.db = await HNSWLib.fromDocuments([], this.embeddings)
-    this.db.addVectors(existingVectors, existingDocs)
+    await this.db.addVectors(existingVectors, existingDocs)
   }
 
-  search = async (query: string, limit = 10) => {
-    const result = await this.db?.similaritySearch(query, limit)
+  search = async (query: string) => {
+    const result = await this.db?.similaritySearchWithScore(query)
     return result
+  }
+
+  topResults = async (query: string, limit = 3) => {
+    const result = await this.search(query)
+    if (!result) return []
+    result.sort((a, b) => b[1] - a[1])
+
+    return result.map((r) => r[0]).slice(0, limit) as Document[]
   }
 }

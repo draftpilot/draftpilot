@@ -4,6 +4,14 @@ import { cyrb53 } from '@/utils'
 
 import ts from 'typescript'
 
+type FuncChunk = {
+  name: string
+  contents: string
+  line: number
+}
+
+const CHUNK_SIZE = 100
+
 // parses a javascript / typescript file and returns functions
 export class JSExtractor {
   parse(file: SourceFile): FunctionDoc[] {
@@ -12,16 +20,15 @@ export class JSExtractor {
     const functions: ts.Node[] = []
     findNodeRecursive(sourceFile, ['FunctionDeclaration', 'MethodDeclaration'], functions)
 
-    const nameSet = new Set<string>()
-    return functions
+    const chunks: FuncChunk[] = functions
       .map((node) => {
         let name: string = 'fn'
 
         if (ts.isFunctionDeclaration(node)) {
           name = node.name?.getText() || 'function'
-          if (!node.body) return null
+          if (!node.body) return []
         } else if (ts.isMethodDeclaration(node)) {
-          if (!node.body) return null
+          if (!node.body) return []
           const parent = node.parent
           let parentName = 'parent'
           if (ts.isClassDeclaration(parent)) parentName = parent.name?.getText() || 'class'
@@ -31,17 +38,31 @@ export class JSExtractor {
           name = parentName + '.' + (node.name?.getText() || 'method')
         }
 
-        if (nameSet.has(name)) {
-          name += ':' + node.getStart(sourceFile)
-        }
-        nameSet.add(name)
-
         const contents = node.getText()
-        const hash = cyrb53(contents)
+        const splitContents = contents.split('\n')
+        const start = node.getStart(sourceFile)
 
+        // chunk every 100 lines
+        const chunks: FuncChunk[] = []
+        for (let i = 0; i < splitContents.length; i += CHUNK_SIZE) {
+          const chunk = splitContents.slice(i, i + CHUNK_SIZE).join('\n')
+          chunks.push({ name, contents: chunk, line: start + i })
+        }
+        return chunks
+      })
+      .flat()
+
+    const nameSet = new Set<string>()
+    return chunks
+      .map((chunk) => {
+        if (nameSet.has(chunk.name)) {
+          chunk.name += ':' + chunk.line
+        }
+        nameSet.add(chunk.name)
+        const hash = cyrb53(chunk.contents)
         return {
-          path: file.name + '#' + name,
-          contents,
+          path: file.name + '#' + chunk.name,
+          contents: chunk.contents,
           hash,
         }
       })

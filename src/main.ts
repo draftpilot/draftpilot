@@ -8,6 +8,7 @@ import { fatal } from '@/utils'
 import packageJson from '../package.json'
 import play from '@/commands/play'
 import indexer from '@/commands/indexer'
+import search from '@/commands/search'
 
 export default function () {
   program
@@ -28,6 +29,14 @@ export default function () {
     .action(actionWrapper(init))
 
   program.command('index').description('Index your project').action(actionWrapper(indexer))
+
+  program
+    .command('search')
+    .description('Perform code search')
+    .action(actionWrapper(search))
+    .argument('<query>', 'The query to search for.')
+    .option('--count <count>', 'The number of results to return (default 3).')
+    .option('--reindex', 'Re-index the project before searching.')
 
   program.command('play').description('Play').action(actionWrapper(play))
 

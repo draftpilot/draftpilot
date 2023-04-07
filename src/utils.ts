@@ -83,3 +83,7 @@ export const cyrb53 = (str: string, seed = 0) => {
 
   return 4294967296 * (2097151 & h2) + (h1 >>> 0)
 }
+
+export const pluralize = (count: number, noun: string) => {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`
+}
