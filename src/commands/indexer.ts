@@ -1,4 +1,5 @@
-import DB from '@/db/db'
+import DB from '@/db/docsDb'
+import { VectorDB } from '@/db/vectorDb'
 import { log } from '@/logger'
 import { findGitRoot } from '@/utils'
 import fastGlob from 'fast-glob'
@@ -24,5 +25,14 @@ export default async function (options: Options) {
 
   const [_, files] = await Promise.all([db.init(), fastGlob(DEFAULT_GLOB)])
 
-  await db.processFiles(files)
+  const result = await db.processFiles(files)
+  if (!result) return
+
+  const vectorDB = new VectorDB()
+  await vectorDB.init(result, (newDocs) => db.saveVectors(newDocs))
+
+  log('done! processed', result.length, 'files')
+
+  const similar = await vectorDB.search('vector', 3)
+  log('similar search:', similar)
 }
