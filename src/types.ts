@@ -1,5 +1,8 @@
 export type ProjectConfig = {
   server?: string
+  language?: string
+  purpose?: string
+  techstack?: string
 }
 
 export type SourceFile = {

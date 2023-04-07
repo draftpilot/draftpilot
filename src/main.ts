@@ -6,9 +6,10 @@ import { log, setVerbose } from '@/logger'
 import { fatal } from '@/utils'
 
 import packageJson from '../package.json'
-import play from '@/commands/play'
+import chat from '@/commands/chat'
 import indexer from '@/commands/indexer'
 import search from '@/commands/search'
+import codegen from '@/commands/codegen'
 
 export default function () {
   program
@@ -21,12 +22,7 @@ export default function () {
       process.exit(0)
     })
 
-  program
-    .command('init')
-    .description('Initialize in a git repo')
-    .argument('<user>', 'Your user id.')
-    .option('--force', 'Force re-registration of the repo')
-    .action(actionWrapper(init))
+  program.command('init').description('Initialize drafty').action(actionWrapper(init))
 
   program.command('index').description('Index your project').action(actionWrapper(indexer))
 
@@ -38,7 +34,14 @@ export default function () {
     .option('--count <count>', 'The number of results to return (default 3).')
     .option('--reindex', 'Re-index the project before searching.')
 
-  program.command('play').description('Play').action(actionWrapper(play))
+  program
+    .command('codegen')
+    .description('Generate project-related code from a query')
+    .action(actionWrapper(codegen))
+    .argument('<request>', 'The request to make.')
+    .option('--reindex', 'Re-index the project before codegen.')
+
+  program.command('chat').description('Test direct GPT-4 completion').action(actionWrapper(chat))
 
   const options = program.parse()
   config.options = options

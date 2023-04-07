@@ -29,8 +29,14 @@ export function generateSecretKey() {
     .replace(/\=/g, '')
 }
 
+export function getConfigPath(root: string = findGitRoot()) {
+  const folder = path.join(root, '.drafty')
+  const file = path.join(folder, 'config.json')
+  return { folder, file }
+}
+
 export function readConfig(root: string = findGitRoot()): ProjectConfig | null {
-  const configPath = path.join(root, '.okpush')
+  const { file: configPath } = getConfigPath(root)
   if (!fs.existsSync(configPath)) {
     return null
   }
