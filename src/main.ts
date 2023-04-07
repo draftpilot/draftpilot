@@ -6,6 +6,7 @@ import { log, setVerbose } from '@/logger'
 import { fatal } from '@/utils'
 
 import packageJson from '../package.json'
+import play from '@/commands/play'
 
 export default function () {
   program
@@ -24,6 +25,8 @@ export default function () {
     .argument('<user>', 'Your user id.')
     .option('--force', 'Force re-registration of the repo')
     .action(actionWrapper(init))
+
+  program.command('play').description('Play').action(actionWrapper(play))
 
   const options = program.parse()
   config.options = options
