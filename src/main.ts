@@ -31,7 +31,7 @@ export default function () {
     .description('Perform code search')
     .action(actionWrapper(search))
     .argument('<query>', 'The query to search for.')
-    .option('--count <count>', 'The number of results to return (default 3).')
+    .option('--k <k>', 'The k means to cluster (and results to return).')
     .option('--reindex', 'Re-index the project before searching.')
 
   program

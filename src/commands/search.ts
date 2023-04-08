@@ -4,7 +4,7 @@ import { pluralize } from '@/utils'
 import chalk from 'chalk'
 
 type Options = {
-  count?: number
+  k?: string
   reindex: boolean
 }
 
@@ -25,6 +25,9 @@ export default async function (query: string, options: Options) {
 
   await indexer.loadVectors(docs)
 
-  const similar = await indexer.vectorDB.search(query)
+  const similar = await indexer.vectorDB.searchWithScores(
+    query,
+    options.k ? parseInt(options.k) : undefined
+  )
   log('results:', similar)
 }

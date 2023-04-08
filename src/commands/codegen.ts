@@ -29,8 +29,16 @@ export default async function (prompt: string, options: Options) {
 
   await indexer.loadVectors(docs)
 
+  const similar = (await indexer.vectorDB.search(prompt, 2)) || []
+
   const firstPassPrompt = `
-    Request: ${prompt}. Response: ${config.language} code for ${config.techstack}. Do not return anything but code.
+  Project context: ${config.purpose}, written in ${config.language}, using ${config.techstack}.
+
+  Example functions:
+  ${similar.map((s) => s.pageContent).join('\n\n')}
+
+  ---
+  Request: generate code and nothiing else for ${prompt}
   `
 
   verboseLog(firstPassPrompt)

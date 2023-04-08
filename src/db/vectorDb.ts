@@ -33,16 +33,13 @@ export class VectorDB {
     await this.db.addVectors(existingVectors, existingDocs)
   }
 
-  search = async (query: string) => {
-    const result = await this.db?.similaritySearchWithScore(query)
+  search = async (query: string, k?: number) => {
+    const result = await this.db?.similaritySearch(query, k)
     return result
   }
 
-  topResults = async (query: string, limit = 3) => {
-    const result = await this.search(query)
-    if (!result) return []
-    result.sort((a, b) => b[1] - a[1])
-
-    return result.map((r) => r[0]).slice(0, limit) as Document[]
+  searchWithScores = async (query: string, k?: number) => {
+    const result = await this.db?.similaritySearchWithScore(query, k)
+    return result
   }
 }

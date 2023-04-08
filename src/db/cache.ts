@@ -20,6 +20,10 @@ class Cache {
     if (!this.client) await this.initRedis()
     return await this.client!.get(key)
   }
+
+  close = async () => {
+    this.client?.quit()
+  }
 }
 
 export const cache = new Cache()
