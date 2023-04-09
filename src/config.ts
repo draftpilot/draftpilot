@@ -2,12 +2,14 @@ type Config = {
   customServer: boolean
   server: string
   options: any | undefined
+  configFolder: string
 }
 
 const config: Config = {
   customServer: false,
   server: 'https://teamstory.ai',
   options: undefined,
+  configFolder: '.drafty',
 }
 
 export default config

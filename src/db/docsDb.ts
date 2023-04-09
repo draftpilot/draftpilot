@@ -5,8 +5,8 @@ import { cyrb53, fatal } from '@/utils'
 import { verboseLog } from '@/logger'
 import { FunctionDoc, SourceFile } from '@/types'
 import { JSExtractor } from '@/db/jsExtractor'
+import config from '@/config'
 
-const DB_FOLDER = '.drafty'
 const SQLITE_DB_NAME = 'docs.sqlite'
 
 type DocRow = {
@@ -23,7 +23,7 @@ export default class FileDB {
   db?: sqlite3.Database
 
   constructor(root: string) {
-    this.dbPath = path.join(root, DB_FOLDER)
+    this.dbPath = path.join(root, config.configFolder)
     const existing = fs.existsSync(this.dbPath)
     if (!existing) fs.mkdirSync(this.dbPath)
   }
@@ -62,6 +62,7 @@ export default class FileDB {
     const extractor = new JSExtractor()
 
     files.forEach((file) => {
+      console.log(file)
       const contents = fs.readFileSync(file, 'utf-8')
       const sourceFile: SourceFile = { name: file, contents }
       const docs = extractor.parse(sourceFile)

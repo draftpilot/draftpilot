@@ -12,8 +12,8 @@ export default async function (query: string, options: Options) {
   const indexer = new Indexer()
   const { docs, newDocs, existing } = await indexer.load()
 
-  if (!existing) throw new Error('you must index your project first')
-  if (newDocs.length) {
+  if (!existing) await indexer.index(newDocs)
+  else if (newDocs.length) {
     if (options.reindex) await indexer.index(newDocs)
     else
       log(

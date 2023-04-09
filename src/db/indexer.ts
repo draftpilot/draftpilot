@@ -11,10 +11,12 @@ const DEFAULT_GLOB = [
   '**/*.ts',
   '**/*.jsx',
   '**/*.tsx',
-  '!node_modules/**',
-  '!dist/**',
-  '!build/**',
+  '!**/node_modules/**',
+  '!**/dist/**',
+  '!**/build/**',
 ]
+
+const GLOB_WITHOUT_TESTS = [...DEFAULT_GLOB, '!**/__tests__/**', '!**/*.test.*', '!**/*.spec.*']
 
 const TAG = chalk.blue('[indexer]')
 
@@ -29,11 +31,15 @@ export class Indexer {
     this.vectorDB = new VectorDB()
   }
 
+  getFiles = async (glob?: string) => {
+    return await FastGlob(glob || GLOB_WITHOUT_TESTS)
+  }
+
   // loads index, returns a set of new documents that have changed since last index
   load = async (
     glob?: string
   ): Promise<{ docs: FunctionDoc[]; newDocs: FunctionDoc[]; existing: boolean }> => {
-    const [_, files] = await Promise.all([this.fileDB.init(), FastGlob(glob || DEFAULT_GLOB)])
+    const [_, files] = await Promise.all([this.fileDB.init(), this.getFiles(glob)])
     const result = await this.fileDB.processFiles(files)
     if (!result) return { docs: [], newDocs: [], existing: false }
 
@@ -43,7 +49,7 @@ export class Indexer {
   }
 
   index = async (newDocs: FunctionDoc[]) => {
-    verboseLog('loading embeddings for', newDocs.length, 'new docs')
+    verboseLog(TAG, 'loading embeddings for', newDocs.length, 'new docs')
     await this.vectorDB.loadEmbeddings(newDocs)
     await this.fileDB.saveVectors(newDocs)
   }

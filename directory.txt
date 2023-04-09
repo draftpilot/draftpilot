@@ -1,0 +1,17 @@
+src/config.ts - config constants
+src/git.ts - a way to invoke the git command
+src/logger.ts - utilities for logging and verbose logging
+src/main.ts - interprets command line arguments and runs a command
+src/types.ts - typescript typedefs
+src/utils.ts - various utility functions
+src/ai/chat.ts - calls OpenAI chat completion endpoint
+src/commands/chat.ts - a command that tests chat completion with arbitrary prompts
+src/commands/codegen.ts - a command that generates code based on what the user wants
+src/commands/indexer.ts - a command that indexes all functions into embeddings
+src/commands/init.ts - a command that asks the user about basics of their project 
+src/commands/search.ts - a command that performs code similarity search based on keywords
+src/db/cache.ts - caches requests to redis
+src/db/docsDb.ts - stores a list of functions and their vectors in sqlite3
+src/db/indexer.ts - reads files from disk and stores into docsDb and vectorDb
+src/db/jsExtractor.ts - parses a javascript / typescript file into functions
+src/db/vectorDb.ts - uses hnsw as an in-memory vector database

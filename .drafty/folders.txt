@@ -1,0 +1,7 @@
+/src/ai: Contains code related to AI functionalities
+/src/commands: Contains scripts used for CLI commands
+/src/db: Contains code related to Database functionalities
+/src/knowledge: Contains general purpose utility files for the application
+/cli.js: CLI script for the application
+/esbuild.js: Script to compile TypeScript code to JavaScript
+/index.ts: Entry point of the application

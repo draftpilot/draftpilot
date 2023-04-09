@@ -10,6 +10,7 @@ type FuncChunk = {
   line: number
 }
 
+// chunk every 100 lines for long functions
 const CHUNK_SIZE = 100
 
 // parses a javascript / typescript file and returns functions
@@ -18,7 +19,11 @@ export class JSExtractor {
     const sourceFile = ts.createSourceFile(file.name, file.contents, ts.ScriptTarget.Latest, true)
 
     const functions: ts.Node[] = []
-    findNodeRecursive(sourceFile, ['FunctionDeclaration', 'MethodDeclaration'], functions)
+    findNodeRecursive(
+      sourceFile,
+      ['FunctionDeclaration', 'MethodDeclaration', 'ArrowFunction'],
+      functions
+    )
 
     const chunks: FuncChunk[] = functions
       .map((node) => {
@@ -27,13 +32,21 @@ export class JSExtractor {
         if (ts.isFunctionDeclaration(node)) {
           name = node.name?.getText() || 'function'
           if (!node.body) return []
+        } else if (ts.isArrowFunction(node)) {
+          const parent = node.parent
+          let parentName = ts.SyntaxKind[parent.kind]
+          if (ts.isVariableDeclaration(parent) || ts.isPropertyAssignment(parent))
+            parentName = parent.name.getText()
+          if (!node.body || node.body.getText().length < 100) return []
+          name = parentName + '.' + 'arrowFunction'
         } else if (ts.isMethodDeclaration(node)) {
           if (!node.body) return []
           const parent = node.parent
-          let parentName = 'parent'
+          let parentName = ts.SyntaxKind[parent.kind]
           if (ts.isClassDeclaration(parent)) parentName = parent.name?.getText() || 'class'
+          else if (ts.isObjectLiteralExpression(parent)) parentName = 'object'
           else {
-            log('unknown parent', parent.kind)
+            log('TS method unknown parent', parent.kind)
           }
           name = parentName + '.' + (node.name?.getText() || 'method')
         }
@@ -42,9 +55,9 @@ export class JSExtractor {
         const splitContents = contents.split('\n')
         const start = node.getStart(sourceFile)
 
-        // chunk every 100 lines
         const chunks: FuncChunk[] = []
-        for (let i = 0; i < splitContents.length; i += CHUNK_SIZE) {
+        // chunk every 100 lines, but include the last 10 lines of prev chunk for context
+        for (let i = 0; i < splitContents.length; i += CHUNK_SIZE - 10) {
           const chunk = splitContents.slice(i, i + CHUNK_SIZE).join('\n')
           chunks.push({ name, contents: chunk, line: start + i })
         }

@@ -10,6 +10,8 @@ import chat from '@/commands/chat'
 import indexer from '@/commands/indexer'
 import search from '@/commands/search'
 import codegen from '@/commands/codegen'
+import folders from '@/commands/folders'
+import planner from '@/commands/planner'
 
 export default function () {
   program
@@ -39,7 +41,20 @@ export default function () {
     .description('Generate project-related code from a query')
     .action(actionWrapper(codegen))
     .argument('<request>', 'The request to make.')
+    .option('--k <k>', 'The k means to cluster (and results to return).')
     .option('--reindex', 'Re-index the project before codegen.')
+
+  program
+    .command('folders')
+    .description('Create a folder manifest for your project')
+    .action(actionWrapper(folders))
+    .option('--glob <glob>', 'The glob to use for finding files.')
+
+  program
+    .command('planner')
+    .description('Create an execution plan for the request')
+    .action(actionWrapper(planner))
+    .argument('<request>', 'The request to make.')
 
   program.command('chat').description('Test direct GPT-4 completion').action(actionWrapper(chat))
 
