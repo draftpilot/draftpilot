@@ -4,7 +4,7 @@ import { ChatMessage } from '@/types'
 import inquirer from 'inquirer'
 import { oraPromise } from 'ora'
 
-export default async function play() {
+export default async function () {
   const chatHistory: ChatMessage[] = []
 
   while (true) {

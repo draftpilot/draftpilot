@@ -1,7 +1,7 @@
 import { program } from 'commander'
 
 import init from '@/commands/init'
-import config, { overrideServer } from '@/config'
+import config, { overrideGPT4, overrideServer } from '@/config'
 import { log, setVerbose } from '@/logger'
 import { fatal } from '@/utils'
 
@@ -21,6 +21,7 @@ export default function () {
     .option('-v, --verbose', 'verbose logging', () => setVerbose(1))
     .option('--server <server>', 'specify a custom server', overrideServer)
     .option('--skip-cache', 'skip cache for all requests', cache.skipCache)
+    .option('--gpt4 <policy>', 'gpt-4 policy (always, code-only, never)', overrideGPT4)
     .option('--version', 'print version', () => {
       log(packageJson.version)
       process.exit(0)
@@ -28,7 +29,11 @@ export default function () {
 
   program.command('init').description('Initialize drafty').action(actionWrapper(init))
 
-  program.command('index').description('Index your project').action(actionWrapper(indexer))
+  program
+    .command('index')
+    .description('Index your project')
+    .action(actionWrapper(indexer))
+    .option('--reindex', 'Re-index from scratch.')
 
   program
     .command('search')

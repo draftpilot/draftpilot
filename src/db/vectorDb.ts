@@ -21,7 +21,8 @@ export class VectorDB {
       existingDocs: Document[] = []
 
     funcDocs.forEach((f) => {
-      const doc = { pageContent: f.contents, metadata: { path: f.path } }
+      const contents = f.path + ':\n' + f.contents
+      const doc = { pageContent: contents, metadata: { path: f.path } }
       if (f.vectors) {
         existingVectors.push(f.vectors)
         existingDocs.push(doc)

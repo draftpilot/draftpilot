@@ -45,7 +45,7 @@ src/jobs: background jobs
 
   verboseLog(prompt)
 
-  const model = config.gpt4 == 'never' ? '3.5' : '4'
+  const model = config.gpt4 == 'always' ? '4' : '3.5'
 
   const promise = chatCompletion(
     prompt,

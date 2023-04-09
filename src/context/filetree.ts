@@ -45,34 +45,13 @@ export const getInfoFileName = (root: string = findGitRoot()) => {
   return path.join(root, config.configFolder, INFO_FILE)
 }
 
-export const joinFilesWithContext = (files: string[]) => {
-  const fileInfos = readFileInfos()
-  if (!fileInfos) return files
-
-  const joinedFiles: string[] = []
-  files.forEach((file) => {
-    const fileName = path.basename(file)
-    const folder = path.dirname(file)
-    const folderInfo = fileInfos[folder]
-
-    if (folderInfo) {
-      if (folderInfo.exclude) return
-      if (folderInfo.description) {
-        joinedFiles.push(folder + ': ' + folderInfo.description)
-        delete folderInfo.description
-      }
-    }
-
-    const info = fileInfos[file]
-    if (info) {
-      if (info.exclude) return
-      if (info.description) return joinedFiles.push('- ' + fileName + ': ' + info.description)
-    }
-
-    joinedFiles.push('- ' + fileName)
-  })
-
-  return joinedFiles
+export const getFilesWithContext = (files: string[]): string[] => {
+  const file = getInfoFileName()
+  if (!fs.existsSync(file)) {
+    return files
+  }
+  const contents = fs.readFileSync(file, 'utf-8').split('\n')
+  return contents
 }
 
 interface DirectoryNode {

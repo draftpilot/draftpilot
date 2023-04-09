@@ -4,5 +4,5 @@ export async function getSimilarMethods(indexer: Indexer, prompt: string, count:
   const similar = await indexer.vectorDB.search(prompt, count)
   if (!similar) return null
 
-  return similar.map((s) => s.metadata.path + ':\n```' + s.pageContent).join('```\n\n')
+  return similar.map((s) => s.pageContent).join('```\n\n')
 }

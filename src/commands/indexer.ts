@@ -1,16 +1,25 @@
 import { Indexer } from '@/db/indexer'
 import { log } from '@/logger'
 
-type Options = {}
+type Options = {
+  reindex: boolean
+}
 
 export default async function (options: Options) {
   const indexer = new Indexer()
   const files = await indexer.getFiles()
   const { docs, newDocs, existing } = await indexer.load(files)
 
-  log(existing ? 're-indexing your project' : 'generating index for the first time...')
+  log(
+    options.reindex
+      ? 're-indexing your project'
+      : existing
+      ? 'updating existing index'
+      : 'generating index for the first time...'
+  )
 
-  await indexer.index(newDocs)
+  const toIndex = options.reindex ? docs : newDocs
+  await indexer.index(toIndex)
 
-  log('done! processed', docs.length, 'functions, with', newDocs.length, 'changes')
+  log('done! processed', docs.length, 'functions, with', toIndex.length, 'changes')
 }
