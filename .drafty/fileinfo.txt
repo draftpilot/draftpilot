@@ -1,41 +1,35 @@
-- package.json: holds project metadata and manages npm packages
-- index.ts: probably the file that exports the application
-- esbuild.js: configuration file for a JavaScript bundler
-- cli.js: command-line interface for the application
-
-src: root source folder
-- utils.ts: utility functions
-- types.ts: TypeScript types
-- main.ts: parses command line args and runs the given command
-- logger.ts: logging functionality
-- git.ts: integration with Git 
-- config.ts: configuration file
-- api.ts: interface with external APIs
-
-src/ai: folder containing AI-related code
-- chat.ts: chatbot functionality
-
-src/commands: folder containing command-related code
-- search.ts: command to search codebase
-- planner.ts: command to plan tasks
-- init.ts: command to initialize project
-- indexer.ts: command to index files
-- filetree.ts: command to create file tree
-- codegen.ts: command to generate code
-- chat.ts: command to enter chat mode
-
-src/context: folder containing context-related code
-- similar.ts: code to find similar code 
-- filetree.ts: constructs the file tree
-
-src/db: folder containing database-related code
-- vectorDb.ts: database for vectors
-- indexer.ts: handles indexing
-- docsDb.ts: database for docs
-- cache.ts: caching mechanism
-
-src/parsing: folder containing code related to parsing code
-- tsExtractor.ts: handles extracting code from TypeScript
-- rawExtractor.ts: handles extracting code from raw source
-- extractorService.ts: manages the extractor
-- extractor.ts: the extractor logic
+- package.json: 
+- index.ts: 
+- esbuild.js: 
+- cli.js: 
+src: main source folder
+- utils.ts: 
+- types.ts: 
+- main.ts: parses command line args & runs given command
+- logger.ts: 
+- git.ts: 
+- config.ts: 
+- api.ts: 
+src/ai: AI implementation
+- chat.ts: invokes AI chat completion
+src/commands: command implementations
+- search.ts: 
+- planner.ts: 
+- init.ts: 
+- indexer.ts: 
+- filetree.ts: 
+- codegen.ts: 
+- chat.ts: 
+src/context: context-related functionalities
+- similar.ts: search for similar functions and code
+- filetree.ts: read file info
+src/db: database services
+- vectorDb.ts: 
+- indexer.ts: 
+- docsDb.ts: 
+- cache.ts: 
+src/parsing: file parsing and extraction
+- tsExtractor.ts: 
+- rawExtractor.ts: 
+- extractorService.ts: 
+- extractor.ts: 
