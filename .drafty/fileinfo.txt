@@ -1,33 +1,41 @@
-- cli.js: 
-- esbuild.js: 
-- index.ts: 
-src: 
-src/ai: utilities for the AI chat feature
-- chat.ts: 
-- api.ts: 
-src/commands: command line interface utilities
-- chat.ts: 
-- codegen.ts: 
-- filetree.ts: 
-- indexer.ts: 
-- init.ts: 
-- planner.ts: 
-- search.ts: 
-- config.ts: 
-src/context: utilities for managing state for the application
-- filetree.ts: 
-src/db: utilities for accessing and managing databases
-- cache.ts: 
-- docsDb.ts: 
-- indexer.ts: 
-- vectorDb.ts: 
-- git.ts: 
-- logger.ts: 
-- main.ts: main entrypoint for CLI, parsing args and running the command
-src/parsing: utilities for parsing code and extracting information from it
-- extractor.ts: 
-- extractorService.ts: 
-- rawExtractor.ts: 
-- tsExtractor.ts: 
-- types.ts: 
-- utils.ts: 
+- package.json: holds project metadata and manages npm packages
+- index.ts: probably the file that exports the application
+- esbuild.js: configuration file for a JavaScript bundler
+- cli.js: command-line interface for the application
+
+src: root source folder
+- utils.ts: utility functions
+- types.ts: TypeScript types
+- main.ts: parses command line args and runs the given command
+- logger.ts: logging functionality
+- git.ts: integration with Git 
+- config.ts: configuration file
+- api.ts: interface with external APIs
+
+src/ai: folder containing AI-related code
+- chat.ts: chatbot functionality
+
+src/commands: folder containing command-related code
+- search.ts: command to search codebase
+- planner.ts: command to plan tasks
+- init.ts: command to initialize project
+- indexer.ts: command to index files
+- filetree.ts: command to create file tree
+- codegen.ts: command to generate code
+- chat.ts: command to enter chat mode
+
+src/context: folder containing context-related code
+- similar.ts: code to find similar code 
+- filetree.ts: constructs the file tree
+
+src/db: folder containing database-related code
+- vectorDb.ts: database for vectors
+- indexer.ts: handles indexing
+- docsDb.ts: database for docs
+- cache.ts: caching mechanism
+
+src/parsing: folder containing code related to parsing code
+- tsExtractor.ts: handles extracting code from TypeScript
+- rawExtractor.ts: handles extracting code from raw source
+- extractorService.ts: manages the extractor
+- extractor.ts: the extractor logic

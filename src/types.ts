@@ -19,3 +19,8 @@ export type CodeDoc = {
   hash?: number
   vectors?: number[]
 }
+
+export type ChatMessage = {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+}

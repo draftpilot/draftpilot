@@ -3,6 +3,7 @@ type Config = {
   server: string
   options: any | undefined
   configFolder: string
+  gpt4: 'always' | 'only-codegen' | 'never'
 }
 
 const config: Config = {
@@ -10,6 +11,7 @@ const config: Config = {
   server: 'https://teamstory.ai',
   options: undefined,
   configFolder: '.drafty',
+  gpt4: 'only-codegen',
 }
 
 export default config

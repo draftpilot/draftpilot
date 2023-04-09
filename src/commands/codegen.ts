@@ -1,4 +1,5 @@
 import { chatCompletion } from '@/ai/chat'
+import { getSimilarMethods } from '@/context/similar'
 import { cache } from '@/db/cache'
 import { Indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/logger'
@@ -32,7 +33,7 @@ export default async function (prompt: string, options: Options) {
 
   await indexer.loadVectors(docs)
 
-  const similar = await indexer.vectorDB.search(prompt, options.k ? parseInt(options.k) : 4)
+  const similar = await getSimilarMethods(indexer, prompt, options.k ? parseInt(options.k) : 4)
 
   if (!similar) throw 'No similar functions found. Codegen is not gonna be useful.'
 
@@ -40,7 +41,7 @@ export default async function (prompt: string, options: Options) {
   Project context: written in ${config.language}, using ${config.techstack}.
 
   Example functions:
-  ${similar.map((s) => s.metadata.path + ':\n' + s.pageContent).join('\n\n')}
+  ${similar}
 
   ---
   Concicely tell me which file/functions you would modify and how you would modify it to do the following: ${prompt}

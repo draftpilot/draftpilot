@@ -13,6 +13,7 @@ import {
   writeFileInfos,
 } from '@/context/filetree'
 import inquirer from 'inquirer'
+import config from '@/config'
 
 type Options = {
   glob?: string
@@ -32,20 +33,25 @@ export default async function (query: string, options: Options) {
   const root = findGitRoot()
   const existingInfos = readFileInfos(root) || {}
 
-  const prompt = `Files:
-${fileListing}
+  const prompt = `${fileListing}
 
-Based on the file/folder names, guess the purpose of each folder. For example, if you see a folder 
-called "components", you might guess that it contains React components. Return in this format:
+Based on the above files/folders, append ':' + guessed the purpose of each item.
+For example, if you see a folder called "components", you might guess that it contains React
+components. If uncertain, just leave it blank. Be concise and don't repeat things 
+like "for the application" on every line. e.g.
 
-src/api: api utilities
-src/components: react components`
+src: source folder
+- main.ts: entry point
+src/components: React components
+`
 
   verboseLog(prompt)
 
+  const model = config.gpt4 == 'always' ? '4' : '3.5'
+
   const promise = chatCompletion(
     prompt,
-    '3.5',
+    model,
     'Respond in the requested format with no extra comments'
   )
   log(
@@ -57,33 +63,29 @@ src/components: react components`
 - put * in front of the files that are most commonly accessed in the project (e.g. api or db access)`
   )
 
-  const folderGuesses = await oraPromise(promise, { text: 'Scanning and summarizing...' })
-  const folderGuessMap: { [key: string]: string } = {}
-  folderGuesses.split('\n').forEach((line) => {
-    let [folder, purpose] = line.split(':', 2).map((s) => s.trim())
-    if (purpose.startsWith('(')) purpose = purpose.slice(1, -1)
-    if (folder && purpose) folderGuessMap[folder] = purpose
+  const guessedFiles = await oraPromise(promise, { text: 'Scanning and summarizing...' })
+  const guessedFileLines = guessedFiles.trim().split('\n')
+
+  if (guessedFileLines.length > 0 && guessedFileLines[0] == 'name,description')
+    guessedFileLines.shift()
+
+  const outputLines: string[] = []
+  guessedFileLines.forEach((line) => {
+    outputLines.push(line)
+    //   const isFile = line.startsWith('- ')
+    //   const file = isFile ? line.slice(2) : line
+    //   const existing = existingInfos[file]
+    //   const prefix = (isFile ? '- ' : '') + (existing?.exclude ? '!' : existing?.key ? '*' : '')
+    //   const guess = folderGuessMap[file]
+    //   if (guess) delete folderGuessMap[file]
+    //   decoratedFiles.push(`${prefix}${file}: ${existing?.description || guess || ''}`)
   })
 
-  const decoratedFiles: string[] = []
+  // Object.keys(folderGuessMap).forEach((folder) => {
+  //   decoratedFiles.push(`${folder}: ${folderGuessMap[folder]}`)
+  // })
 
-  dirTree.forEach((line) => {
-    const isFile = line.startsWith('- ')
-    const file = isFile ? line.slice(2) : line
-
-    const existing = existingInfos[file]
-    const prefix = (isFile ? '- ' : '') + (existing?.exclude ? '!' : existing?.key ? '*' : '')
-    const guess = folderGuessMap[file]
-    if (guess) delete folderGuessMap[file]
-
-    decoratedFiles.push(`${prefix}${file}: ${existing?.description || guess || ''}`)
-  })
-
-  Object.keys(folderGuessMap).forEach((folder) => {
-    decoratedFiles.push(`${folder}: ${folderGuessMap[folder]}`)
-  })
-
-  writeFileInfos(decoratedFiles.join('\n'), root)
+  writeFileInfos(outputLines.join('\n'), root)
   const fileName = getInfoFileName(root)
 
   await open(fileName)
@@ -96,7 +98,8 @@ src/components: react components`
     {
       type: 'input',
       name: 'done',
-      message: "Press enter when done editing. While you do that, I'm indexing all files.",
+      message:
+        "Save the file and press enter when done. While you do that, I'm indexing all files.",
     },
   ])
 

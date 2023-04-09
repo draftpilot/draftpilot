@@ -51,18 +51,25 @@ export const joinFilesWithContext = (files: string[]) => {
 
   const joinedFiles: string[] = []
   files.forEach((file) => {
-    const folderInfo = fileInfos[path.dirname(file)]
+    const fileName = path.basename(file)
+    const folder = path.dirname(file)
+    const folderInfo = fileInfos[folder]
+
     if (folderInfo) {
       if (folderInfo.exclude) return
+      if (folderInfo.description) {
+        joinedFiles.push(folder + ': ' + folderInfo.description)
+        delete folderInfo.description
+      }
     }
 
     const info = fileInfos[file]
     if (info) {
       if (info.exclude) return
-      if (info.description) return joinedFiles.push(file + ': ' + info.description)
+      if (info.description) return joinedFiles.push('- ' + fileName + ': ' + info.description)
     }
 
-    joinedFiles.push(file)
+    joinedFiles.push('- ' + fileName)
   })
 
   return joinedFiles
@@ -85,7 +92,8 @@ function addFileToDirectory(directory: string, fileTree: DirectoryNode) {
 
 function getDirectoryPaths(fileTree: DirectoryNode, prefix: string): string[] {
   const paths: string[] = []
-  for (const path in fileTree) {
+  const keys = Object.keys(fileTree).sort((a, b) => (fileTree[a] === true ? -1 : 1))
+  for (const path of keys) {
     if (fileTree[path] === true) {
       paths.push(`- ${path}`)
     } else {
