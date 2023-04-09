@@ -3,9 +3,9 @@ import fs from 'fs'
 import sqlite3 from 'sqlite3'
 import { cyrb53, fatal } from '@/utils'
 import { verboseLog } from '@/logger'
-import { FunctionDoc, SourceFile } from '@/types'
-import { JSExtractor } from '@/db/jsExtractor'
+import { CodeDoc, SourceFile } from '@/types'
 import config from '@/config'
+import { ExtractorService } from '@/parsing/extractorService'
 
 const SQLITE_DB_NAME = 'docs.sqlite'
 
@@ -58,21 +58,22 @@ export default class FileDB {
       return null
     }
 
-    const allDocs: { [path: string]: FunctionDoc } = {}
-    const extractor = new JSExtractor()
+    const allDocs: { [path: string]: CodeDoc } = {}
+    const extractor = new ExtractorService()
 
-    files.forEach((file) => {
-      console.log(file)
-      const contents = fs.readFileSync(file, 'utf-8')
-      const sourceFile: SourceFile = { name: file, contents }
-      const docs = extractor.parse(sourceFile)
-      docs.forEach((doc) => (allDocs[doc.path] = doc))
-    })
+    await Promise.all(
+      files.map(async (file) => {
+        const contents = fs.readFileSync(file, 'utf-8')
+        const sourceFile: SourceFile = { name: file, contents }
+        const docs = await extractor.parse(sourceFile)
+        docs.forEach((doc) => (allDocs[doc.path] = doc))
+      })
+    )
 
     // check for existing records in sqlite
-    const changedDocs: FunctionDoc[] = []
+    const changedDocs: CodeDoc[] = []
     const docsToDelete: string[] = []
-    const existingDocs: FunctionDoc[] = []
+    const existingDocs: CodeDoc[] = []
 
     const rows = await new Promise<DocRow[]>((res, rej) =>
       this.db!.all(`SELECT * FROM docs`, [], promisedResult(res, rej))
@@ -114,7 +115,7 @@ export default class FileDB {
     return [...existingDocs, ...changedDocs, ...newDocs]
   }
 
-  saveVectors = async (docs: FunctionDoc[]) => {
+  saveVectors = async (docs: CodeDoc[]) => {
     if (!this.db) {
       fatal('not initialized')
       return

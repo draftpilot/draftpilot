@@ -1,8 +1,7 @@
 import { HNSWLib } from 'langchain/vectorstores'
 import { OpenAIEmbeddings } from 'langchain/embeddings'
-import { FunctionDoc } from '@/types'
+import { CodeDoc } from '@/types'
 import type { Document } from 'langchain/dist/document'
-import { log } from '@/logger'
 
 export class VectorDB {
   db?: HNSWLib
@@ -11,13 +10,13 @@ export class VectorDB {
     stripNewLines: true,
   })
 
-  loadEmbeddings = async (docs: FunctionDoc[]) => {
+  loadEmbeddings = async (docs: CodeDoc[]) => {
     const texts = docs.map((d) => d.contents)
     const vectors = await this.embeddings.embedDocuments(texts)
     docs.forEach((d, i) => (d.vectors = vectors[i]))
   }
 
-  init = async (funcDocs: FunctionDoc[]) => {
+  init = async (funcDocs: CodeDoc[]) => {
     const existingVectors: number[][] = [],
       existingDocs: Document[] = []
 

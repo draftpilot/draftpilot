@@ -1,5 +1,6 @@
 import { log } from '@/logger'
-import { FunctionDoc, SourceFile } from '@/types'
+import { Extractor } from '@/parsing/extractor'
+import { CodeDoc, SourceFile } from '@/types'
 import { cyrb53 } from '@/utils'
 
 import ts from 'typescript'
@@ -14,8 +15,8 @@ type FuncChunk = {
 const CHUNK_SIZE = 100
 
 // parses a javascript / typescript file and returns functions
-export class JSExtractor {
-  parse(file: SourceFile): FunctionDoc[] {
+export class TSExtractor implements Extractor {
+  async parse(file: SourceFile): Promise<CodeDoc[]> {
     const sourceFile = ts.createSourceFile(file.name, file.contents, ts.ScriptTarget.Latest, true)
 
     const functions: ts.Node[] = []
@@ -79,7 +80,7 @@ export class JSExtractor {
           hash,
         }
       })
-      .filter(Boolean) as FunctionDoc[]
+      .filter(Boolean) as CodeDoc[]
   }
 }
 
