@@ -1,0 +1,33 @@
+- cli.js: 
+- esbuild.js: 
+- index.ts: 
+src: 
+src/ai: utilities for the AI chat feature
+- chat.ts: 
+- api.ts: 
+src/commands: command line interface utilities
+- chat.ts: 
+- codegen.ts: 
+- filetree.ts: 
+- indexer.ts: 
+- init.ts: 
+- planner.ts: 
+- search.ts: 
+- config.ts: 
+src/context: utilities for managing state for the application
+- filetree.ts: 
+src/db: utilities for accessing and managing databases
+- cache.ts: 
+- docsDb.ts: 
+- indexer.ts: 
+- vectorDb.ts: 
+- git.ts: 
+- logger.ts: 
+- main.ts: main entrypoint for CLI, parsing args and running the command
+src/parsing: utilities for parsing code and extracting information from it
+- extractor.ts: 
+- extractorService.ts: 
+- rawExtractor.ts: 
+- tsExtractor.ts: 
+- types.ts: 
+- utils.ts: 

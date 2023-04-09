@@ -5,7 +5,8 @@ type Options = {}
 
 export default async function (options: Options) {
   const indexer = new Indexer()
-  const { docs, newDocs, existing } = await indexer.load()
+  const files = await indexer.getFiles()
+  const { docs, newDocs, existing } = await indexer.load(files)
 
   log(existing ? 're-indexing your project' : 'generating index for the first time...')
 

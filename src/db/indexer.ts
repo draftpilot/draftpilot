@@ -37,9 +37,10 @@ export class Indexer {
 
   // loads index, returns a set of new documents that have changed since last index
   load = async (
-    glob?: string
+    files?: string[]
   ): Promise<{ docs: CodeDoc[]; newDocs: CodeDoc[]; existing: boolean }> => {
-    const [_, files] = await Promise.all([this.fileDB.init(), this.getFiles(glob)])
+    await this.fileDB.init()
+    if (!files) files = await this.getFiles()
     const result = await this.fileDB.processFiles(files)
     if (!result) return { docs: [], newDocs: [], existing: false }
 

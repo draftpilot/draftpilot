@@ -1,10 +1,10 @@
 import { chatCompletion } from '@/ai/chat'
 import { Indexer } from '@/db/indexer'
-import { joinFoldersWithFiles } from '@/knowledge/folders'
 import { log, verboseLog } from '@/logger'
 import { oraPromise } from 'ora'
 import chalk from 'chalk'
 import { cache } from '@/db/cache'
+import { joinFilesWithContext } from '@/context/filetree'
 
 type Options = {
   glob?: string
@@ -15,7 +15,7 @@ export default async function (query: string, options: Options) {
 
   const files = await indexer.getFiles(options.glob)
 
-  const joinedFiles = joinFoldersWithFiles(files)
+  const joinedFiles = joinFilesWithContext(files)
 
   const prompt = `Project Files:
 ${joinedFiles.join('\n')}

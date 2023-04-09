@@ -4,6 +4,7 @@ import { createClient } from 'redis'
 
 class Cache {
   client?: RedisClientType
+  shouldSkipCache = false
 
   initRedis = async () => {
     this.client = createClient()
@@ -18,11 +19,16 @@ class Cache {
 
   get = async (key: string) => {
     if (!this.client) await this.initRedis()
+    if (this.shouldSkipCache) return null
     return await this.client!.get(key)
   }
 
   close = async () => {
     this.client?.quit()
+  }
+
+  skipCache = () => {
+    this.shouldSkipCache = true
   }
 }
 

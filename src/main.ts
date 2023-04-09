@@ -10,8 +10,9 @@ import chat from '@/commands/chat'
 import indexer from '@/commands/indexer'
 import search from '@/commands/search'
 import codegen from '@/commands/codegen'
-import folders from '@/commands/folders'
+import filetree from '@/commands/filetree'
 import planner from '@/commands/planner'
+import { cache } from '@/db/cache'
 
 export default function () {
   program
@@ -19,6 +20,7 @@ export default function () {
     .description('AI-assisted coding')
     .option('-v, --verbose', 'verbose logging', () => setVerbose(1))
     .option('--server <server>', 'specify a custom server', overrideServer)
+    .option('--skip-cache', 'skip cache for all requests', cache.skipCache)
     .option('--version', 'print version', () => {
       log(packageJson.version)
       process.exit(0)
@@ -45,9 +47,9 @@ export default function () {
     .option('--reindex', 'Re-index the project before codegen.')
 
   program
-    .command('folders')
-    .description('Create a folder manifest for your project')
-    .action(actionWrapper(folders))
+    .command('filetree')
+    .description('Create a filetree manifest for your project')
+    .action(actionWrapper(filetree))
     .option('--glob <glob>', 'The glob to use for finding files.')
 
   program
