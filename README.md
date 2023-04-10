@@ -61,5 +61,5 @@ enough context to reproduce and debug the issue.
 
 Draftpilot is available under the [LGPL 3.0](https://spdx.org/licenses/LGPL-3.0-or-later.html) license.
 You can use generated code freely commercially (subject to any copyright concerns that exist
-generally with AI-generated code), but if you distribute any derived works
-based on this project, you must make modifications available to the public.
+generally with AI-generated code), but if you distribute any derived works based on this project,
+you must make modifications available to the public.

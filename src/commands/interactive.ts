@@ -2,6 +2,7 @@ import { executePlan } from '@/commands/executor'
 import { doInitialize } from '@/commands/init'
 import { doPlan } from '@/commands/planner'
 import { getManifestName } from '@/context/manifest'
+import { cache } from '@/db/cache'
 import { Indexer } from '@/db/indexer'
 import { Plan } from '@/types'
 import { findRoot } from '@/utils'
@@ -39,4 +40,6 @@ export default async function (options: Options) {
   // execute
   const planJSON: Plan = JSON.parse(plan)
   await executePlan(planJSON, indexer)
+
+  cache.close()
 }

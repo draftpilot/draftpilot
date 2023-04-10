@@ -61,8 +61,8 @@ ${filesWithContext.join('\n')}
 
 ---
 Request: ${query}
-Return a list of files which should be accessed for context (no more than 3) or changed to fulfill
-this request in this JSON format:
+Return a list of files which should be read for context (no more than 3) and modified (at least 1)
+to fulfill this request in this JSON format:
 
 {
   "read": ["path/file1", "path/to/file2"],
