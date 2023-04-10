@@ -1,7 +1,7 @@
 import { executePlan } from '@/commands/executor'
 import { doInitialize } from '@/commands/init'
 import { doPlan } from '@/commands/planner'
-import { getInfoFileName } from '@/context/filetree'
+import { getManifestName } from '@/context/manifest'
 import { Indexer } from '@/db/indexer'
 import { Plan } from '@/types'
 import { findRoot } from '@/utils'
@@ -16,9 +16,9 @@ type Options = {
 export default async function (options: Options) {
   // init if necessary
   const root = findRoot()
-  const infoFile = root ? getInfoFileName(root) : null
+  const manifestFile = root ? getManifestName(root) : null
 
-  const needsInit = !infoFile || !fs.existsSync(infoFile)
+  const needsInit = !manifestFile || !fs.existsSync(manifestFile)
   const indexer = new Indexer()
   if (needsInit) {
     await doInitialize(indexer, options)

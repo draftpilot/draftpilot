@@ -1,4 +1,4 @@
-import { filesToDirectoryTree, updateFileInfoManifest } from '@/context/filetree'
+import { filesToDirectoryTree, updateFileManifest } from '@/context/manifest'
 import { Indexer } from '@/db/indexer'
 import { log } from '@/logger'
 
@@ -23,7 +23,7 @@ export default async function (options: Options) {
   await indexer.index(toIndex)
 
   const dirTree = filesToDirectoryTree(files)
-  updateFileInfoManifest('', dirTree)
+  updateFileManifest('', dirTree)
 
   log(
     'Done! processed',

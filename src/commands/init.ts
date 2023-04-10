@@ -6,7 +6,7 @@ import open from 'open'
 import { findRoot } from '@/utils'
 import { cache } from '@/db/cache'
 import path from 'path'
-import { filesToDirectoryTree, getInfoFileName, updateFileInfoManifest } from '@/context/filetree'
+import { filesToDirectoryTree, getManifestName, updateFileManifest } from '@/context/manifest'
 import inquirer from 'inquirer'
 import config from '@/config'
 import { updateGitIgnores } from '@/git'
@@ -64,8 +64,8 @@ src/jobs: background jobs
   verboseLog(guessedFiles)
 
   const root = findRoot()
-  updateFileInfoManifest(guessedFiles, dirTree, root)
-  const fileName = getInfoFileName(root)
+  updateFileManifest(guessedFiles, dirTree, root)
+  const fileName = getManifestName(root)
 
   await open(fileName)
 

@@ -1,0 +1,37 @@
+- cli.js: 
+- esbuild.js: 
+- index.ts: 
+- package.json: 
+- README.md: 
+src: main source folder
+- src/api.ts: 
+- src/config.ts: 
+- src/git.ts: 
+- src/logger.ts: 
+- src/main.ts: parses command line args & runs given command
+- src/types.ts: 
+- src/utils.ts: 
+src/ai: AI implementation
+- src/ai/chat.ts: invokes AI chat completion
+src/commands: command implementations
+- src/commands/chat.ts: 
+- src/commands/codegen.ts: 
+- src/commands/executor.ts: 
+- src/commands/indexer.ts: 
+- src/commands/init.ts: 
+- src/commands/interactive.ts: 
+- src/commands/planner.ts: 
+- src/commands/search.ts: 
+src/context: context-related functionalities
+- src/context/manifest.ts: 
+- src/context/similar.ts: search for similar functions and code
+src/db: database services
+- src/db/cache.ts: 
+- src/db/docsDb.ts: 
+- src/db/indexer.ts: 
+- src/db/vectorDb.ts: 
+src/parsing: file parsing and extraction
+- src/parsing/extractor.ts: 
+- src/parsing/extractorService.ts: 
+- src/parsing/rawExtractor.ts: 
+- src/parsing/tsExtractor.ts: 

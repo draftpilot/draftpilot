@@ -44,4 +44,4 @@ export type FileInfo = {
   description?: string
   key?: boolean
 }
-export type FileInfoMap = { [file: string]: FileInfo }
+export type FileManifest = { [file: string]: FileInfo }

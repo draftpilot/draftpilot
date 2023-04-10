@@ -25,7 +25,7 @@ Without any commands, it will run in interactive mode, but you can see all comma
 
 After initialization, the following files will be generated in the `.draftpilot` folder:
 
-- fileinfo.txt - codebase manifest. This should be checked in to git
+- manifest.txt - codebase manifest. This should be checked in to git
 - learning.json - a learned log of interactions. This can be checked into git to share learnings across all contributors, or ignored to be kept personal
 - docs.sqlite - an index of all functions in the codebase. This
   can be ignored by git, as it is derived from the code
