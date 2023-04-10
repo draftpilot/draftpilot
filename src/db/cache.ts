@@ -1,38 +1,32 @@
-import { log } from '@/logger'
-import { RedisClientType } from '@redis/client'
-import { createClient } from 'redis'
+import config from '@/config'
+import Cache from 'cache'
 
 const EXPIRY = 60 * 60 * 24 * 7 // 1 week
-const PREFIX = 'dp:'
 
-class Cache {
-  client?: RedisClientType
+class RequestCache {
+  client?: Cache
   shouldSkipCache = false
 
-  initRedis = async () => {
-    this.client = createClient()
-    this.client.on('error', (err) => log('Redis Client Error', err))
-    await this.client.connect()
+  init = async () => {
+    this.client = new Cache(EXPIRY, config.configFolder + '/cache.json')
   }
 
-  set = async (key: string, value: string) => {
-    if (!this.client) await this.initRedis()
-    await this.client!.set(PREFIX + key, value, { EX: EXPIRY })
+  set = async (key: string, value: any) => {
+    if (!this.client) await this.init()
+    this.client!.put(key, value)
   }
 
   get = async (key: string) => {
-    if (!this.client) await this.initRedis()
+    if (!this.client) await this.init()
     if (this.shouldSkipCache) return null
-    return await this.client!.get(PREFIX + key)
+    return this.client!.get(key)
   }
 
-  close = async () => {
-    this.client?.quit()
-  }
+  close = async () => {}
 
   skipCache = () => {
     this.shouldSkipCache = true
   }
 }
 
-export const cache = new Cache()
+export const cache = new RequestCache()

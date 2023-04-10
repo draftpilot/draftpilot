@@ -10,3 +10,4 @@ plan.json
 !.yarn/versions
 .draftpilot/history.json
 .draftpilot/docs.sqlite
+.draftpilot/cache.json
