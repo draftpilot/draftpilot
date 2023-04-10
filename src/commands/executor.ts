@@ -51,7 +51,13 @@ export async function executePlan(plan: Plan, indexer: Indexer): Promise<boolean
   }
 
   if (plan.delete) {
-    plan.delete.forEach((file) => promises.push(deleteFile(file)))
+    plan.delete.forEach((file) => promises.push(deleteFile(file, indexer)))
+  }
+
+  if (plan.copyAndEdit) {
+    Object.keys(plan.copyAndEdit).forEach((file) =>
+      promises.push(doCopyAndEdit(plan, indexer, file))
+    )
   }
 
   const promise = Promise.all(promises)
@@ -71,7 +77,7 @@ export async function executePlan(plan: Plan, indexer: Indexer): Promise<boolean
   }
 }
 
-export async function createFile(plan: Plan, path: string, changes: string) {
+async function createFile(plan: Plan, path: string, changes: string) {
   const prompt = `Create a new file at ${path} based on the following request: ${changes}
 ---
 Overall goal: ${plan.request}`
@@ -88,22 +94,42 @@ Overall goal: ${plan.request}`
   return null
 }
 
-export async function deleteFile(path: string) {
-  if (!fs.existsSync(path)) {
-    return chalk.red('Error: ') + `File ${path} does not exist.`
+async function deleteFile(file: string, indexer: Indexer) {
+  file = findMatchingFile(file, indexer)
+  if (!fs.existsSync(file)) {
+    return chalk.red('Error: ') + `File ${file} does not exist.`
   }
 
-  fs.unlinkSync(path)
+  fs.unlinkSync(file)
   return null
 }
 
-async function doChange(plan: Plan, indexer: Indexer, file: string, changes: string) {
+async function doCopyAndEdit(plan: Plan, indexer: Indexer, file: string) {
+  const dest = plan.copyAndEdit![file]
+  file = findMatchingFile(file, indexer)
+
+  if (!fs.existsSync(file)) {
+    return chalk.red('Error: ') + `File ${file} does not exist.`
+  }
+
+  return await doChange(plan, indexer, file, dest.edits, dest.dest)
+}
+
+async function doChange(
+  plan: Plan,
+  indexer: Indexer,
+  file: string,
+  changes: string,
+  outputFile?: string
+) {
+  file = findMatchingFile(file, indexer)
   if (!fs.existsSync(file)) return chalk.red('Error: ') + `File ${file} does not exist.`
+  const fileContents = fs.readFileSync(file, 'utf8')
+  if (!outputFile) outputFile = file
 
   const similar = (await indexer.vectorDB.search(changes, 6)) || []
   const notInFile = similar.filter((s) => !s.metadata.path.includes(file)).slice(0, 4)
 
-  const fileContents = fs.readFileSync(file, 'utf8')
   const fileLines = fileContents.split('\n')
   const outputFormat = fileLines.length < 200 ? 'full' : 'diff'
 
@@ -133,7 +159,7 @@ Apply the following changes to the ${file}: ${changes}`
   const result = await chatCompletion(prompt, model, systemMessage)
 
   if (outputFormat == 'full') {
-    fs.writeFileSync(file, result)
+    fs.writeFileSync(outputFile, result)
   } else {
     const tempOutput = '/tmp/' + basename(file) + '.patch'
     fs.writeFileSync(tempOutput, 'changing ' + file + '\n\n' + result)
@@ -147,7 +173,7 @@ Apply the following changes to the ${file}: ${changes}`
 
     try {
       const output = Diff.applyPatch(fileContents, result.trim(), { fuzzFactor: 5 })
-      fs.writeFileSync(file, output)
+      fs.writeFileSync(outputFile, output)
     } catch (e: any) {
       return (
         chalk.red('Error: ') +
@@ -170,3 +196,12 @@ const DIFF_FORMAT = `Output only in patch format with no commentary and no chang
 @@ -88,6 +87,11 @@`
 
 const FULL_FORMAT = `Output complete file with no commentary and no changes to other files.`
+
+export const findMatchingFile = (file: string, indexer: Indexer) => {
+  if (fs.existsSync(file)) return file
+
+  const similar = indexer.files.find((f) => f.endsWith(file))
+  if (similar) return similar
+
+  return file
+}

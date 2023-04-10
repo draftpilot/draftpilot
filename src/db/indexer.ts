@@ -26,15 +26,19 @@ const TAG = chalk.blue('[indexer]')
 export class Indexer {
   fileDB: FileDB
   vectorDB: VectorDB
+  files: string[]
 
   constructor() {
     const root = findRoot()
     this.fileDB = new FileDB(root)
     this.vectorDB = new VectorDB()
+    this.files = []
   }
 
   getFiles = async (glob?: string) => {
-    return await FastGlob(glob || GLOB_WITHOUT_TESTS)
+    const files = await FastGlob(glob || GLOB_WITHOUT_TESTS)
+    this.files = files
+    return files
   }
 
   // loads index, returns a set of new documents that have changed since last index
