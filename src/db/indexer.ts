@@ -60,4 +60,11 @@ export class Indexer {
   loadVectors = async (docs: CodeDoc[]) => {
     await this.vectorDB.init(docs)
   }
+
+  loadFilesIntoVectors = async (glob?: string) => {
+    const files = await this.getFiles(glob)
+    const { docs, newDocs, existing } = await this.load(files)
+    if (!existing) await this.index(newDocs)
+    await this.loadVectors(docs)
+  }
 }

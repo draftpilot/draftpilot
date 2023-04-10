@@ -27,28 +27,32 @@ export default async function (file: string | undefined, options: Options) {
   try {
     const plan: Plan = JSON.parse(planText)
 
-    const promises: Promise<string | null>[] = []
-    if (plan.change) {
-      Object.keys(plan.change).forEach((file) =>
-        promises.push(doChange(indexer, file, plan.change[file]))
-      )
-    }
-
-    const promise = Promise.all(promises)
-    const results = await oraPromise(promise, { text: 'Executing...' })
-
-    const messages = results.filter(Boolean)
-
-    if (messages.length) {
-      log('Execution finished with errors:', ...messages)
-    } else {
-      log(chalk.green('Success! '), 'Execution finished successfully.')
-    }
+    await executePlan(plan, indexer)
   } catch (e: any) {
     throw new Error('Unable to parse plan file', e)
   }
 
   cache.close()
+}
+
+export async function executePlan(plan: Plan, indexer: Indexer) {
+  const promises: Promise<string | null>[] = []
+  if (plan.change) {
+    Object.keys(plan.change).forEach((file) =>
+      promises.push(doChange(indexer, file, plan.change[file]))
+    )
+  }
+
+  const promise = Promise.all(promises)
+  const results = await oraPromise(promise, { text: 'Executing...' })
+
+  const messages = results.filter(Boolean)
+
+  if (messages.length) {
+    log('Execution finished with errors:', ...messages)
+  } else {
+    log(chalk.green('Success! '), 'Execution finished successfully.')
+  }
 }
 
 async function doChange(indexer: Indexer, file: string, changes: string) {

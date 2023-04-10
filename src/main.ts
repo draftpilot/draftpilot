@@ -10,10 +10,10 @@ import chat from '@/commands/chat'
 import indexer from '@/commands/indexer'
 import search from '@/commands/search'
 import codegen from '@/commands/codegen'
-import filetree from '@/commands/filetree'
 import planner from '@/commands/planner'
 import { cache } from '@/db/cache'
 import executor from '@/commands/executor'
+import interactive from '@/commands/interactive'
 
 export default function () {
   program
@@ -21,13 +21,21 @@ export default function () {
     .description('AI-assisted coding')
     .option('-v, --verbose', 'verbose logging', () => setVerbose(1))
     .option('--skip-cache', 'skip cache for all requests', cache.skipCache)
-    .option('--gpt4 <policy>', 'gpt-4 policy (always, code-only, never)', overrideGPT4)
+    .option(
+      '--gpt4 <policy>',
+      'usage of gpt-4 over gpt-3.5-turbo (always, code-only, never)',
+      overrideGPT4
+    )
     .option('--version', 'print version', () => {
       log(packageJson.version)
       process.exit(0)
     })
 
-  program.command('init').description('Initialize draftpilot').action(actionWrapper(init))
+  program
+    .command('init')
+    .description('Initialize draftpilot. Can be called again later to update the manifest.')
+    .action(actionWrapper(init))
+    .option('--glob <glob>', 'Custom glob to use for finding files.')
 
   program
     .command('index')
@@ -52,12 +60,6 @@ export default function () {
     .option('--reindex', 'Re-index the project before codegen')
 
   program
-    .command('filetree')
-    .description('Create a filetree manifest for your project')
-    .action(actionWrapper(filetree))
-    .option('--glob <glob>', 'Custom glob to use for finding files.')
-
-  program
     .command('plan')
     .description('Create an execution plan for the request')
     .action(actionWrapper(planner))
@@ -69,6 +71,11 @@ export default function () {
     .action(executor)
 
   program.command('chat').description('Talk directly to chatGPT').action(actionWrapper(chat))
+
+  program
+    .command('interactive', { isDefault: true })
+    .description('Interactive mode')
+    .action(actionWrapper(interactive))
 
   const options = program.parse()
   config.options = options

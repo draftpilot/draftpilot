@@ -17,9 +17,13 @@ type Options = {
 
 export const PLAN_FILE = 'plan.json'
 
+// write the plan to a file
 export default async function (query: string, options: Options) {
-  const result = await doPlan(query, options)
+  const indexer = new Indexer()
 
+  const plan = await doPlan(indexer, query, options)
+
+  fs.writeFileSync(PLAN_FILE, plan)
   log(chalk.green(`Excellent! Wrote plan to ${PLAN_FILE}`))
 
   cache.close()
@@ -28,14 +32,8 @@ export default async function (query: string, options: Options) {
 const SYSTEM_MESSAGE =
   'Respond in the requested format with no extra comments. Do not return actual code.'
 
-export async function doPlan(query: string, options?: Options) {
-  const indexer = new Indexer()
-
+export async function doPlan(indexer: Indexer, query: string, options?: Options) {
   const files = await indexer.getFiles(options?.glob)
-  const { docs, newDocs, existing } = await indexer.load()
-  if (!existing) await indexer.index(newDocs)
-  await indexer.loadVectors(docs)
-
   const filesWithContext = getFilesWithContext(files)
 
   const similar = null // await getSimilarMethods(indexer, query, 4)
@@ -86,10 +84,13 @@ async function loopIteratePlan(prompt: string, plan: string) {
     { role: 'assistant', content: plan },
   ]
 
+  let finalPlan: string = plan
+
   while (true) {
     plan = plan.trim()
     if (plan.startsWith('{') && plan.endsWith('}')) {
-      fs.writeFileSync(PLAN_FILE, plan)
+      // don't accept plans that are not JSON
+      finalPlan = plan
     }
 
     const answer = await inquirer.prompt([
@@ -101,7 +102,7 @@ async function loopIteratePlan(prompt: string, plan: string) {
     ])
 
     const iterate = answer.iterate.trim()
-    if (!iterate) return plan
+    if (!iterate) return finalPlan
 
     chatHistory.push({ role: 'user', content: iterate })
 

@@ -31,3 +31,10 @@ export type Plan = {
   add: { [file: string]: string }
   delete: string[]
 }
+
+export type FileInfo = {
+  exclude?: boolean
+  description?: string
+  key?: boolean
+}
+export type FileInfoMap = { [file: string]: FileInfo }

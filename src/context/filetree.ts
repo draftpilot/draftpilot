@@ -2,15 +2,9 @@ import config from '@/config'
 import { findRoot } from '@/utils'
 import path from 'path'
 import fs from 'fs'
+import { FileInfo, FileInfoMap } from '@/types'
 
 const INFO_FILE = 'fileinfo.txt'
-
-type FileInfo = {
-  exclude?: boolean
-  description?: string
-  key?: boolean
-}
-type FileInfoMap = { [file: string]: FileInfo }
 
 export const readFileInfos = (root: string = findRoot()) => {
   const file = getInfoFileName(root)

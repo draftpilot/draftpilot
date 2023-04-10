@@ -1,39 +1,125 @@
-import { findRoot, getConfigPath, readConfig } from '@/utils'
+import { chatCompletion } from '@/ai/chat'
+import { Indexer } from '@/db/indexer'
+import { log, verboseLog } from '@/logger'
+import { oraPromise } from 'ora'
+import open from 'open'
+import { findRoot } from '@/utils'
+import { cache } from '@/db/cache'
+import path from 'path'
+import {
+  filesToDirectoryTree,
+  getInfoFileName,
+  readFileInfos,
+  writeFileInfos,
+} from '@/context/filetree'
 import inquirer from 'inquirer'
-import fs from 'fs'
-import { log } from '@/logger'
+import config from '@/config'
+import { updateGitIgnores } from '@/git'
+import { FileInfoMap } from '@/types'
 
 type Options = {
-  force?: boolean
+  glob?: string
 }
 
-export default async function (options: Options) {
+const GIT_IGNORE_FILES = ['history.json', 'docs.sqlite']
+
+export default async function (options?: Options) {
+  const indexer = new Indexer()
+
+  await doInitialize(indexer, options)
+}
+
+export async function doInitialize(indexer: Indexer, options?: Options) {
+  const files = await indexer.getFiles(options?.glob)
+  files.sort((a, b) => a.localeCompare(b))
+
+  const dirTree = filesToDirectoryTree(files)
+  const fileListing = dirTree.join('\n')
+
+  const fileLoadPromise = indexer.load(files)
+
   const root = findRoot()
-  const existingConfig = readConfig(root)
+  const existingInfos = (root && readFileInfos(root)) || {}
 
-  const hasTSConfig = fs.existsSync(root + '/tsconfig.json')
+  const prompt = `${fileListing}
 
-  const response = await inquirer.prompt([
+Return only the folders, guessing the purpose of each folder with : in front. For example, if you 
+see a folder called "components", you might guess that it contains React components. Example:
+
+src: source folder
+src/components: React components
+src/jobs: background jobs
+`
+
+  verboseLog(prompt)
+
+  const model = config.gpt4 == 'always' ? '4' : '3.5'
+
+  const promise = chatCompletion(
+    prompt,
+    model,
+    'Respond in the requested format with no extra comments'
+  )
+  log(
+    `Just like any new member of your team, I’ll need some onboarding. I'm scanning your folders. When I'm done, please:
+
+- correct anything that looks wrong
+- add explanation to important files I’ll probably need
+- put ! in front of any folders/files i should not read when generating code (e.g. tests, generated files, build scripts, etc)
+- put * in front of the files that are most commonly accessed in the project (e.g. api or db access)`
+  )
+
+  const guessedFiles = await oraPromise(promise, { text: 'Scanning and summarizing...' })
+  verboseLog(guessedFiles)
+
+  const outputLines = mergeWithExisting(guessedFiles, dirTree, existingInfos)
+
+  writeFileInfos(outputLines.join('\n'), root)
+  const fileName = getInfoFileName(root)
+
+  await open(fileName)
+
+  const { newDocs } = await fileLoadPromise
+  indexer.index(newDocs)
+
+  // Wait for user to press enter
+  inquirer.prompt([
     {
       type: 'input',
-      name: 'purpose',
-      message: 'Describe the purpose of this codebase (e.g. backend server for url shortener):',
-    },
-    {
-      type: 'input',
-      name: 'techstack',
-      message: 'Describe the tech stack of this codebase (e.g. node.js, express, postgres):',
+      name: 'done',
+      message:
+        "Save the file and press enter when done. While you do that, I'm indexing all files.",
     },
   ])
 
-  const config = existingConfig || {}
-  config.language = hasTSConfig ? 'typescript' : 'javascript'
-  config.purpose = response.purpose
-  config.techstack = response.techstack
+  cache.close()
 
-  const { folder, file } = getConfigPath(root)
-  if (!fs.existsSync(folder)) fs.mkdirSync(folder)
-  fs.writeFileSync(file, JSON.stringify(config))
+  const gitIgnore = GIT_IGNORE_FILES.map((f) => path.join(config.configFolder, f))
+  updateGitIgnores(gitIgnore)
+}
 
-  log('All set!')
+function mergeWithExisting(guessedFiles: string, dirTree: string[], existingInfos: FileInfoMap) {
+  const folderGuessMap = new Map<string, string>()
+  const guessedFileLines = guessedFiles.split('\n')
+  guessedFileLines.forEach((line) => {
+    const [file, guess] = line.split(':')
+    if (file && guess) folderGuessMap.set(file.trim(), guess.trim())
+  })
+
+  const outputLines: string[] = []
+  dirTree.forEach((line) => {
+    const isFile = line.startsWith('- ')
+    const file = isFile ? line.slice(2) : line
+    const existing = existingInfos[file]
+    const prefix = (isFile ? '- ' : '') + (existing?.exclude ? '!' : existing?.key ? '*' : '')
+    const guess = folderGuessMap.get(file)
+    if (guess) folderGuessMap.delete(file)
+    outputLines.push(`${prefix}${file}: ${existing?.description || guess || ''}`)
+  })
+
+  for (const folder of folderGuessMap.keys()) {
+    outputLines.push(`${folder}: ${folderGuessMap.get(folder)}`)
+  }
+
+  return outputLines
 }
