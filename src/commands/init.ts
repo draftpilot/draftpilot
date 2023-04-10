@@ -15,7 +15,7 @@ type Options = {
   glob?: string
 }
 
-const GIT_IGNORE_FILES = ['history.json', 'docs.sqlite']
+const GIT_IGNORE_FILES = ['cache.json', 'history.json', 'docs.sqlite']
 
 export default async function (options?: Options) {
   const indexer = new Indexer()

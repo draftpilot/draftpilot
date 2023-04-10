@@ -28,28 +28,23 @@ export class TSExtractor implements Extractor {
 
     const chunks: FuncChunk[] = functions
       .map((node) => {
-        let name: string = 'fn'
+        const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart())
+        let name: string = 'L' + line
 
         if (ts.isFunctionDeclaration(node)) {
-          name = node.name?.getText() || 'function'
+          if (node.name) name = node.name?.getText()
           if (!node.body) return []
         } else if (ts.isArrowFunction(node)) {
           const parent = node.parent
-          let parentName = ts.SyntaxKind[parent.kind]
           if (ts.isVariableDeclaration(parent) || ts.isPropertyAssignment(parent))
-            parentName = parent.name.getText()
+            name = parent.name.getText()
           if (!node.body || node.body.getText().length < 100) return []
-          name = parentName + '.' + 'arrowFunction'
         } else if (ts.isMethodDeclaration(node)) {
           if (!node.body) return []
           const parent = node.parent
-          let parentName = ts.SyntaxKind[parent.kind]
-          if (ts.isClassDeclaration(parent)) parentName = parent.name?.getText() || 'class'
-          else if (ts.isObjectLiteralExpression(parent)) parentName = 'object'
-          else {
-            log('TS method unknown parent', parent.kind)
-          }
-          name = parentName + '.' + (node.name?.getText() || 'method')
+          let parentName: string | undefined
+          if (ts.isClassDeclaration(parent)) parentName = parent.name?.getText()
+          if (parentName) name = parentName + '.' + (node.name?.getText() || 'method')
         }
 
         const contents = node.getText()

@@ -7,7 +7,7 @@ import { cache } from '@/db/cache'
 import { getFilesWithContext } from '@/context/manifest'
 import config from '@/config'
 import fs from 'fs'
-import { ChatMessage } from '@/types'
+import { ChatMessage, Plan } from '@/types'
 import inquirer from 'inquirer'
 
 type Options = {
@@ -22,7 +22,7 @@ export default async function (query: string, options: Options) {
 
   const plan = await doPlan(indexer, query, options)
 
-  fs.writeFileSync(PLAN_FILE, plan)
+  fs.writeFileSync(PLAN_FILE, JSON.stringify(plan))
   log(chalk.green(`Excellent! Wrote plan to ${PLAN_FILE}`))
 
   cache.close()
@@ -50,7 +50,11 @@ export async function doPlan(indexer: Indexer, query: string, options?: Options)
   log(chalk.bold(`Here's my guess as to which files I'll need to access or change:`))
   log(result)
 
-  const finalPlan = await loopIteratePlan(createPlanPrompt(filesWithContext, null, query), result)
+  const finalPlan = await loopIteratePlan(
+    query,
+    createPlanPrompt(filesWithContext, null, query),
+    result
+  )
 
   return finalPlan
 }
@@ -79,20 +83,20 @@ to fulfill this request in this JSON format:
 }`
 }
 
-async function loopIteratePlan(prompt: string, plan: string) {
+async function loopIteratePlan(request: string, prompt: string, plan: string): Promise<Plan> {
   const chatHistory: ChatMessage[] = [
     { role: 'system', content: SYSTEM_MESSAGE },
     { role: 'user', content: prompt },
     { role: 'assistant', content: plan },
   ]
 
-  let finalPlan: string = plan
+  let finalPlan: Plan = { request }
 
   while (true) {
     plan = plan.trim()
     if (plan.startsWith('{') && plan.endsWith('}')) {
       // don't accept plans that are not JSON
-      finalPlan = plan
+      finalPlan = { request, ...JSON.parse(plan) }
     }
 
     const answer = await inquirer.prompt([

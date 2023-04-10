@@ -1,11 +1,12 @@
 import { executePlan } from '@/commands/executor'
 import { doInitialize } from '@/commands/init'
-import { doPlan } from '@/commands/planner'
+import { doPlan, PLAN_FILE } from '@/commands/planner'
 import { getManifestName } from '@/context/manifest'
 import { cache } from '@/db/cache'
 import { Indexer } from '@/db/indexer'
-import { Plan } from '@/types'
+import { log } from '@/logger'
 import { findRoot } from '@/utils'
+import chalk from 'chalk'
 import fs from 'fs'
 import inquirer from 'inquirer'
 
@@ -37,9 +38,26 @@ export default async function (options: Options) {
   ])
   const plan = await doPlan(indexer, planInput.plan, options)
 
+  fs.writeFileSync(PLAN_FILE, JSON.stringify(plan))
+  log(`Wote plan to ${PLAN_FILE}`)
+
   // execute
-  const planJSON: Plan = JSON.parse(plan)
-  await executePlan(planJSON, indexer)
+  await executePlan(plan, indexer)
+
+  const doneResponse = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'done',
+      message: 'Are you happy with your results? If so we will clean up intermediate files.',
+    },
+  ])
+
+  if (doneResponse.done) {
+    fs.rmSync(PLAN_FILE)
+    log(chalk.green('Fantastic. Have a great day!'))
+  } else {
+    log(chalk.yellow('Ok. You can check the plan file and run `execute` to try again.'))
+  }
 
   cache.close()
 }
