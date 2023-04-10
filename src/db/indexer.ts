@@ -2,7 +2,7 @@ import FileDB from '@/db/docsDb'
 import { VectorDB } from '@/db/vectorDb'
 import { verboseLog } from '@/logger'
 import { CodeDoc } from '@/types'
-import { findGitRoot } from '@/utils'
+import { findRoot } from '@/utils'
 import chalk from 'chalk'
 import FastGlob from 'fast-glob'
 
@@ -28,7 +28,7 @@ export class Indexer {
   vectorDB: VectorDB
 
   constructor() {
-    const root = findGitRoot()
+    const root = findRoot()
     this.fileDB = new FileDB(root)
     this.vectorDB = new VectorDB()
   }

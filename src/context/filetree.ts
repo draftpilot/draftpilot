@@ -1,5 +1,5 @@
 import config from '@/config'
-import { findGitRoot } from '@/utils'
+import { findRoot } from '@/utils'
 import path from 'path'
 import fs from 'fs'
 
@@ -12,7 +12,7 @@ type FileInfo = {
 }
 type FileInfoMap = { [file: string]: FileInfo }
 
-export const readFileInfos = (root: string = findGitRoot()) => {
+export const readFileInfos = (root: string = findRoot()) => {
   const file = getInfoFileName(root)
   if (!fs.existsSync(file)) {
     return null
@@ -36,12 +36,12 @@ export const readFileInfos = (root: string = findGitRoot()) => {
   return fileInfo
 }
 
-export const writeFileInfos = (contents: string, root: string = findGitRoot()) => {
+export const writeFileInfos = (contents: string, root: string = findRoot()) => {
   const file = getInfoFileName(root)
   return fs.writeFileSync(file, contents, 'utf-8')
 }
 
-export const getInfoFileName = (root: string = findGitRoot()) => {
+export const getInfoFileName = (root: string = findRoot()) => {
   return path.join(root, config.configFolder, INFO_FILE)
 }
 

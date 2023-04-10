@@ -12,7 +12,7 @@ const config: Config = {
   customServer: false,
   server: 'https://teamstory.ai',
   options: undefined,
-  configFolder: '.drafty',
+  configFolder: '.draftpilot',
   gpt4: 'code-only',
 }
 

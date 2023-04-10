@@ -3,7 +3,7 @@ import { Indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/logger'
 import { oraPromise } from 'ora'
 import open from 'open'
-import { findGitRoot } from '@/utils'
+import { findRoot } from '@/utils'
 import { cache } from '@/db/cache'
 import path from 'path'
 import {
@@ -30,7 +30,7 @@ export default async function (query: string, options: Options) {
 
   const fileLoadPromise = indexer.load(files)
 
-  const root = findGitRoot()
+  const root = findRoot()
   const existingInfos = readFileInfos(root) || {}
 
   const prompt = `${fileListing}

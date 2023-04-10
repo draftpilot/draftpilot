@@ -1,4 +1,4 @@
-import { findGitRoot, getConfigPath, readConfig } from '@/utils'
+import { findRoot, getConfigPath, readConfig } from '@/utils'
 import inquirer from 'inquirer'
 import fs from 'fs'
 import { log } from '@/logger'
@@ -8,10 +8,10 @@ type Options = {
 }
 
 export default async function (options: Options) {
-  const gitRoot = findGitRoot()
-  const existingConfig = readConfig(gitRoot)
+  const root = findRoot()
+  const existingConfig = readConfig(root)
 
-  const hasTSConfig = fs.existsSync(gitRoot + '/tsconfig.json')
+  const hasTSConfig = fs.existsSync(root + '/tsconfig.json')
 
   const response = await inquirer.prompt([
     {
@@ -31,7 +31,7 @@ export default async function (options: Options) {
   config.purpose = response.purpose
   config.techstack = response.techstack
 
-  const { folder, file } = getConfigPath(gitRoot)
+  const { folder, file } = getConfigPath(root)
   if (!fs.existsSync(folder)) fs.mkdirSync(folder)
   fs.writeFileSync(file, JSON.stringify(config))
 

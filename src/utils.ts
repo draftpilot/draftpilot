@@ -5,17 +5,17 @@ import fs from 'fs'
 import path from 'path'
 
 import api from '@/api'
-import { overrideServer } from '@/config'
+import config, { overrideServer } from '@/config'
 import { ProjectConfig } from '@/types'
 
 // walk up the tree until we find the .git folder
-export function findGitRoot(cwd?: string) {
+export function findRoot(cwd?: string) {
   let dir = cwd || process.cwd()
   while (dir !== '/') {
-    if (fs.existsSync(path.join(dir, '.git'))) return dir
+    if (fs.existsSync(path.join(dir, config.configFolder))) return dir
     dir = path.dirname(dir)
   }
-  throw new Error('Could not find git root')
+  throw new Error('Could not find root')
 }
 
 // generate secret key
@@ -28,13 +28,13 @@ export function generateSecretKey() {
     .replace(/\=/g, '')
 }
 
-export function getConfigPath(root: string = findGitRoot()) {
-  const folder = path.join(root, '.drafty')
+export function getConfigPath(root: string = findRoot()) {
+  const folder = path.join(root, config.configFolder)
   const file = path.join(folder, 'config.json')
   return { folder, file }
 }
 
-export function readConfig(root: string = findGitRoot()): ProjectConfig | null {
+export function readConfig(root: string = findRoot()): ProjectConfig | null {
   const { file: configPath } = getConfigPath(root)
   if (!fs.existsSync(configPath)) {
     return null
