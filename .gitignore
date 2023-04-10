@@ -2,7 +2,7 @@ node_modules
 dist
 .DS_Store
 .yarn/*
-plan.txt
+plan.json
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases

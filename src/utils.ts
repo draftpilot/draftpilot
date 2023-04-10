@@ -1,6 +1,5 @@
 import { isAxiosError } from 'axios'
 import chalk from 'chalk'
-import { exec, ExecException, ExecOptions } from 'child_process'
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'

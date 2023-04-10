@@ -15,15 +15,12 @@ type Options = {
   glob?: string
 }
 
-const PLAN_FILE = 'plan.txt'
+export const PLAN_FILE = 'plan.json'
 
 export default async function (query: string, options: Options) {
   const result = await doPlan(query, options)
 
-  log(result)
-
-  fs.writeFileSync(PLAN_FILE, result)
-  log(chalk.green(`Wrote plan to ${PLAN_FILE}`))
+  log(chalk.green(`Excellent! Wrote plan to ${PLAN_FILE}`))
 
   cache.close()
 }
@@ -65,23 +62,21 @@ function createPlanPrompt(filesWithContext: string[], similar: string | null, qu
   return `Project Files:
 ${filesWithContext.join('\n')}
 
-Return a list of files which should be read (no more than 3) or changed to fulfill this request in this format:
-
-read: file1, file2
-
-change: file3
-- detailed explanation of change
-
-change: file4
-- detailed explanation of change
-
-add: file5
-- detailed explanation of change
-
-delete: file6
-
+---
 Request: ${query}
-`
+Return a list of files which should be accessed for context (no more than 3) or changed to fulfill
+this request in this JSON format:
+
+{
+  "read": ["path/file1", "path/to/file2"],
+  "change": {
+    "path/file3": "detailed explanation of change",
+  },
+  "add": {
+    "other/file4": "detailed explanation of change",
+  },
+  "delete": []
+}`
 }
 
 async function loopIteratePlan(prompt: string, plan: string) {
@@ -92,6 +87,11 @@ async function loopIteratePlan(prompt: string, plan: string) {
   ]
 
   while (true) {
+    plan = plan.trim()
+    if (plan.startsWith('{') && plan.endsWith('}')) {
+      fs.writeFileSync(PLAN_FILE, plan)
+    }
+
     const answer = await inquirer.prompt([
       {
         type: 'input',

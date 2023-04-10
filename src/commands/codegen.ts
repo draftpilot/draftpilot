@@ -1,4 +1,5 @@
 import { chatCompletion } from '@/ai/chat'
+import config from '@/config'
 import { getSimilarMethods } from '@/context/similar'
 import { cache } from '@/db/cache'
 import { Indexer } from '@/db/indexer'
@@ -14,9 +15,6 @@ type Options = {
 
 // codegen based on a query
 export default async function (prompt: string, options: Options) {
-  const config = readConfig()
-  if (!config) throw new Error('you must run `init` first')
-
   const indexer = new Indexer()
   const { docs, newDocs, existing } = await indexer.load()
 
@@ -38,9 +36,7 @@ export default async function (prompt: string, options: Options) {
   if (!similar) throw 'No similar functions found. Codegen is not gonna be useful.'
 
   const firstPassPrompt = `
-  Project context: written in ${config.language}, using ${config.techstack}.
-
-  Example functions:
+  Related functions:
   ${similar}
 
   ---
@@ -49,9 +45,11 @@ export default async function (prompt: string, options: Options) {
 
   verboseLog(firstPassPrompt)
 
-  // const promise = chatCompletion(firstPassPrompt, '4')
-  // const result = await oraPromise(promise, { text: 'Thinking...' })
-  // log(chalk.green('Result:'), result)
+  const model = config.gpt4 == 'never' ? '3.5' : '4'
+
+  const promise = chatCompletion(firstPassPrompt, model)
+  const result = await oraPromise(promise, { text: 'Thinking...' })
+  log(chalk.green('Result:'), result)
 
   cache.close()
 }

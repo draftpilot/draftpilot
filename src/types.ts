@@ -24,3 +24,10 @@ export type ChatMessage = {
   role: 'user' | 'assistant' | 'system'
   content: string
 }
+
+export type Plan = {
+  read: string[]
+  change: { [file: string]: string }
+  add: { [file: string]: string }
+  delete: string[]
+}

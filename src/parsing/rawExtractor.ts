@@ -3,7 +3,7 @@ import { CodeDoc, SourceFile } from '@/types'
 import { cyrb53 } from '@/utils'
 
 // chunk every 100 lines for long functions
-const CHUNK_SIZE = 100
+const CHUNK_SIZE = 200
 
 // returns an entire file grouped into 100 line chunks
 export class RawExtractor implements Extractor {

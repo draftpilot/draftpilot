@@ -339,6 +339,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/diff@npm:^5.0.3":
+  version: 5.0.3
+  resolution: "@types/diff@npm:5.0.3"
+  checksum: d8a7d4de12f1aba0bd0c17b0b0d1e45c83824d3d6cc65763fbad371cd8315361a7e16fbae3f260a83bfdf30cebe1c876b42cec4518698055bc430fb09db1cbc8
+  languageName: node
+  linkType: hard
+
 "@types/ini@npm:^1.3.31":
   version: 1.3.31
   resolution: "@types/ini@npm:1.3.31"
@@ -1023,6 +1030,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"diff@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "diff@npm:5.1.0"
+  checksum: c7bf0df7c9bfbe1cf8a678fd1b2137c4fb11be117a67bc18a0e03ae75105e8533dbfb1cda6b46beb3586ef5aed22143ef9d70713977d5fb1f9114e21455fba90
+  languageName: node
+  linkType: hard
+
 "dir-glob@npm:^3.0.1":
   version: 3.0.1
   resolution: "dir-glob@npm:3.0.1"
@@ -1036,6 +1050,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "drafty@workspace:."
   dependencies:
+    "@types/diff": ^5.0.3
     "@types/ini": ^1.3.31
     "@types/inquirer": ^9.0.3
     "@types/node": ^18.11.0
@@ -1045,6 +1060,7 @@ __metadata:
     axios: ^1.3.5
     chalk: ^4.1.2
     commander: ^9.4.1
+    diff: ^5.1.0
     esbuild: ^0.17.10
     esbuild-node-externals: ^1.6.0
     esbuild-ts-paths: ^1.1.3

@@ -12,6 +12,7 @@ const DEFAULT_GLOB = [
   '**/*.jsx',
   '**/*.tsx',
   'package.json',
+  'README*',
   '!**/node_modules/**',
   '!**/dist/**',
   '!**/build/**',

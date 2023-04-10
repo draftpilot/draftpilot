@@ -13,6 +13,7 @@ import codegen from '@/commands/codegen'
 import filetree from '@/commands/filetree'
 import planner from '@/commands/planner'
 import { cache } from '@/db/cache'
+import executor from '@/commands/executor'
 
 export default function () {
   program
@@ -31,7 +32,7 @@ export default function () {
 
   program
     .command('index')
-    .description('Index your project')
+    .description("Index your project's code")
     .action(actionWrapper(indexer))
     .option('--reindex', 'Re-index from scratch.')
 
@@ -45,10 +46,10 @@ export default function () {
 
   program
     .command('codegen')
-    .description('Generate project-related code from a query')
+    .description('Generate code from a query (without editing any files)')
     .action(actionWrapper(codegen))
     .argument('<request>', 'The request to make.')
-    .option('--k <k>', 'The k means to cluster (and results to return).')
+    .option('--k <k>', '# of relevant functions to include (default 4)')
     .option('--reindex', 'Re-index the project before codegen.')
 
   program
@@ -58,12 +59,17 @@ export default function () {
     .option('--glob <glob>', 'The glob to use for finding files.')
 
   program
-    .command('planner')
+    .command('plan')
     .description('Create an execution plan for the request')
     .action(actionWrapper(planner))
     .argument('<request>', 'The request to make.')
 
-  program.command('chat').description('Test direct GPT-4 completion').action(actionWrapper(chat))
+  program
+    .command('execute [file]')
+    .description('Execute a plan file (defaults to plan.txt)')
+    .action(executor)
+
+  program.command('chat').description('Talk directly to chatGPT').action(actionWrapper(chat))
 
   const options = program.parse()
   config.options = options
