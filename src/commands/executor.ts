@@ -10,7 +10,7 @@ import { PLAN_FILE } from '@/commands/planner'
 import { Plan } from '@/types'
 import config from '@/config'
 import * as Diff from 'diff'
-import { basename } from 'path'
+import { dirname, basename } from 'path'
 
 type Options = {}
 
@@ -77,8 +77,8 @@ export async function executePlan(plan: Plan, indexer: Indexer): Promise<boolean
   }
 }
 
-async function createFile(plan: Plan, path: string, changes: string) {
-  const prompt = `Create a new file at ${path} based on the following request: ${changes}
+async function createFile(plan: Plan, file: string, changes: string) {
+  const prompt = `Create a new file at ${file} based on the following request: ${changes}
 ---
 Overall goal: ${plan.request}`
 
@@ -87,10 +87,12 @@ Overall goal: ${plan.request}`
   const result = await chatCompletion(prompt, model, systemMessage)
 
   if (!result) {
-    return chalk.red('Error: ') + `Unable to create file at ${path}.`
+    return chalk.red('Error: ') + `Unable to create file at ${file}.`
   }
 
-  fs.writeFileSync(path, result)
+  const dir = dirname(file)
+  fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(file, result)
   return null
 }
 

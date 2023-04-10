@@ -73,7 +73,7 @@ src/jobs: background jobs
   indexer.index(updatedDocs)
 
   // Wait for user to press enter
-  inquirer.prompt([
+  await inquirer.prompt([
     {
       type: 'input',
       name: 'done',

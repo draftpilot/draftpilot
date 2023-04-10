@@ -8,14 +8,14 @@ import api from '@/api'
 import config, { overrideServer } from '@/config'
 import { ProjectConfig } from '@/types'
 
-// walk up the tree until we find the .git folder
+// walk up the tree until we find the .draftpilot folder
 export function findRoot(cwd?: string) {
   let dir = cwd || process.cwd()
   while (dir !== '/') {
     if (fs.existsSync(path.join(dir, config.configFolder))) return dir
     dir = path.dirname(dir)
   }
-  throw new Error('Could not find root')
+  return cwd || process.cwd()
 }
 
 // generate secret key

@@ -1,7 +1,7 @@
 import { program } from 'commander'
 
 import init from '@/commands/init'
-import config, { overrideGPT4, overrideServer } from '@/config'
+import config, { overrideGPT4 } from '@/config'
 import { log, setVerbose } from '@/logger'
 import { fatal } from '@/utils'
 
@@ -15,6 +15,7 @@ import { cache } from '@/db/cache'
 import executor from '@/commands/executor'
 import interactive from '@/commands/interactive'
 import patch from '@/commands/patch'
+import scratchpad from '@/commands/scratchpad'
 
 export default function () {
   program
@@ -74,6 +75,11 @@ export default function () {
   program.command('patch').argument('<file>').description('Applies a /tmp patch file').action(patch)
 
   program.command('chat').description('Talk directly to chatGPT').action(actionWrapper(chat))
+
+  program
+    .command('scratchpad')
+    .description('File to run scratchpad code')
+    .action(actionWrapper(scratchpad))
 
   program
     .command('interactive', { isDefault: true })

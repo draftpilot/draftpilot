@@ -35,10 +35,10 @@ export async function doPlan(indexer: Indexer, query: string, options?: Options)
   const files = await indexer.getFiles(options?.glob)
   const filesWithContext = getFilesWithContext(files)
 
-  const similar = null // await getSimilarMethods(indexer, query, 4)
-  // TODO: this is where we should output the exported class members
+  // return 200 most similar files
+  const filteredFiles = filterFiles(filesWithContext, query, 200)
 
-  const prompt = createPlanPrompt(filesWithContext, similar, query)
+  const prompt = createPlanPrompt(filteredFiles, query)
 
   verboseLog(prompt)
 
@@ -50,16 +50,12 @@ export async function doPlan(indexer: Indexer, query: string, options?: Options)
   log(chalk.bold(`Here's my guess as to which files I'll need to access or change:`))
   log(result)
 
-  const finalPlan = await loopIteratePlan(
-    query,
-    createPlanPrompt(filesWithContext, null, query),
-    result
-  )
+  const finalPlan = await loopIteratePlan(query, createPlanPrompt(filesWithContext, query), result)
 
   return finalPlan
 }
 
-function createPlanPrompt(filesWithContext: string[], similar: string | null, query: string) {
+function createPlanPrompt(filesWithContext: string[], query: string) {
   return `Project Files:
 ${filesWithContext.join('\n')}
 
@@ -95,8 +91,18 @@ async function loopIteratePlan(request: string, prompt: string, plan: string): P
   while (true) {
     plan = plan.trim()
     if (plan.startsWith('{') && plan.endsWith('}')) {
+      // sometimes trailing commas are generated
+      const regex = /,\s*([\]}])/g
+      const fixedJsonString = plan.replace(regex, '$1')
+
       // don't accept plans that are not JSON
-      finalPlan = { request, ...JSON.parse(plan) }
+      try {
+        finalPlan = { request, ...JSON.parse(fixedJsonString) }
+      } catch (e) {
+        log(chalk.red('Error:'), 'Oops, that was invalid JSON')
+      }
+    } else {
+      log(chalk.yellow('Warning:'), 'Plan was not updated, got non-JSON response')
     }
 
     const answer = await inquirer.prompt([
@@ -122,4 +128,13 @@ async function loopIteratePlan(request: string, prompt: string, plan: string): P
 
     chatHistory.push({ role: 'assistant', content: plan })
   }
+}
+
+function filterFiles(files: string[], query: string, limit: number) {
+  const filteredFiles = files.filter((file) => {
+    const fileWithoutContext = file.split(' ')[0]
+    return fileWithoutContext.includes(query)
+  })
+
+  return filteredFiles.slice(0, limit)
 }

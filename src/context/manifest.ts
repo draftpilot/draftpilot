@@ -123,13 +123,15 @@ export function updateFileManifest(
   dirTree.forEach((line) => {
     const isFile = line.startsWith('- ')
     if (!isFile) folder = line
+    else line = line.substring(2)
 
-    const file = isFile ? path.join(folder, line.slice(2)) : line
+    const file = isFile ? path.join(folder, line) : line
     const existing = existingInfos[file]
     const prefix = makePrefix(isFile, existing)
     const guess = folderGuessMap.get(file)
     if (guess) folderGuessMap.delete(file)
-    outputLines.push(`${prefix}${file}: ${existing?.description || guess || ''}`)
+
+    outputLines.push(`${prefix}${line}: ${existing?.description || guess || ''}`)
   })
 
   for (const folder of folderGuessMap.keys()) {
