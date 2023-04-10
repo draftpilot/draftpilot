@@ -1,24 +1,24 @@
 {
-  "name": "drafty",
+  "name": "draftpilot",
   "version": "0.0.1",
   "description": "AI-assisted coding",
   "main": "dist/index.js",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/teamstoryai/drafty.git"
+    "url": "https://github.com/draftpilot/draftpilot.git"
   },
   "scripts": {
     "build": "node esbuild.js",
     "clean": "rm -rf dist",
     "go": "node ./cli.js",
-    "drafty": "yarn build && yarn go",
+    "draftpilot": "yarn build && yarn go",
     "prepack": "yarn build",
     "test": "yarn tsc && mocha",
     "watch": "node esbuild.js --watch"
   },
   "author": "Tim Su",
-  "license": "UNLICENSED",
+  "license": "LGPL-3.0",
   "bin": "./cli.js",
   "files": [
     "cli.js",

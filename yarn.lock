@@ -1046,9 +1046,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"drafty@workspace:.":
+"draftpilot@workspace:.":
   version: 0.0.0-use.local
-  resolution: "drafty@workspace:."
+  resolution: "draftpilot@workspace:."
   dependencies:
     "@types/diff": ^5.0.3
     "@types/ini": ^1.3.31
@@ -1079,7 +1079,7 @@ __metadata:
     tsc-alias: ^1.8.2
     typescript: ^5.0.4
   bin:
-    drafty: ./cli.js
+    draftpilot: ./cli.js
   languageName: unknown
   linkType: soft
 
