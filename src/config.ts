@@ -6,6 +6,7 @@ type Config = {
   options: any | undefined
   configFolder: string
   gpt4: 'always' | 'code-only' | 'never'
+  glob?: string
 }
 
 const config: Config = {

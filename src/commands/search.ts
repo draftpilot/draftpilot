@@ -10,20 +10,8 @@ type Options = {
 
 export default async function (query: string, options: Options) {
   const indexer = new Indexer()
-  const { docs, newDocs, existing } = await indexer.load()
 
-  if (!existing) await indexer.index(newDocs)
-  else if (newDocs.length) {
-    if (options.reindex) await indexer.index(newDocs)
-    else
-      log(
-        chalk.yellow(
-          `Found ${pluralize(newDocs.length, 'new function')}, run with --reindex to index them`
-        )
-      )
-  }
-
-  await indexer.loadVectors(docs)
+  await indexer.loadFilesIntoVectors()
 
   const similar = await indexer.vectorDB.searchWithScores(
     query,

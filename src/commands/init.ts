@@ -6,17 +6,10 @@ import open from 'open'
 import { findRoot } from '@/utils'
 import { cache } from '@/db/cache'
 import path from 'path'
-import {
-  filesToDirectoryTree,
-  getInfoFileName,
-  readFileInfos,
-  updateFileInfoManifest,
-  writeFileInfos,
-} from '@/context/filetree'
+import { filesToDirectoryTree, getInfoFileName, updateFileInfoManifest } from '@/context/filetree'
 import inquirer from 'inquirer'
 import config from '@/config'
 import { updateGitIgnores } from '@/git'
-import { FileInfo, FileInfoMap } from '@/types'
 
 type Options = {
   glob?: string

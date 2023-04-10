@@ -63,8 +63,8 @@ export class Indexer {
 
   loadFilesIntoVectors = async (glob?: string) => {
     const files = await this.getFiles(glob)
-    const { docs, updatedDocs, existing } = await this.load(files)
-    if (!existing) await this.index(updatedDocs)
+    const { docs, updatedDocs } = await this.load(files)
+    await this.index(updatedDocs)
     await this.loadVectors(docs)
   }
 }

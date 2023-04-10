@@ -8,3 +8,5 @@ plan.json
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+.draftpilot/history.json
+.draftpilot/docs.sqlite

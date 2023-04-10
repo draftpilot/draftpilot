@@ -5,7 +5,6 @@ import { oraPromise } from 'ora'
 import chalk from 'chalk'
 import { cache } from '@/db/cache'
 import { getFilesWithContext } from '@/context/filetree'
-import { getSimilarMethods } from '@/context/similar'
 import config from '@/config'
 import fs from 'fs'
 import { ChatMessage } from '@/types'
@@ -73,6 +72,9 @@ this request in this JSON format:
   "add": {
     "other/file4": "detailed explanation of change",
   },
+  "rename": { "from/file": "to/file" },
+  "copyAndEdit": { "from/file":
+    { "dest": "to/file", edits: "detailed explanation of change" } },
   "delete": []
 }`
 }

@@ -29,6 +29,13 @@ export type Plan = {
   read: string[]
   change: { [file: string]: string }
   add: { [file: string]: string }
+  rename: { [file: string]: string }
+  copyAndEdit: {
+    [file: string]: {
+      dest: string
+      edits: string
+    }
+  }
   delete: string[]
 }
 
