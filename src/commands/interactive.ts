@@ -42,7 +42,12 @@ export default async function (options: Options) {
   log(`Wrote plan to ${PLAN_FILE}`)
 
   // execute
-  await executePlan(plan, indexer)
+  const success = await executePlan(plan, indexer)
+
+  if (!success) {
+    log(chalk.yellow('Ok. You can check the plan file and run `execute` to try again.'))
+    return
+  }
 
   const doneResponse = await inquirer.prompt([
     {

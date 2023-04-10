@@ -36,7 +36,7 @@ export default async function (file: string | undefined, options: Options) {
   cache.close()
 }
 
-export async function executePlan(plan: Plan, indexer: Indexer) {
+export async function executePlan(plan: Plan, indexer: Indexer): Promise<boolean> {
   const promises: Promise<string | null>[] = []
   if (plan.change) {
     Object.keys(plan.change).forEach((file) =>
@@ -63,9 +63,11 @@ export async function executePlan(plan: Plan, indexer: Indexer) {
     log('Execution finished with errors:')
     messages.forEach((m) => log(m))
     log('Please check /tmp/*.patch and *.prompt to inspect intermediate results.')
+    return false
   } else {
     log(chalk.green('Success! '), 'Execution finished successfully.')
     log('If anything went wrong, results were output to /tmp/*.patch and *.prompt')
+    return true
   }
 }
 
@@ -102,7 +104,11 @@ async function doChange(plan: Plan, indexer: Indexer, file: string, changes: str
   const notInFile = similar.filter((s) => !s.metadata.path.includes(file)).slice(0, 4)
 
   const fileContents = fs.readFileSync(file, 'utf8')
-  const fileLines = fileContents.split('\n').map((l, i) => `${i + 1}: ${l}`)
+  const fileLines = fileContents.split('\n')
+  const outputFormat = fileLines.length < 200 ? 'full' : 'diff'
+
+  const decoratedLines =
+    outputFormat == 'full' ? fileLines : fileLines.map((l, i) => `${i + 1}: ${l}`)
 
   const prompt = `
 Possibly related code:
@@ -110,47 +116,57 @@ ${notInFile.map((s) => s.pageContent).join('\n\n')}
 
 ---
 ${file} contents:
-${fileLines.join('\n')}
+${decoratedLines.join('\n')}
 
 ---
 Overall goal: ${plan.request}
 
 Apply the following changes to the ${file}: ${changes}`
 
-  const tempInput = '/tmp/' + basename(file) + '.prompt'
-  fs.writeFileSync(tempInput, prompt)
-
   const model = config.gpt4 == 'never' ? '3.5' : '4'
 
-  const systemMessage = `Output only in patch format with no free text and no changes to other files. e.g:
-  @@ -20,7 +20,6 @@
-   context2
-   context3
-  -  line to be deleted
-  +  line to be added
-    context4
-  @@ -88,6 +87,11 @@`
+  const systemMessage = outputFormat == 'full' ? FULL_FORMAT : DIFF_FORMAT
+
+  const tempInput = '/tmp/' + basename(file) + '.prompt'
+  fs.writeFileSync(tempInput, systemMessage + '\n\n' + prompt)
 
   const result = await chatCompletion(prompt, model, systemMessage)
 
-  verboseLog('result for', file, changes, result)
+  if (outputFormat == 'full') {
+    fs.writeFileSync(file, result)
+  } else {
+    const tempOutput = '/tmp/' + basename(file) + '.patch'
+    fs.writeFileSync(tempOutput, 'changing ' + file + '\n\n' + result)
 
-  const tempOutput = '/tmp/' + basename(file) + '.patch'
-  fs.writeFileSync(tempOutput, 'changing ' + file + '\n\n' + result)
+    if (!result.startsWith('@@')) {
+      return (
+        chalk.red('Error: ') +
+        `AI completion did not return a valid patch file. Please check ${tempOutput} for details.`
+      )
+    }
 
-  if (!result.startsWith('@@')) {
-    return (
-      chalk.red('Error: ') +
-      `AI completion did not return a valid patch file. Please check ${tempOutput} for details.`
-    )
-  }
-
-  try {
-    const output = Diff.applyPatch(fileContents, result.trim(), { fuzzFactor: 5 })
-    fs.writeFileSync(file, output)
-  } catch (e: any) {
-    return chalk.red('Error: ') + `Unable to apply patch to ${file}: ${e.message}`
+    try {
+      const output = Diff.applyPatch(fileContents, result.trim(), { fuzzFactor: 5 })
+      fs.writeFileSync(file, output)
+    } catch (e: any) {
+      return (
+        chalk.red('Error: ') +
+        `Unable to apply patch to ${file}. The AI is not very good at ` +
+        `producing diffs, so you can try to apply it yourself: ${tempOutput}.`
+      )
+    }
   }
 
   return null
 }
+
+const DIFF_FORMAT = `Output only in patch format with no commentary and no changes to other files. e.g:
+@@ -20,7 +20,6 @@
+ context2
+ context3
+-  line to be deleted
++  line to be added
+  context4
+@@ -88,6 +87,11 @@`
+
+const FULL_FORMAT = `Output complete file with no commentary and no changes to other files.`

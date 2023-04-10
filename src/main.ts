@@ -14,6 +14,7 @@ import planner from '@/commands/planner'
 import { cache } from '@/db/cache'
 import executor from '@/commands/executor'
 import interactive from '@/commands/interactive'
+import patch from '@/commands/patch'
 
 export default function () {
   program
@@ -69,6 +70,8 @@ export default function () {
     .command('execute [file]')
     .description('Execute a plan file or a request and modifies code')
     .action(executor)
+
+  program.command('patch').argument('<file>').description('Applies a /tmp patch file').action(patch)
 
   program.command('chat').description('Talk directly to chatGPT').action(actionWrapper(chat))
 
