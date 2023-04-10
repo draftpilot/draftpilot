@@ -39,7 +39,7 @@ export default async function (options: Options) {
   const plan = await doPlan(indexer, planInput.plan, options)
 
   fs.writeFileSync(PLAN_FILE, JSON.stringify(plan))
-  log(`Wote plan to ${PLAN_FILE}`)
+  log(`Wrote plan to ${PLAN_FILE}`)
 
   // execute
   await executePlan(plan, indexer)

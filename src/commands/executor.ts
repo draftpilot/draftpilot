@@ -44,6 +44,16 @@ export async function executePlan(plan: Plan, indexer: Indexer) {
     )
   }
 
+  if (plan.create) {
+    Object.keys(plan.create).forEach((file) =>
+      promises.push(createFile(plan, file, plan.create![file]))
+    )
+  }
+
+  if (plan.delete) {
+    plan.delete.forEach((file) => promises.push(deleteFile(file)))
+  }
+
   const promise = Promise.all(promises)
   const results = await oraPromise(promise, { text: 'Executing...' })
 
@@ -57,6 +67,32 @@ export async function executePlan(plan: Plan, indexer: Indexer) {
     log(chalk.green('Success! '), 'Execution finished successfully.')
     log('If anything went wrong, results were output to /tmp/*.patch and *.prompt')
   }
+}
+
+export async function createFile(plan: Plan, path: string, changes: string) {
+  const prompt = `Create a new file at ${path} based on the following request: ${changes}
+---
+Overall goal: ${plan.request}`
+
+  const systemMessage = `Output only file contents with no commentary and no changes to other files`
+  const model = config.gpt4 == 'never' ? '3.5' : '4'
+  const result = await chatCompletion(prompt, model, systemMessage)
+
+  if (!result) {
+    return chalk.red('Error: ') + `Unable to create file at ${path}.`
+  }
+
+  fs.writeFileSync(path, result)
+  return null
+}
+
+export async function deleteFile(path: string) {
+  if (!fs.existsSync(path)) {
+    return chalk.red('Error: ') + `File ${path} does not exist.`
+  }
+
+  fs.unlinkSync(path)
+  return null
 }
 
 async function doChange(plan: Plan, indexer: Indexer, file: string, changes: string) {

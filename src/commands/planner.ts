@@ -73,8 +73,8 @@ to fulfill this request in this JSON format:
   "change": {
     "path/file3": "detailed explanation of change",
   },
-  "add": {
-    "other/file4": "detailed explanation of change",
+  "create": {
+    "other/file4": "detailed explanation of file contents",
   },
   "rename": { "from/file": "to/file" },
   "copyAndEdit": { "from/file":
