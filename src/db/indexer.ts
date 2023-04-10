@@ -40,21 +40,21 @@ export class Indexer {
   // loads index, returns a set of new documents that have changed since last index
   load = async (
     files?: string[]
-  ): Promise<{ docs: CodeDoc[]; newDocs: CodeDoc[]; existing: boolean }> => {
+  ): Promise<{ docs: CodeDoc[]; updatedDocs: CodeDoc[]; existing: boolean }> => {
     await this.fileDB.init()
     if (!files) files = await this.getFiles()
-    const result = await this.fileDB.processFiles(files)
-    if (!result) return { docs: [], newDocs: [], existing: false }
+    const { docs } = await this.fileDB.processFiles(files)
+    if (!docs) return { docs: [], updatedDocs: [], existing: false }
 
-    const newDocs: CodeDoc[] = result.filter((f) => !f.vectors)
+    const updatedDocs: CodeDoc[] = docs.filter((f) => !f.vectors)
 
-    return { docs: result, newDocs, existing: !this.fileDB.dbWasEmpty }
+    return { docs, updatedDocs, existing: !this.fileDB.dbWasEmpty }
   }
 
-  index = async (newDocs: CodeDoc[]) => {
-    verboseLog(TAG, 'loading embeddings for', newDocs.length, 'new docs')
-    await this.vectorDB.loadEmbeddings(newDocs)
-    await this.fileDB.saveVectors(newDocs)
+  index = async (updatedDocs: CodeDoc[]) => {
+    verboseLog(TAG, 'loading embeddings for', updatedDocs.length, 'updated docs')
+    await this.vectorDB.loadEmbeddings(updatedDocs)
+    await this.fileDB.saveVectors(updatedDocs)
   }
 
   loadVectors = async (docs: CodeDoc[]) => {
@@ -63,8 +63,8 @@ export class Indexer {
 
   loadFilesIntoVectors = async (glob?: string) => {
     const files = await this.getFiles(glob)
-    const { docs, newDocs, existing } = await this.load(files)
-    if (!existing) await this.index(newDocs)
+    const { docs, updatedDocs, existing } = await this.load(files)
+    if (!existing) await this.index(updatedDocs)
     await this.loadVectors(docs)
   }
 }

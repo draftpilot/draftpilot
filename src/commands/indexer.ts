@@ -1,3 +1,4 @@
+import { filesToDirectoryTree, updateFileInfoManifest } from '@/context/filetree'
 import { Indexer } from '@/db/indexer'
 import { log } from '@/logger'
 
@@ -8,7 +9,7 @@ type Options = {
 export default async function (options: Options) {
   const indexer = new Indexer()
   const files = await indexer.getFiles()
-  const { docs, newDocs, existing } = await indexer.load(files)
+  const { docs, updatedDocs, existing } = await indexer.load(files)
 
   log(
     options.reindex
@@ -18,8 +19,19 @@ export default async function (options: Options) {
       : 'generating index for the first time...'
   )
 
-  const toIndex = options.reindex ? docs : newDocs
+  const toIndex = options.reindex ? docs : updatedDocs
   await indexer.index(toIndex)
 
-  log('done! processed', docs.length, 'functions, with', toIndex.length, 'changes')
+  const dirTree = filesToDirectoryTree(files)
+  updateFileInfoManifest('', dirTree)
+
+  log(
+    'Done! processed',
+    files.length,
+    'files,',
+    docs.length,
+    'functions, with',
+    toIndex.length,
+    'changes'
+  )
 }

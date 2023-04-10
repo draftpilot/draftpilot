@@ -54,8 +54,7 @@ export default class FileDB {
 
   processFiles = async (files: string[]) => {
     if (!this.db) {
-      fatal('not initialized')
-      return null
+      throw new Error('db not initialized')
     }
 
     const allDocs: { [path: string]: CodeDoc } = {}
@@ -112,7 +111,8 @@ export default class FileDB {
     }
 
     const newDocs = Object.values(allDocs)
-    return [...existingDocs, ...changedDocs, ...newDocs]
+    const docs = [...existingDocs, ...changedDocs, ...newDocs]
+    return { docs, newDocs, changedDocs }
   }
 
   saveVectors = async (docs: CodeDoc[]) => {

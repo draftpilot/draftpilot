@@ -19,8 +19,8 @@ export default async function (file: string | undefined, options: Options) {
   if (!config) throw new Error('you must run `init` first')
 
   const indexer = new Indexer()
-  const { docs, newDocs, existing } = await indexer.load()
-  if (!existing) await indexer.index(newDocs)
+  const { docs, updatedDocs, existing } = await indexer.load()
+  if (!existing) await indexer.index(updatedDocs)
   await indexer.loadVectors(docs)
 
   const planText = fs.readFileSync(file || PLAN_FILE, 'utf8')

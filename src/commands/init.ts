@@ -10,12 +10,13 @@ import {
   filesToDirectoryTree,
   getInfoFileName,
   readFileInfos,
+  updateFileInfoManifest,
   writeFileInfos,
 } from '@/context/filetree'
 import inquirer from 'inquirer'
 import config from '@/config'
 import { updateGitIgnores } from '@/git'
-import { FileInfoMap } from '@/types'
+import { FileInfo, FileInfoMap } from '@/types'
 
 type Options = {
   glob?: string
@@ -37,9 +38,6 @@ export async function doInitialize(indexer: Indexer, options?: Options) {
   const fileListing = dirTree.join('\n')
 
   const fileLoadPromise = indexer.load(files)
-
-  const root = findRoot()
-  const existingInfos = (root && readFileInfos(root)) || {}
 
   const prompt = `${fileListing}
 
@@ -72,15 +70,14 @@ src/jobs: background jobs
   const guessedFiles = await oraPromise(promise, { text: 'Scanning and summarizing...' })
   verboseLog(guessedFiles)
 
-  const outputLines = mergeWithExisting(guessedFiles, dirTree, existingInfos)
-
-  writeFileInfos(outputLines.join('\n'), root)
+  const root = findRoot()
+  updateFileInfoManifest(guessedFiles, dirTree, root)
   const fileName = getInfoFileName(root)
 
   await open(fileName)
 
-  const { newDocs } = await fileLoadPromise
-  indexer.index(newDocs)
+  const { updatedDocs } = await fileLoadPromise
+  indexer.index(updatedDocs)
 
   // Wait for user to press enter
   inquirer.prompt([
@@ -96,30 +93,4 @@ src/jobs: background jobs
 
   const gitIgnore = GIT_IGNORE_FILES.map((f) => path.join(config.configFolder, f))
   updateGitIgnores(gitIgnore)
-}
-
-function mergeWithExisting(guessedFiles: string, dirTree: string[], existingInfos: FileInfoMap) {
-  const folderGuessMap = new Map<string, string>()
-  const guessedFileLines = guessedFiles.split('\n')
-  guessedFileLines.forEach((line) => {
-    const [file, guess] = line.split(':')
-    if (file && guess) folderGuessMap.set(file.trim(), guess.trim())
-  })
-
-  const outputLines: string[] = []
-  dirTree.forEach((line) => {
-    const isFile = line.startsWith('- ')
-    const file = isFile ? line.slice(2) : line
-    const existing = existingInfos[file]
-    const prefix = (isFile ? '- ' : '') + (existing?.exclude ? '!' : existing?.key ? '*' : '')
-    const guess = folderGuessMap.get(file)
-    if (guess) folderGuessMap.delete(file)
-    outputLines.push(`${prefix}${file}: ${existing?.description || guess || ''}`)
-  })
-
-  for (const folder of folderGuessMap.keys()) {
-    outputLines.push(`${folder}: ${folderGuessMap.get(folder)}`)
-  }
-
-  return outputLines
 }

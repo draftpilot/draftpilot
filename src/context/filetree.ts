@@ -87,3 +87,38 @@ export function filesToDirectoryTree(files: string[]) {
   const paths = getDirectoryPaths(fileTree, '')
   return paths
 }
+
+export function updateFileInfoManifest(
+  guessedFiles: string,
+  dirTree: string[],
+  root: string = findRoot()
+) {
+  const existingInfos = (root && readFileInfos(root)) || {}
+
+  const folderGuessMap = new Map<string, string>()
+  const guessedFileLines = guessedFiles.split('\n')
+  guessedFileLines.forEach((line) => {
+    const [file, guess] = line.split(':')
+    if (file && guess) folderGuessMap.set(file.trim(), guess.trim())
+  })
+
+  const outputLines: string[] = []
+  dirTree.forEach((line) => {
+    const isFile = line.startsWith('- ')
+    const file = isFile ? line.slice(2) : line
+    const existing = existingInfos[file]
+    const prefix = makePrefix(isFile, existing)
+    const guess = folderGuessMap.get(file)
+    if (guess) folderGuessMap.delete(file)
+    outputLines.push(`${prefix}${file}: ${existing?.description || guess || ''}`)
+  })
+
+  for (const folder of folderGuessMap.keys()) {
+    outputLines.push(`${folder}: ${folderGuessMap.get(folder)}`)
+  }
+
+  writeFileInfos(outputLines.join('\n'), root)
+}
+
+const makePrefix = (isFile: boolean, existing: FileInfo | undefined) =>
+  (isFile ? '- ' : '') + (existing?.exclude ? '!' : existing?.key ? '*' : '')
