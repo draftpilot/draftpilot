@@ -1,6 +1,6 @@
 import { chatCompletion, chatWithHistory } from '@/ai/chat'
 import { Indexer } from '@/db/indexer'
-import { log, verboseLog } from '@/logger'
+import { log, verboseLog } from '@/utils/logger'
 import { oraPromise } from 'ora'
 import chalk from 'chalk'
 import { cache } from '@/db/cache'

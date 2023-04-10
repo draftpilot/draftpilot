@@ -1,6 +1,6 @@
 import { Indexer } from '@/db/indexer'
-import { log } from '@/logger'
-import { pluralize } from '@/utils'
+import { log } from '@/utils/logger'
+import { pluralize } from '@/utils/utils'
 import chalk from 'chalk'
 
 type Options = {

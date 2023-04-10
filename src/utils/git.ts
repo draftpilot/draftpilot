@@ -1,6 +1,6 @@
 import { spawnSync } from 'child_process'
 
-import { verboseLog } from '@/logger'
+import { verboseLog } from '@/utils/logger'
 import fs from 'fs'
 import path from 'path'
 

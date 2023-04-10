@@ -3,7 +3,7 @@ import config from '@/config'
 import { getSimilarMethods } from '@/context/similar'
 import { cache } from '@/db/cache'
 import { Indexer } from '@/db/indexer'
-import { log, verboseLog } from '@/logger'
+import { log, verboseLog } from '@/utils/logger'
 import chalk from 'chalk'
 import { oraPromise } from 'ora'
 

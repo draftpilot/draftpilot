@@ -1,6 +1,6 @@
 import { filesToDirectoryTree } from '@/context/manifest'
 import { Indexer } from '@/db/indexer'
-import { log } from '@/logger'
+import { log } from '@/utils/logger'
 
 export default async function () {
   console.log('hello world')

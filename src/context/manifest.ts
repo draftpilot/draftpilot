@@ -1,5 +1,5 @@
 import config from '@/config'
-import { findRoot } from '@/utils'
+import { findRoot } from '@/utils/utils'
 import path from 'path'
 import fs from 'fs'
 import { FileInfo, FileManifest } from '@/types'

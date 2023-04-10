@@ -1,8 +1,8 @@
 import FileDB from '@/db/docsDb'
 import { VectorDB } from '@/db/vectorDb'
-import { verboseLog } from '@/logger'
+import { verboseLog } from '@/utils/logger'
 import { CodeDoc } from '@/types'
-import { findRoot } from '@/utils'
+import { findRoot } from '@/utils/utils'
 import chalk from 'chalk'
 import FastGlob from 'fast-glob'
 

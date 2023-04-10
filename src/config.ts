@@ -1,4 +1,4 @@
-import { fatal } from '@/utils'
+import { fatal } from '@/utils/utils'
 
 type Config = {
   customServer: boolean
@@ -11,7 +11,7 @@ type Config = {
 
 const config: Config = {
   customServer: false,
-  server: 'https://teamstory.ai',
+  server: '',
   options: undefined,
   configFolder: '.draftpilot',
   gpt4: 'code-only',

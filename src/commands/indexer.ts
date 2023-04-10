@@ -1,6 +1,6 @@
 import { filesToDirectoryTree, updateFileManifest } from '@/context/manifest'
 import { Indexer } from '@/db/indexer'
-import { log } from '@/logger'
+import { log } from '@/utils/logger'
 
 type Options = {
   reindex: boolean

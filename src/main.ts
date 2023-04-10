@@ -2,8 +2,8 @@ import { program } from 'commander'
 
 import init from '@/commands/init'
 import config, { overrideGPT4 } from '@/config'
-import { log, setVerbose } from '@/logger'
-import { fatal } from '@/utils'
+import { log, setVerbose } from '@/utils/logger'
+import { fatal } from '@/utils/utils'
 
 import packageJson from '../package.json'
 import chat from '@/commands/chat'

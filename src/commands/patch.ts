@@ -1,4 +1,4 @@
-import { log } from '@/logger'
+import { log } from '@/utils/logger'
 import chalk from 'chalk'
 import fs from 'fs'
 import * as Diff from 'diff'

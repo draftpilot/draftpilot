@@ -1,7 +1,7 @@
-import { log } from '@/logger'
+import { log } from '@/utils/logger'
 import { Extractor } from '@/parsing/extractor'
 import { CodeDoc, SourceFile } from '@/types'
-import { cyrb53 } from '@/utils'
+import { cyrb53 } from '@/utils/utils'
 
 import ts from 'typescript'
 
