@@ -9,7 +9,7 @@ import path from 'path'
 import { filesToDirectoryTree, getManifestName, updateFileManifest } from '@/context/manifest'
 import inquirer from 'inquirer'
 import config from '@/config'
-import { updateGitIgnores } from '@/git'
+import { updateGitIgnores } from '@/utils/git'
 
 type Options = {
   glob?: string

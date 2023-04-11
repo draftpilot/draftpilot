@@ -40,6 +40,6 @@ export class VectorDB {
 
   searchWithScores = async (query: string, k?: number) => {
     const result = await this.db?.similaritySearchWithScore(query, k)
-    return result
+    return result as [Document, number][]
   }
 }

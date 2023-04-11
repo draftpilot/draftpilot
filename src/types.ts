@@ -32,7 +32,7 @@ export type Plan = {
   change?: { [file: string]: string }
   create?: { [file: string]: string }
   rename?: { [file: string]: string }
-  copyAndEdit?: {
+  clone?: {
     [file: string]: {
       dest: string
       edits: string

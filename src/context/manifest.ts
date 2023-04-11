@@ -52,8 +52,31 @@ export const getFilesWithContext = (files: string[]): string[] => {
   if (!fs.existsSync(file)) {
     return files
   }
-  const contents = fs.readFileSync(file, 'utf-8').split('\n')
-  return contents
+  const existingInfos = readManifest() || {}
+
+  const dirTree = filesToDirectoryTree(files)
+
+  let folder = ''
+  const outputLines: string[] = []
+  dirTree.forEach((line) => {
+    const isFile = line.startsWith('- ')
+
+    if (!isFile) folder = line
+    else line = line.substring(2)
+
+    const prefix = isFile ? '- ' : ''
+
+    const file = isFile ? path.join(folder, line) : line
+    const existing = existingInfos[file]
+    if (existing?.exclude) return
+
+    const existingFolder = existingInfos[folder]
+    if (existingFolder?.exclude) return
+
+    outputLines.push(`${prefix}${line}${existing?.description ? ': ' + existing.description : ''}`)
+  })
+
+  return outputLines
 }
 
 interface DirectoryNode {

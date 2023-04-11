@@ -11,14 +11,12 @@ import { Plan } from '@/types'
 import config from '@/config'
 import * as Diff from 'diff'
 import { dirname, basename } from 'path'
+import type { Document } from 'langchain/dist/document'
 
 type Options = {}
 
 // executes a plan
 export default async function (file: string | undefined, options: Options) {
-  const config = readConfig()
-  if (!config) throw new Error('you must run `init` first')
-
   const indexer = new Indexer()
   const { docs, updatedDocs, existing } = await indexer.load()
   if (!existing) await indexer.index(updatedDocs)
@@ -54,24 +52,29 @@ export async function executePlan(plan: Plan, indexer: Indexer): Promise<boolean
     plan.delete.forEach((file) => promises.push(deleteFile(file, indexer)))
   }
 
-  if (plan.copyAndEdit) {
-    Object.keys(plan.copyAndEdit).forEach((file) =>
-      promises.push(doCopyAndEdit(plan, indexer, file))
-    )
+  if (plan.clone) {
+    Object.keys(plan.clone).forEach((file) => promises.push(doClone(plan, indexer, file)))
   }
 
+  const start = Date.now()
   const promise = Promise.all(promises)
-  const results = await oraPromise(promise, { text: 'Executing...' })
+  const text =
+    config.gpt4 == 'never'
+      ? 'Executing...'
+      : 'Executing (GPT-4 is slow so this may take a while)...'
+  const results = await oraPromise(promise, { text })
 
   const messages = results.filter(Boolean)
 
+  log(`Execution took ${Date.now() - start}ms`)
+
   if (messages.length) {
-    log('Execution finished with errors:')
+    log('Finished with errors:')
     messages.forEach((m) => log(m))
     log('Please check /tmp/*.patch and *.prompt to inspect intermediate results.')
     return false
   } else {
-    log(chalk.green('Success! '), 'Execution finished successfully.')
+    log(chalk.green('Success!'))
     log('If anything went wrong, results were output to /tmp/*.patch and *.prompt')
     return true
   }
@@ -106,13 +109,16 @@ async function deleteFile(file: string, indexer: Indexer) {
   return null
 }
 
-async function doCopyAndEdit(plan: Plan, indexer: Indexer, file: string) {
-  const dest = plan.copyAndEdit![file]
+async function doClone(plan: Plan, indexer: Indexer, file: string) {
+  const dest = plan.clone![file]
   file = findMatchingFile(file, indexer)
 
   if (!fs.existsSync(file)) {
     return chalk.red('Error: ') + `File ${file} does not exist.`
   }
+
+  const dir = dirname(dest.dest)
+  fs.mkdirSync(dir, { recursive: true })
 
   return await doChange(plan, indexer, file, dest.edits, dest.dest)
 }
@@ -120,17 +126,24 @@ async function doCopyAndEdit(plan: Plan, indexer: Indexer, file: string) {
 async function doChange(
   plan: Plan,
   indexer: Indexer,
-  file: string,
+  inputFile: string,
   changes: string,
   outputFile?: string
 ) {
-  file = findMatchingFile(file, indexer)
-  if (!fs.existsSync(file)) return chalk.red('Error: ') + `File ${file} does not exist.`
-  const fileContents = fs.readFileSync(file, 'utf8')
-  if (!outputFile) outputFile = file
+  inputFile = findMatchingFile(inputFile, indexer)
+  if (!fs.existsSync(inputFile)) return chalk.red('Error: ') + `File ${inputFile} does not exist.`
+  const fileContents = fs.readFileSync(inputFile, 'utf8')
+  if (!outputFile) outputFile = inputFile
 
-  const similar = (await indexer.vectorDB.search(changes, 6)) || []
-  const notInFile = similar.filter((s) => !s.metadata.path.includes(file)).slice(0, 4)
+  const similar = await indexer.vectorDB.searchWithScores(plan.request + '\n' + changes, 4)
+  const notInFile = similar
+    ?.filter((s) => {
+      const [doc, score] = s
+      if (score < 0.15) return false
+      if (doc.metadata.path.includes(inputFile)) return false
+      return true
+    })
+    .slice(0, 2)
 
   const fileLines = fileContents.split('\n')
   const outputFormat = fileLines.length < 200 ? 'full' : 'diff'
@@ -140,22 +153,23 @@ async function doChange(
 
   const prompt = `
 Possibly related code:
-${notInFile.map((s) => s.pageContent).join('\n\n')}
+${notInFile.map((s) => s[0].pageContent).join('\n\n')}
 
 ---
-${file} contents:
+${outputFile} contents:
+
 ${decoratedLines.join('\n')}
 
 ---
 Overall goal: ${plan.request}
 
-Apply the following changes to the ${file}: ${changes}`
+Apply the following changes to the ${outputFile}: ${changes}`
 
   const model = config.gpt4 == 'never' ? '3.5' : '4'
 
   const systemMessage = outputFormat == 'full' ? FULL_FORMAT : DIFF_FORMAT
 
-  const tempInput = '/tmp/' + basename(file) + '.prompt'
+  const tempInput = '/tmp/' + basename(outputFile) + '.prompt'
   fs.writeFileSync(tempInput, systemMessage + '\n\n' + prompt)
 
   const result = await chatCompletion(prompt, model, systemMessage)
@@ -163,8 +177,8 @@ Apply the following changes to the ${file}: ${changes}`
   if (outputFormat == 'full') {
     fs.writeFileSync(outputFile, result)
   } else {
-    const tempOutput = '/tmp/' + basename(file) + '.patch'
-    fs.writeFileSync(tempOutput, 'changing ' + file + '\n\n' + result)
+    const tempOutput = '/tmp/' + basename(outputFile) + '.patch'
+    fs.writeFileSync(tempOutput, 'changing ' + outputFile + '\n\n' + result)
 
     if (!result.startsWith('@@')) {
       return (
@@ -177,9 +191,10 @@ Apply the following changes to the ${file}: ${changes}`
       const output = Diff.applyPatch(fileContents, result.trim(), { fuzzFactor: 5 })
       fs.writeFileSync(outputFile, output)
     } catch (e: any) {
+      if (inputFile != outputFile) fs.writeFileSync(outputFile, fileContents)
       return (
         chalk.red('Error: ') +
-        `Unable to apply patch to ${file}. The AI is not very good at ` +
+        `Unable to apply patch to ${outputFile}. The AI is not very good at ` +
         `producing diffs, so you can try to apply it yourself: ${tempOutput}.`
       )
     }
@@ -188,7 +203,7 @@ Apply the following changes to the ${file}: ${changes}`
   return null
 }
 
-const DIFF_FORMAT = `Output only in patch format with no commentary and no changes to other files. e.g:
+const DIFF_FORMAT = `Output only in patch format with no commentary and no changes to other files - your output will be sent to patch tool. e.g:
 @@ -20,7 +20,6 @@
  context2
  context3
@@ -197,7 +212,7 @@ const DIFF_FORMAT = `Output only in patch format with no commentary and no chang
   context4
 @@ -88,6 +87,11 @@`
 
-const FULL_FORMAT = `Output complete file with no commentary and no changes to other files.`
+const FULL_FORMAT = `Output the entire file with no commentary and no changes to other files - your output will be written directly to disk.`
 
 export const findMatchingFile = (file: string, indexer: Indexer) => {
   if (fs.existsSync(file)) return file

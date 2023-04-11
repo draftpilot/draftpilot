@@ -26,23 +26,21 @@ export default async function (options: Options) {
       return file
     })
 
-  if (untracked.length > 0) {
-    while (true) {
-      const response = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'add',
-          message: 'You have untracked files. Would you like to add any?',
-          choices: [NONE].concat(untracked),
-        },
-      ])
-      const result = response.add
-      if (result === NONE) {
-        break
-      }
-      untracked = untracked.filter((x) => x !== result)
-      git(['add', result])
+  while (untracked.length > 0) {
+    const response = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'add',
+        message: 'You have untracked changes. Add?',
+        choices: [NONE].concat(untracked),
+      },
+    ])
+    const result = response.add
+    if (result === NONE) {
+      break
     }
+    untracked = untracked.filter((x) => x !== result)
+    git(['add', result])
   }
 
   let diff = git(['diff', '--cached'])
@@ -64,10 +62,7 @@ export default async function (options: Options) {
     .filter((s) => s.trim().length)
     .join('\n')
 
-  const prompt = `Example commit messages:
-${previousCommits}
-  
-Diff:
+  const prompt = `Diff:
 ${diff.join('\n')}
 
 Based on above, generate a git commit messages for the following changes. Don't make anything up.`
