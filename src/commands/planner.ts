@@ -9,6 +9,7 @@ import config from '@/config'
 import fs from 'fs'
 import { ChatMessage, Plan } from '@/types'
 import inquirer from 'inquirer'
+import { findSimilarDocuments } from '@/utils/similarity'
 
 type Options = {
   glob?: string
@@ -33,12 +34,12 @@ const SYSTEM_MESSAGE =
 
 export async function doPlan(indexer: Indexer, query: string, options?: Options) {
   const files = await indexer.getFiles(options?.glob)
-  const filesWithContext = getFilesWithContext(files)
 
   // return 200 most similar files
-  const filteredFiles = filterFiles(filesWithContext, query, 200)
+  const filteredFiles = filterFiles(files, query, 200)
+  const filesWithContext = getFilesWithContext(filteredFiles)
 
-  const prompt = createPlanPrompt(filteredFiles, query)
+  const prompt = createPlanPrompt(filesWithContext, query)
 
   verboseLog(prompt)
 
@@ -61,20 +62,18 @@ ${filesWithContext.join('\n')}
 
 ---
 Request: ${query}
-Return a list of files which should be read for context (no more than 3) and modified (at least 1)
-to fulfill this request in this JSON format:
+Return a list of files which should be modified (at least 1) to fulfill this request in this JSON format:
 
 {
-  "read": ["path/file1", "path/to/file2"],
   "change": {
     "path/file3": "detailed explanation of change",
   },
+  "clone": { "from/file":
+    { "dest": "to/file", edits: "making a copy of from/file with changes" } },
   "create": {
-    "other/file4": "detailed explanation of file contents",
+    "other/file4": "detailed explanation of new file contents",
   },
   "rename": { "from/file": "to/file" },
-  "copyAndEdit": { "from/file":
-    { "dest": "to/file", edits: "detailed explanation of change" } },
   "delete": []
 }`
 }
@@ -90,10 +89,13 @@ async function loopIteratePlan(request: string, prompt: string, plan: string): P
 
   while (true) {
     plan = plan.trim()
-    if (plan.startsWith('{') && plan.endsWith('}')) {
-      // sometimes trailing commas are generated
-      const regex = /,\s*([\]}])/g
-      const fixedJsonString = plan.replace(regex, '$1')
+
+    const jsonStart = plan.indexOf('{')
+    const jsonEnd = plan.lastIndexOf('}')
+    if (jsonStart > -1 && jsonEnd > -1) {
+      plan = plan.substring(jsonStart, jsonEnd + 1)
+      // sometimes trailing commas are generated. sometimes no commas are generated,
+      const fixedJsonString = plan.replace(/"\n"/g, '",').replace(/,\s*([\]}])/g, '$1')
 
       // don't accept plans that are not JSON
       try {
@@ -131,10 +133,8 @@ async function loopIteratePlan(request: string, prompt: string, plan: string): P
 }
 
 function filterFiles(files: string[], query: string, limit: number) {
-  const filteredFiles = files.filter((file) => {
-    const fileWithoutContext = file.split(' ')[0]
-    return fileWithoutContext.includes(query)
-  })
+  if (files.length <= limit) return files
+  const similar = findSimilarDocuments(query, files)
 
-  return filteredFiles.slice(0, limit)
+  return similar.slice(0, limit)
 }
