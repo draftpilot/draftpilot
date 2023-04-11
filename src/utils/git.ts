@@ -12,7 +12,7 @@ export function git(args: string[], cwd?: string) {
   })
 
   if (result.error) throw result.error
-  return result.stdout.trim()
+  return result.stdout
 }
 
 // walk up the tree until we find the .git folder

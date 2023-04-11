@@ -17,6 +17,7 @@ const NONE = '- none -'
 // infer a commit message and commit the changes
 export default async function (options: Options) {
   const status = git(['status', '--porcelain'])
+  console.log(status)
 
   let untracked = status
     .split('\n')
@@ -43,11 +44,11 @@ export default async function (options: Options) {
     git(['add', result])
   }
 
-  let diff = git(['diff', '--cached'])
+  let diff = git(['diff', '--cached', '-U1'])
     .split('\n')
     .filter((s) => s.trim().length)
 
-  if (!diff) {
+  if (diff.length == 0) {
     log(chalk.yellow('Nothing to commit.'))
     return
   }
@@ -65,14 +66,29 @@ export default async function (options: Options) {
   const prompt = `Diff:
 ${diff.join('\n')}
 
-Based on above, generate a git commit messages for the following changes. Don't make anything up.`
+Based the diff above, generate a git commit messages for the following changes.`
 
   verboseLog(prompt)
 
-  const promise = chatCompletion(prompt, '3.5')
+  const promise = chatCompletion(
+    prompt,
+    '3.5',
+    "Be concise and don't make anything up. If you don't know, just write 'Updates to <filename>'."
+  )
 
   const result = await oraPromise(promise, { text: 'Generating a commit message...' })
 
   log(chalk.green('Here you go:'))
   log('git commit -m', '"' + result.replace(/"/g, '\\"') + '"')
+
+  const response = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'message',
+      message: 'Press enter to commit, type a new message to use that instead, ctrl-c to quit',
+    },
+  ])
+
+  const message = response.message || result
+  log(git(['commit', '-m', message]))
 }
