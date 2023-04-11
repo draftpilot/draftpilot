@@ -11,8 +11,9 @@
   "scripts": {
     "build": "node esbuild.js",
     "clean": "rm -rf dist",
-    "go": "node ./cli.js",
     "draftpilot": "yarn build && yarn go",
+    "go": "node --enable-source-maps ./cli.js",
+    "init": "",
     "prepack": "yarn build",
     "test": "yarn tsc && mocha",
     "watch": "node esbuild.js --watch"
@@ -32,6 +33,7 @@
     "commander": "^9.4.1",
     "diff": "^5.1.0",
     "fast-glob": "^3.2.12",
+    "gpt-3-encoder": "^1.1.4",
     "hnswlib-node": "^1.4.2",
     "ini": "^3.0.1",
     "inquirer": "^9.1.4",

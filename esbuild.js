@@ -10,6 +10,7 @@ const config = {
   target: 'node14',
   plugins: [tsPaths(), nodeExternalsPlugin()],
   format: 'esm',
+  sourcemap: true,
 }
 
 if (process.argv.includes('--watch')) {
