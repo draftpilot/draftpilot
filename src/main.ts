@@ -29,6 +29,9 @@ export default function () {
       'usage of gpt-4 over gpt-3.5-turbo (always, code-only, never)',
       overrideGPT4
     )
+    .option('--temperature <number>', 'temperature for AI generations', (temperature) => {
+      config.temperature = parseFloat(temperature)
+    })
     .option('--version', 'print version', () => {
       log(packageJson.version)
       process.exit(0)

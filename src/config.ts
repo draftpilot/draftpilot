@@ -7,6 +7,7 @@ type Config = {
   configFolder: string
   gpt4: 'always' | 'code-only' | 'never'
   glob?: string
+  temperature?: number
 }
 
 const config: Config = {
@@ -15,6 +16,7 @@ const config: Config = {
   options: undefined,
   configFolder: '.draftpilot',
   gpt4: 'code-only',
+  temperature: 0.1,
 }
 
 export default config

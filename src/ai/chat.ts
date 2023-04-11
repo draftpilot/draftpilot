@@ -1,3 +1,4 @@
+import config from '@/config'
 import { cache } from '@/db/cache'
 import { ChatMessage } from '@/types'
 import { isAxiosError } from 'axios'
@@ -16,6 +17,7 @@ export async function chatCompletion(prompt: string, model: '3.5' | '4', systemM
   try {
     const completion = await openai.createChatCompletion({
       model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
+      temperature: config.temperature,
       messages: systemMessage
         ? [
             { role: 'system', content: systemMessage },
