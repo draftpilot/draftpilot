@@ -25,6 +25,38 @@ export function findGitRoot(cwd?: string) {
   throw new Error('Could not find git root')
 }
 
+type GitStatusData = {
+  modified: string[]
+  added: string[]
+  deleted: string[]
+  renamed: string[]
+  copied: string[]
+  untracked: string[]
+}
+
+export function gitStatus(cwd?: string): GitStatusData {
+  const response = git(['status', '--porcelain'], cwd)
+  const lines = response.split('\n')
+  const data: GitStatusData = {
+    modified: [],
+    untracked: [],
+    added: [],
+    deleted: [],
+    renamed: [],
+    copied: [],
+  }
+  lines.forEach((line) => {
+    const [status, file] = line.split(' ', 2)
+    if (status === 'M') data.modified.push(file)
+    else if (status === '??') data.untracked.push(file)
+    else if (status === 'A') data.added.push(file)
+    else if (status === 'D') data.deleted.push(file)
+    else if (status === 'R') data.renamed.push(file)
+    else if (status === 'C') data.copied.push(file)
+  })
+  return data
+}
+
 export function updateGitIgnores(files: string[]) {
   const gitRoot = findGitRoot()
   if (!gitRoot) return

@@ -16,6 +16,7 @@ import executor from '@/commands/executor'
 import interactive from '@/commands/interactive'
 import patch from '@/commands/patch'
 import scratchpad from '@/commands/scratchpad'
+import commit from '@/commands/commit'
 
 export default function () {
   program
@@ -80,6 +81,11 @@ export default function () {
     .command('scratchpad')
     .description('File to run scratchpad code')
     .action(actionWrapper(scratchpad))
+
+  program
+    .command('commit')
+    .description('Commit code with a magic commit message')
+    .action(actionWrapper(commit))
 
   program
     .command('interactive', { isDefault: true })
