@@ -2,7 +2,7 @@ import { chatCompletion } from '@/ai/chat'
 import { cache } from '@/db/cache'
 import { Indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/utils/logger'
-import { readConfig } from '@/utils/utils'
+import { fuzzyMatchingFile, readConfig } from '@/utils/utils'
 import chalk from 'chalk'
 import { oraPromise } from 'ora'
 import fs from 'fs'
@@ -13,12 +13,15 @@ import * as Diff from 'diff'
 import { dirname, basename } from 'path'
 import type { Document } from 'langchain/dist/document'
 
-type Options = {}
+type Options = {
+  glob?: string
+}
 
 // executes a plan
 export default async function (file: string | undefined, options: Options) {
   const indexer = new Indexer()
-  const { docs, updatedDocs, existing } = await indexer.load()
+  const files = await indexer.getFiles(options.glob)
+  const { docs, updatedDocs, existing } = await indexer.load(files)
   if (!existing) await indexer.index(updatedDocs)
   await indexer.loadVectors(docs)
 
@@ -100,7 +103,7 @@ Overall goal: ${plan.request}`
 }
 
 async function deleteFile(file: string, indexer: Indexer) {
-  file = findMatchingFile(file, indexer)
+  file = fuzzyMatchingFile(file, indexer.files) || file
   if (!fs.existsSync(file)) {
     return chalk.red('Error: ') + `File ${file} does not exist.`
   }
@@ -111,7 +114,7 @@ async function deleteFile(file: string, indexer: Indexer) {
 
 async function doClone(plan: Plan, indexer: Indexer, file: string) {
   const dest = plan.clone![file]
-  file = findMatchingFile(file, indexer)
+  file = fuzzyMatchingFile(file, indexer.files) || file
 
   if (!fs.existsSync(file)) {
     return chalk.red('Error: ') + `File ${file} does not exist.`
@@ -130,7 +133,7 @@ async function doChange(
   changes: string,
   outputFile?: string
 ) {
-  inputFile = findMatchingFile(inputFile, indexer)
+  inputFile = fuzzyMatchingFile(inputFile, indexer.files) || inputFile
   if (!fs.existsSync(inputFile)) return chalk.red('Error: ') + `File ${inputFile} does not exist.`
   const fileContents = fs.readFileSync(inputFile, 'utf8')
   if (!outputFile) outputFile = inputFile
@@ -213,12 +216,3 @@ const DIFF_FORMAT = `Output only in patch format with no commentary and no chang
 @@ -88,6 +87,11 @@`
 
 const FULL_FORMAT = `Output the entire file with no commentary and no changes to other files - your output will be written directly to disk.`
-
-export const findMatchingFile = (file: string, indexer: Indexer) => {
-  if (fs.existsSync(file)) return file
-
-  const similar = indexer.files.find((f) => f.endsWith(file))
-  if (similar) return similar
-
-  return file
-}

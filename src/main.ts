@@ -72,6 +72,7 @@ export default function () {
     .command('execute [file]')
     .description('Execute a plan file or a request and modifies code')
     .action(executor)
+    .option('--glob <glob>', 'Custom glob to use for finding files')
 
   program.command('patch').argument('<file>').description('Applies a /tmp patch file').action(patch)
 

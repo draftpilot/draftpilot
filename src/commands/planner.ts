@@ -1,5 +1,5 @@
 import { chatCompletion, chatWithHistory } from '@/ai/chat'
-import { Indexer } from '@/db/indexer'
+import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, Indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/utils/logger'
 import { oraPromise } from 'ora'
 import chalk from 'chalk'
@@ -30,10 +30,12 @@ export default async function (query: string, options: Options) {
 }
 
 const SYSTEM_MESSAGE =
-  'Respond in the requested format with no extra comments. Do not return actual code.'
+  'Respond in the requested format with no extra comments. Do not return actual code, and do not make up files to modify.'
 
 export async function doPlan(indexer: Indexer, query: string, options?: Options) {
-  const files = await indexer.getFiles(options?.glob)
+  const baseGlob = query.includes('test') ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS
+
+  const files = await indexer.getFiles(options?.glob || baseGlob)
 
   // return 200 most similar files
   const filteredFiles = filterFiles(files, query, 200)

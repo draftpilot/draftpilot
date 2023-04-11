@@ -58,10 +58,12 @@ export default async function (options: Options) {
     diff = diff.slice(0, 100)
   }
 
-  const previousCommits = git(['log', '--pretty=%B', '-n', '10'])
-    .split('\n')
-    .filter((s) => s.trim().length)
-    .join('\n')
+  // tried to add previous commits, but the model would just follow this even if it was unrelated
+
+  // const previousCommits = git(['log', '--pretty=%B', '-n', '10'])
+  //   .split('\n')
+  //   .filter((s) => s.trim().length)
+  //   .join('\n')
 
   const prompt = `Diff:
 ${diff.join('\n')}
@@ -78,14 +80,15 @@ Based the diff above, generate a git commit messages for the following changes.`
 
   const result = await oraPromise(promise, { text: 'Generating a commit message...' })
 
-  log(chalk.green('Here you go:'))
-  log('git commit -m', '"' + result.replace(/"/g, '\\"') + '"')
+  log(chalk.green('Here you go:'), result)
+
+  log('Press enter to commit, type a new message to use that instead, ctrl-c to quit')
 
   const response = await inquirer.prompt([
     {
       type: 'input',
       name: 'message',
-      message: 'Press enter to commit, type a new message to use that instead, ctrl-c to quit',
+      message: '>',
     },
   ])
 

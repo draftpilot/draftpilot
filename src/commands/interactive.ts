@@ -29,11 +29,12 @@ export default async function (options: Options) {
   }
 
   // plan
+  log('What do you want to do?')
   const planInput = await inquirer.prompt([
     {
       type: 'input',
       name: 'plan',
-      message: 'What do you want to do?',
+      message: '>',
     },
   ])
   const plan = await doPlan(indexer, planInput.plan, options)

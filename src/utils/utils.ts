@@ -92,3 +92,13 @@ export const cyrb53 = (str: string, seed = 0) => {
 export const pluralize = (count: number, noun: string) => {
   return `${count} ${noun}${count === 1 ? '' : 's'}`
 }
+
+export const fuzzyMatchingFile = (file: string, files: string[]) => {
+  if (fs.existsSync(file)) return file
+
+  const fileBasename = path.basename(file)
+  const similar = files.find((f) => f.endsWith(fileBasename))
+  if (similar) return similar
+
+  return null
+}

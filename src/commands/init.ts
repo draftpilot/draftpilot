@@ -10,6 +10,7 @@ import { filesToDirectoryTree, getManifestName, updateFileManifest } from '@/con
 import inquirer from 'inquirer'
 import config from '@/config'
 import { updateGitIgnores } from '@/utils/git'
+import { encode } from 'gpt-3-encoder'
 
 type Options = {
   glob?: string
@@ -41,6 +42,10 @@ src: source folder
 src/components: React components
 src/jobs: background jobs
 `
+
+  const tokenCount = encode(prompt).length
+  log(`Scanning ${files.length} files (${tokenCount} tokens)`)
+  return
 
   verboseLog(prompt)
 

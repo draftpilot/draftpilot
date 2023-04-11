@@ -6,7 +6,7 @@ import { findRoot } from '@/utils/utils'
 import chalk from 'chalk'
 import FastGlob from 'fast-glob'
 
-const DEFAULT_GLOB = [
+export const DEFAULT_GLOB = [
   '**/*.js',
   '**/*.ts',
   '**/*.jsx',
@@ -18,7 +18,12 @@ const DEFAULT_GLOB = [
   '!**/build/**',
 ]
 
-const GLOB_WITHOUT_TESTS = [...DEFAULT_GLOB, '!**/__tests__/**', '!**/*.test.*', '!**/*.spec.*']
+export const GLOB_WITHOUT_TESTS = [
+  ...DEFAULT_GLOB,
+  '!**/__tests__/**',
+  '!**/*.test.*',
+  '!**/*.spec.*',
+]
 
 const TAG = chalk.blue('[indexer]')
 
@@ -35,7 +40,7 @@ export class Indexer {
     this.files = []
   }
 
-  getFiles = async (glob?: string) => {
+  getFiles = async (glob?: string | string[]) => {
     const files = await FastGlob(glob || GLOB_WITHOUT_TESTS)
     this.files = files
     return files
