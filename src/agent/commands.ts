@@ -1,5 +1,5 @@
-import { Tool } from '@/tools/tool'
-import { spawnPromise } from '@/tools/unix'
+import { Tool } from '@/agent/tool'
+import { spawnPromise } from '@/agent/unix'
 import fs from 'fs'
 
 const runTestsTool: Tool = {

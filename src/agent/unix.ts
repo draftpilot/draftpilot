@@ -1,11 +1,11 @@
-import { Tool, confirmPrompt } from '@/tools/tool'
+import { Tool, confirmPrompt } from '@/agent/tool'
 
 import child_process from 'child_process'
 import FastGlob from 'fast-glob'
 
 const grepTool: Tool = {
   name: 'grep',
-  description: 'Search for a pattern and print the matching lines. e.g. grep -r pattern .',
+  description: 'Search for a pattern and print the matching lines. e.g. grep: pattern',
 
   run: (input: string) => {
     const args = stringToArgs(input)
@@ -31,8 +31,8 @@ const grepTool: Tool = {
 }
 
 const findTool: Tool = {
-  name: 'find',
-  description: 'Tool to find files matching a shell pattern. e.g. find . -name "*.foo.js"',
+  name: 'findTool',
+  description: 'Tool to find files matching a shell pattern. e.g. find: "*.foo.js"',
 
   run: (input: string) => {
     const args = stringToArgs(input)
@@ -42,7 +42,7 @@ const findTool: Tool = {
 }
 
 const lsTool: Tool = {
-  name: 'ls',
+  name: 'lsTool',
   description: 'List files in a folder. e.g. ls folder1 folder2',
   run: (input: string) => {
     const args = stringToArgs(input)
@@ -67,7 +67,7 @@ const rmTool: Tool = {
 
 const cpTool: Tool = {
   name: 'cp',
-  description: 'Copies files and folders. e.g. cp -r src/folder dest/folder',
+  description: 'Copies files and folders. e.g. cp: -r src/folder dest/folder',
   run: async (input: string) => {
     const args = stringToArgs(input)
 
@@ -77,7 +77,7 @@ const cpTool: Tool = {
 
 const mvTool: Tool = {
   name: 'mv',
-  description: 'Moves files and folders. e.g. mv src/file dest/file',
+  description: 'Moves files and folders. e.g. mv: src/file dest/file',
   run: async (input: string) => {
     const args = stringToArgs(input)
 
@@ -91,7 +91,7 @@ const mvTool: Tool = {
 
 const sedTool: Tool = {
   name: 'sed',
-  description: 'In-place stream editor. e.g. sed s/foo/bar/ **/*.js',
+  description: 'In-place stream editor. e.g. sed: s/foo/bar/ **/*.js',
   run: async (input: string) => {
     const args = stringToArgs(input).filter((arg) => arg != '-i')
 
@@ -116,7 +116,7 @@ const sedTool: Tool = {
 
 const gitHistory: Tool = {
   name: 'gitHistory',
-  description: 'Show git history for a given file. e.g. gitHistory file',
+  description: 'Show git history for a given file. e.g. gitHistory: file',
   run: (input: string) => {
     const args = ['log', '--pretty=format:%h %s', input]
     return spawnPromise('git', args)
@@ -125,7 +125,7 @@ const gitHistory: Tool = {
 
 const gitDiffTool: Tool = {
   name: 'gitDiff',
-  description: 'Prints git diff of changes to file. e.g. gitDiff file',
+  description: 'Prints git diff of changes to file. e.g. gitDiff: file',
 
   run: async (input: string, overallGoal?: string) => {
     const args = ['diff', '--pretty=format:%H', input]
@@ -159,8 +159,10 @@ export const stringToArgs = (input: string) => {
       }
       inDoubleQuote = !inDoubleQuote
     } else if (char === ' ' && !inSingleQuote && !inDoubleQuote) {
-      args.push(currentArg)
-      currentArg = ''
+      if (currentArg) {
+        args.push(currentArg)
+        currentArg = ''
+      }
     } else {
       currentArg += char
     }
@@ -173,7 +175,7 @@ export const stringToArgs = (input: string) => {
 }
 
 export const spawnPromise = (command: string, args: string[], cwd?: string) => {
-  const result = child_process.spawn(command, args, { cwd })
+  const result = child_process.spawn(command, args, { cwd, shell: true })
   return new Promise<string>((resolve, reject) => {
     const chunks: Buffer[] = []
     const errorChunks: Buffer[] = []

@@ -1,5 +1,5 @@
 import { chatCompletion } from '@/ai/api'
-import { Tool } from '@/tools/tool'
+import { Tool } from '@/agent/tool'
 import { log, verboseLog } from '@/utils/logger'
 import chalk from 'chalk'
 import { encode } from 'gpt-3-encoder'

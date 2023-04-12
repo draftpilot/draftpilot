@@ -1,4 +1,4 @@
-import { Tool } from '@/tools/tool'
+import { Tool } from '@/agent/tool'
 import inquirer from 'inquirer'
 
 const askUserTool: Tool = {

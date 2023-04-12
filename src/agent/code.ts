@@ -1,5 +1,5 @@
 import { Indexer } from '@/db/indexer'
-import { Tool } from '@/tools/tool'
+import { Tool } from '@/agent/tool'
 import { fuzzyMatchingFile } from '@/utils/utils'
 import fs from 'fs'
 
@@ -38,16 +38,26 @@ export const generateCodeTools = (indexer: Indexer): Tool[] => {
     },
   }
 
-  const searchFunctionsTool: Tool = {
-    name: 'searchFunctions',
-    description:
-      'Search for file/function names with contents similar to the input. Input: search query',
+  const tools = [viewFileTool, searchCodeTool]
 
-    run: async (input: string) => {
-      const results = await indexer.vectorDB.searchWithScores(input, 10)
-      return results?.map(([r, score]) => `${r.metadata.path} - score: ${score}`).join('\n') || ''
-    },
+  if (indexer.files.includes('package.json')) {
+    const listPackages: Tool = {
+      name: 'listPackages',
+      description: 'List installed packages. Optional input: filter query e.g. react',
+
+      run: async (input: string) => {
+        const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+        let deps = Object.keys(packageJson.dependencies || {})
+        if (input) {
+          deps = deps.filter((d) => d.includes(input))
+        }
+
+        if (deps.length == 0) return 'No packages found'
+        return deps.join(', ')
+      },
+    }
+    tools.push(listPackages)
   }
 
-  return [viewFileTool, searchCodeTool, searchFunctionsTool]
+  return tools
 }

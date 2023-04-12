@@ -1,6 +1,6 @@
-import { Agent } from '@/ai/agent'
+import { Agent } from '@/agent/agent'
 import { Indexer } from '@/db/indexer'
-import { getAllTools } from '@/tools'
+import { getAllTools } from '@/agent'
 import { log } from '@/utils/logger'
 import inquirer from 'inquirer'
 

@@ -78,3 +78,6 @@ export class Indexer {
     await this.loadVectors(docs)
   }
 }
+
+// global singleton instance
+export const indexer = new Indexer()

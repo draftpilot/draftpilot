@@ -2,9 +2,9 @@ import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, Indexer } from '@/db/indexer'
 import { cache } from '@/db/cache'
 import { getFilesWithContext } from '@/context/manifest'
 import { findSimilarDocuments } from '@/utils/similarity'
-import { Agent } from '@/ai/agent'
+import { Agent } from '@/agent/agent'
 import { splitOnce } from '@/utils/utils'
-import { getAllTools } from '@/tools'
+import { getAllTools } from '@/agent'
 
 type Options = {
   glob?: string
@@ -22,7 +22,7 @@ export default async function (query: string, options: Options) {
 }
 
 const SYSTEM_MESSAGE =
-  'You are EngineerGPT, you help make changes to an existing codebase in as few steps as possible. Only use the tools provided.'
+  'You are EngineerGPT, you help make changes to an existing codebase in as few steps as possible. Only use the tools provided, unix/bash expressions not supported.'
 
 export async function doPlan(indexer: Indexer, query: string, options?: Options) {
   const baseGlob = query.includes('test') ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS

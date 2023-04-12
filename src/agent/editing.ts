@@ -1,13 +1,12 @@
 import { chatCompletion } from '@/ai/api'
 import config from '@/config'
 import { Indexer } from '@/db/indexer'
-import { Tool } from '@/tools/tool'
+import { Tool } from '@/agent/tool'
 import { fuzzyMatchingFile, splitOnce } from '@/utils/utils'
 import fs from 'fs'
 import { basename } from 'path'
 import * as Diff from 'diff'
 import { oraPromise } from 'ora'
-import { git } from '@/utils/git'
 
 export const generateEditingTools = (indexer: Indexer): Tool[] => {
   const createFileTool: Tool = {
