@@ -35,6 +35,7 @@ export class Indexer {
   vectorDB: VectorDB
   searchDB: SearchDB
   files: string[]
+  docs?: CodeDoc[]
 
   constructor() {
     const root = findRoot()
@@ -59,6 +60,7 @@ export class Indexer {
     if (!files) files = await this.getFiles()
     const { docs, docsToDelete } = await this.fileDB.processFiles(files)
     if (!docs) return { docs: [], updatedDocs: [], existing: false }
+    this.docs = docs
 
     if (!skipDelete) this.fileDB.deleteDocs(docsToDelete)
     const updatedDocs: CodeDoc[] = docs.filter((f) => !f.vectors)
@@ -81,6 +83,15 @@ export class Indexer {
     const { docs, updatedDocs } = await this.load(files)
     await this.index(updatedDocs)
     await this.loadVectors(docs)
+  }
+
+  createPartialIndex = async (prefixes: string[]) => {
+    const subsetDocs = this.docs!.filter((d) =>
+      prefixes.some((prefix) => d.path.startsWith(prefix))
+    )
+    const vectorDb = new VectorDB()
+    await vectorDb.init(subsetDocs)
+    return vectorDb
   }
 }
 

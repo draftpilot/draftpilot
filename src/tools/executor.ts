@@ -14,7 +14,7 @@ import { VectorDB } from '@/db/vectorDb'
 import { encode } from 'gpt-3-encoder'
 
 export class Executor {
-  referencesIndex: Indexer | undefined
+  referencesIndex: VectorDB | undefined
 
   executePlan = async (plan: Plan): Promise<boolean> => {
     const promises: Promise<string | null>[] = []
@@ -78,9 +78,7 @@ export class Executor {
   loadReferences = async (references: string[]) => {
     if (references.length == 0) return
 
-    this.referencesIndex = new Indexer()
-    const { docs } = await this.referencesIndex.load(references, true)
-    this.referencesIndex.loadVectors(docs)
+    this.referencesIndex = await indexer.createPartialIndex(references)
   }
 
   createFile = async (plan: Plan, file: string, changes: string) => {
@@ -132,8 +130,7 @@ export class Executor {
     const fileContents = fs.readFileSync(inputFile, 'utf8')
     if (!outputFile) outputFile = inputFile
 
-    const fromReferences =
-      this.referencesIndex && (await this.referencesIndex.vectorDB.search(changes, 4))
+    const fromReferences = this.referencesIndex && (await this.referencesIndex.search(changes, 4))
     const referenceSet = new Set(fromReferences?.map((s) => s.metadata.path))
     const similar = await indexer.vectorDB.searchWithScores(plan.request + '\n' + changes, 6)
     const similarFuncs = similar

@@ -210,7 +210,7 @@ ${progressText}
           }
 
           try {
-            const result = await tool.run(invocation.input, this.query)
+            const result = await tool.run(invocation.input, this.query!)
             return (
               `Ran tool ${invocation.tool} with input ${invocation.input}\n` +
               (result ? result : 'Empty output returned')
