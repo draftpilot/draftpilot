@@ -33,6 +33,7 @@
     "commander": "^9.4.1",
     "diff": "^5.1.0",
     "fast-glob": "^3.2.12",
+    "flexsearch": "^0.7.31",
     "gpt-3-encoder": "^1.1.4",
     "hnswlib-node": "^1.4.2",
     "ini": "^3.0.1",
