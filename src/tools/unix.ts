@@ -134,26 +134,42 @@ const gitDiffTool: Tool = {
 }
 
 export const stringToArgs = (input: string) => {
-  const regex = /[^\s"']+|'([^']*)'|"([^"]*)"/gi
   const args = []
+  let currentArg = ''
+  let inSingleQuote = false
+  let inDoubleQuote = false
+  let escapeNextChar = false
 
-  let match
-  do {
-    match = regex.exec(input)
-    if (match !== null) {
-      args.push(match[1] ? match[1] : match[2] ? match[2] : match[0])
-    }
-  } while (match !== null)
-
-  return args.map((arg) => {
-    if (arg.startsWith('"') && arg.endsWith('"')) {
-      return arg.slice(1, -1).replace(/\\"/g, '"')
-    } else if (arg.startsWith("'") && arg.endsWith("'")) {
-      return arg.slice(1, -1).replace(/\\'/g, "'")
+  for (const char of input) {
+    if (escapeNextChar) {
+      currentArg += char
+      escapeNextChar = false
+    } else if (char === '\\') {
+      escapeNextChar = true
+    } else if (char === "'" && !inDoubleQuote) {
+      if (inSingleQuote) {
+        args.push(currentArg)
+        currentArg = ''
+      }
+      inSingleQuote = !inSingleQuote
+    } else if (char === '"' && !inSingleQuote) {
+      if (inDoubleQuote) {
+        args.push(currentArg)
+        currentArg = ''
+      }
+      inDoubleQuote = !inDoubleQuote
+    } else if (char === ' ' && !inSingleQuote && !inDoubleQuote) {
+      args.push(currentArg)
+      currentArg = ''
     } else {
-      return arg
+      currentArg += char
     }
-  })
+  }
+  if (currentArg) {
+    args.push(currentArg)
+  }
+
+  return args
 }
 
 export const spawnPromise = (command: string, args: string[], cwd?: string) => {
