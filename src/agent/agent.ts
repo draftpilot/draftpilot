@@ -27,8 +27,6 @@ type AgentState = {
 // an agent iteratively uses tools to solve a problem
 // inspired by langchain
 export class Agent {
-  systemMessage?: string
-
   scratchpad: string = ''
 
   toolNames: string
@@ -44,9 +42,10 @@ export class Agent {
 
   chatHistory: ChatMessage[] = []
 
-  constructor(public tools: Tool[], public outputFormat: string) {
+  constructor(public tools: Tool[], public outputFormat: string, public systemMessage?: string) {
     this.toolNames = tools.map((tool) => tool.name).join(', ')
     this.toolDescriptions = tools.map((tool) => `${tool.name}: ${tool.description}`).join('\n')
+    if (systemMessage) this.chatHistory.push({ role: 'system', content: systemMessage })
   }
 
   addInitialState = (thought: string, observation: string) => {

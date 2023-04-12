@@ -1,4 +1,4 @@
-import { stringToArgs, unixTools } from '@/tools/unix'
+import { stringToArgs, unixTools } from '@/agent/unix'
 import assert from 'assert'
 
 describe('stringToArgs', () => {

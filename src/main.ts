@@ -76,7 +76,7 @@ export default function () {
     .command('agent')
     .description('Use agent approach to fulfill the request (experimental)')
     .action(actionWrapper(agent))
-    .argument('<request>', 'The request to make.')
+    .argument('[request]', 'The request to make.')
 
   program
     .command('execute [file]')

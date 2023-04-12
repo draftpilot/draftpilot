@@ -12,7 +12,7 @@ export default async function () {
 
   const tools = getAllTools(indexer)
 
-  const agent = new Agent(tools, '')
+  const agent = new Agent(tools, '', '')
 
   log('Available tools:', agent.toolDescriptions)
 

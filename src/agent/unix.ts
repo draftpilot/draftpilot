@@ -4,8 +4,9 @@ import child_process from 'child_process'
 import FastGlob from 'fast-glob'
 
 const grepTool: Tool = {
-  name: 'grep',
-  description: 'Search for a pattern and print the matching lines. e.g. grep: pattern',
+  name: 'findAcrossFiles',
+  description:
+    'Search for a pattern and across files print the matching lines. e.g. findAcrossFiles: pattern',
 
   run: (input: string) => {
     const args = stringToArgs(input)
@@ -31,8 +32,8 @@ const grepTool: Tool = {
 }
 
 const findTool: Tool = {
-  name: 'findTool',
-  description: 'Tool to find files matching a shell pattern. e.g. find: "*.foo.js"',
+  name: 'findFileNames',
+  description: 'Find file names matching a shell pattern. e.g. findFileNames: *.foo.js',
 
   run: (input: string) => {
     const args = stringToArgs(input)
@@ -42,8 +43,8 @@ const findTool: Tool = {
 }
 
 const lsTool: Tool = {
-  name: 'lsTool',
-  description: 'List files in a folder. e.g. ls folder1 folder2',
+  name: 'listFiles',
+  description: 'List files in a folder. e.g. listFiles folder1 folder2',
   run: (input: string) => {
     const args = stringToArgs(input)
     return spawnPromise('ls', args)
@@ -199,3 +200,5 @@ export const unixTools = [
   rmTool,
   sedTool,
 ]
+
+export const unixReadOnlyTools = [grepTool, findTool, lsTool, gitHistory, gitDiffTool]
