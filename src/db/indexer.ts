@@ -5,6 +5,7 @@ import { CodeDoc } from '@/types'
 import { findRoot } from '@/utils/utils'
 import chalk from 'chalk'
 import FastGlob from 'fast-glob'
+import SearchDB from '@/db/searchDb'
 
 // things that glob should never return
 export const GLOB_EXCLUSIONS = ['!**/node_modules/**', '!**/dist/**', '!**/build/**']
@@ -32,12 +33,14 @@ const TAG = chalk.blue('[indexer]')
 export class Indexer {
   fileDB: FileDB
   vectorDB: VectorDB
+  searchDB: SearchDB
   files: string[]
 
   constructor() {
     const root = findRoot()
     this.fileDB = new FileDB(root)
     this.vectorDB = new VectorDB()
+    this.searchDB = new SearchDB()
     this.files = []
   }
 
@@ -70,6 +73,7 @@ export class Indexer {
 
   loadVectors = async (docs: CodeDoc[]) => {
     await this.vectorDB.init(docs)
+    this.searchDB.addDocuments(docs)
   }
 
   loadFilesIntoVectors = async (glob?: string) => {

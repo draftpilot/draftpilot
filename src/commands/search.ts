@@ -1,7 +1,5 @@
 import { indexer } from '@/db/indexer'
 import { log } from '@/utils/logger'
-import { pluralize } from '@/utils/utils'
-import chalk from 'chalk'
 
 type Options = {
   k?: string
@@ -15,5 +13,8 @@ export default async function (query: string, options: Options) {
     query,
     options.k ? parseInt(options.k) : undefined
   )
-  log('results:', similar)
+  log('vector results:', similar)
+
+  const wordSearch = await indexer.searchDB.search(query)
+  log('word results:', wordSearch)
 }

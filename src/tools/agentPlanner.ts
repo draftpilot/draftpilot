@@ -39,10 +39,7 @@ export class AgentPlanner implements AbstractPlanner {
     agent.actionParam = 'Research Action'
     agent.finalAnswerParam = 'Action Plan'
 
-    agent.addInitialState(
-      'What are the most relevant files to this query?',
-      relevantDocs.join('\n')
-    )
+    agent.addInitialState('What are the most relevant files to this query?', relevantDocs)
 
     while (true) {
       const planString = await agent.runContinuous(query, MAX_PLAN_ITERATIONS, this.stopEachStep)
@@ -71,16 +68,20 @@ export class AgentPlanner implements AbstractPlanner {
 export async function findRelevantDocs(query: string, files: string[]) {
   const filteredFiles = filterFiles(files, query, 20)
   const fileSet = new Set(filteredFiles)
-  const similarDocs = await indexer.vectorDB.search(query, 10)
+  const similarDocs = (await indexer.vectorDB.search(query, 10)) || []
 
-  similarDocs?.forEach((doc) => {
+  const exactMatches = await indexer.searchDB.search(query, 10)
+  similarDocs.forEach((doc) => {
     const file = splitOnce(doc.metadata.path, '#')[0]
     fileSet.add(file)
   })
 
+  const returnStrings = []
+  if (exactMatches.length) returnStrings.push('Exact matches:', exactMatches.join('\n'))
   const relevantFiles = Array.from(fileSet)
-  const filesWithContext = getFilesWithContext(relevantFiles)
-  return filesWithContext
+  if (relevantFiles.length) returnStrings.push('Other related files:', relevantFiles.join('\n'))
+
+  return returnStrings.join('\n')
 }
 
 function filterFiles(files: string[], query: string, limit: number) {

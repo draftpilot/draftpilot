@@ -40,7 +40,7 @@ export default async function (query: string, options: Options) {
   agent.actionParam = 'Research Action'
   agent.finalAnswerParam = 'Action Plan'
 
-  agent.addInitialState('What are the most relevant files to this query?', relevantDocs.join('\n'))
+  agent.addInitialState('What are the most relevant files to this query?', relevantDocs)
 
   await agent.runContinuous(query, 10, true)
 

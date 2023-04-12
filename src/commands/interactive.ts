@@ -21,10 +21,8 @@ export default async function (options: Options) {
   const unstaged = getUnstagedFiles()
   if (unstaged) {
     log(
-      chalk.yellow(
-        'Warning: ',
-        'You have unstaged files in your git repo. We recommend you commit those first in case you need to roll-back.'
-      )
+      chalk.yellow('Warning:'),
+      'Unstaged files in your git repo. We recommend you quit & commit those first in case you need to roll back.'
     )
   }
 
@@ -40,7 +38,7 @@ export default async function (options: Options) {
   }
 
   // plan
-  log('What do you want to do?')
+  log('What can I do for you?')
   const planInput = await inquirer.prompt([
     {
       type: 'input',
