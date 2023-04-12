@@ -1,6 +1,7 @@
 import { Tool, confirmPrompt } from '@/tools/tool'
 
 import child_process from 'child_process'
+import FastGlob from 'fast-glob'
 
 const grepTool: Tool = {
   name: 'grep',
@@ -19,7 +20,11 @@ const grepTool: Tool = {
       '--exclude-dir',
       '.git',
       '--exclude-dir',
-      '.draftpilot'
+      '.draftpilot',
+      '--exclude-dir',
+      'dist',
+      '--exclude-dir',
+      'out'
     )
     return spawnPromise('grep', args)
   },
@@ -54,6 +59,55 @@ const rmTool: Tool = {
 
     if (await confirmPrompt(`Run rm ${args.join(' ')}?`)) {
       return spawnPromise('rm', args)
+    } else {
+      return 'Cancelled by user'
+    }
+  },
+}
+
+const cpTool: Tool = {
+  name: 'cp',
+  description: 'Copies files and folders. e.g. cp -r src/folder dest/folder',
+  run: async (input: string) => {
+    const args = stringToArgs(input)
+
+    return spawnPromise('cp', args)
+  },
+}
+
+const mvTool: Tool = {
+  name: 'mv',
+  description: 'Moves files and folders. e.g. mv src/file dest/file',
+  run: async (input: string) => {
+    const args = stringToArgs(input)
+
+    if (await confirmPrompt(`Run mv ${args.join(' ')}?`)) {
+      return spawnPromise('mv', args)
+    } else {
+      return 'Cancelled by user'
+    }
+  },
+}
+
+const sedTool: Tool = {
+  name: 'sed',
+  description: 'In-place stream editor. e.g. sed s/foo/bar/ **/*.js',
+  run: async (input: string) => {
+    const args = stringToArgs(input).filter((arg) => arg != '-i')
+
+    // deal with darwin sed
+    if (process.platform == 'darwin') args.unshift('-i', '')
+    else args.unshift('-i')
+
+    if (await confirmPrompt(`Run sed ${args.join(' ')}?`)) {
+      // If the last argument is a glob, expand it and add the files to the args
+      if (args[args.length - 1].startsWith('**')) {
+        const glob = args.pop()
+        const files = await FastGlob(glob!)
+        args.push(...files)
+      }
+
+      return spawnPromise('sed', args)
     } else {
       return 'Cancelled by user'
     }
@@ -98,4 +152,4 @@ const spawnPromise = (command: string, args: string[], cwd?: string) => {
   })
 }
 
-export const unixTools = [grepTool, findTool, lsTool, gitHistory, rmTool]
+export const unixTools = [grepTool, findTool, lsTool, gitHistory, cpTool, mvTool, rmTool, sedTool]
