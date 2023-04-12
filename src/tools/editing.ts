@@ -27,9 +27,10 @@ export const generateEditingTools = (indexer: Indexer): Tool[] => {
       'Clones the source file and uses AI to edit it according to instructions. e.g. cloneFile source/file dest/file rename foo to bar',
 
     run: async (input: string, overallGoal?: string) => {
-      const [file, change] = splitOnce(input, ' ')
+      const [file, destAndChange] = splitOnce(input, ' ')
+      const [dest, change] = splitOnce(destAndChange, ' ')
 
-      return await doChange(overallGoal || '', indexer, file, change)
+      return await doChange(overallGoal || '', indexer, file, change, dest)
     },
   }
 
@@ -76,7 +77,10 @@ ${decoratedLines.join('\n')}
 ---
 Overall goal: ${overallGoal}
 
-Apply the following changes to the ${outputFile}: ${changes}`
+Apply the following changes to the ${outputFile}: ${changes}.
+
+If you are unable to make the changes or need more information, respond HELP: <detailed question or reason>
+`
 
   const model = config.gpt4 == 'never' ? '3.5' : '4'
 
@@ -90,6 +94,10 @@ Apply the following changes to the ${outputFile}: ${changes}`
     model == '3.5' ? 'Executing...' : 'Executing (GPT-4 is slow so this may take a while)...'
   const result = await oraPromise(promise, { text })
 
+  if (result.startsWith('HELP:')) {
+    return 'Unable to edit file, the AI needs: ' + result.substring(5)
+  }
+
   if (outputFormat == 'full') {
     fs.writeFileSync(outputFile, result)
   } else {
@@ -101,8 +109,9 @@ Apply the following changes to the ${outputFile}: ${changes}`
     }
 
     try {
-      const output = Diff.applyPatch(fileContents, result.trim(), { fuzzFactor: 5 })
-      fs.writeFileSync(outputFile, output)
+      const output = Diff.applyPatch(fileContents, result.trim(), { fuzzFactor: 30 })
+      if (output) fs.writeFileSync(outputFile, output)
+      throw 'Unable to apply patch'
     } catch (e: any) {
       if (inputFile != outputFile) fs.writeFileSync(outputFile, fileContents)
       return (

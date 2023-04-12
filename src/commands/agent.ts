@@ -36,7 +36,8 @@ const SYSTEM_MESSAGE =
 export async function doPlan(indexer: Indexer, query: string, options?: Options) {
   const baseGlob = query.includes('test') ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS
   const files = await indexer.getFiles(options?.glob || baseGlob)
-  const { docs } = await indexer.load(files)
+  const { docs, updatedDocs } = await indexer.load(files)
+  await indexer.index(updatedDocs)
   await indexer.loadVectors(docs)
 
   const relevantDocs = await findRelevantDocs(query, files, indexer)

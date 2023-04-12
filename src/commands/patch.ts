@@ -22,9 +22,12 @@ export default async function (file: string, options: Options) {
   log('loading file', fileToEdit)
   const fileContents = fs.readFileSync(fileToEdit, 'utf8')
 
-  const output = Diff.applyPatch(fileContents, patchContents, { fuzzFactor: 5 })
+  const output = Diff.applyPatch(fileContents, patchContents, { fuzzFactor: 30 })
+  if (!output) {
+    log(chalk.red(`Failed to apply patch to ${file}`))
+    return
+  }
 
-  log('got output', typeof output)
   fs.writeFileSync(fileToEdit, output)
 
   log(chalk.green(`Successfully applied patch to ${file}`))

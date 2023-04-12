@@ -8,6 +8,7 @@ import { oraPromise } from 'ora'
 import fs from 'fs'
 import { splitOnce } from '@/utils/utils'
 
+import { ChatMessage } from '@/types'
 type ToolInvocation = {
   tool: string
   input: string
@@ -38,6 +39,8 @@ export class Agent {
 
   // query states, newest first
   state: AgentState[] = []
+
+  chatHistory: ChatMessage[] = []
 
   constructor(public tools: Tool[], public outputFormat: string) {
     this.toolNames = tools.map((tool) => tool.name).join(', ')
@@ -142,6 +145,7 @@ ${progressText}
           this.state.unshift({
             thought: 'From user: ' + response.continue,
           })
+          this.chatHistory.push({ role: 'user', content: response.continue })
         }
       }
     }
@@ -163,6 +167,7 @@ ${progressText}
     const response = await oraPromise(promise, { text: 'Analyzing next steps...' })
 
     log(chalk.bold(`Response:`))
+    this.chatHistory.push({ role: 'assistant', content: response })
     log(response)
 
     if (forceComplete)
