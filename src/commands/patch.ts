@@ -3,6 +3,7 @@ import chalk from 'chalk'
 import fs from 'fs'
 import * as Diff from 'diff'
 import { splitOnce } from '@/utils/utils'
+import child_process from 'child_process'
 
 type Options = {}
 
@@ -19,15 +20,17 @@ export default async function (file: string, options: Options) {
   const fileToEdit = splitOnce(lines[0], ' ')[1]
   const patchContents = lines.slice(2).join('\n')
 
+  // fs.writeFileSync('/tmp/patch.patch', patchContents)
+  // const result = child_process.execSync(`patch ${fileToEdit} /tmp/patch.patch`)
+  // log(result.toString())
+
   log('loading file', fileToEdit)
   const fileContents = fs.readFileSync(fileToEdit, 'utf8')
-
   const output = Diff.applyPatch(fileContents, patchContents, { fuzzFactor: 30 })
   if (!output) {
     log(chalk.red(`Failed to apply patch to ${file}`))
     return
   }
-
   fs.writeFileSync(fileToEdit, output)
 
   log(chalk.green(`Successfully applied patch to ${file}`))

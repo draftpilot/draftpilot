@@ -6,9 +6,11 @@ import { encode } from 'gpt-3-encoder'
 import inquirer from 'inquirer'
 import { oraPromise } from 'ora'
 import fs from 'fs'
-import { splitOnce } from '@/utils/utils'
+import { findRoot, splitOnce } from '@/utils/utils'
 
 import { ChatMessage } from '@/types'
+import { writeFileSync } from 'fs'
+
 type ToolInvocation = {
   tool: string
   input: string
@@ -114,6 +116,8 @@ ${progressText}
       if (i == limit - 1) forceAnswer = true
 
       const result = await this.runOnce(query, forceAnswer)
+      const root = findRoot()
+      writeFileSync(root + '/.draftpilot/history.json', JSON.stringify(this.chatHistory, null, 2))
 
       if (result.finalAnswer) {
         return result.finalAnswer

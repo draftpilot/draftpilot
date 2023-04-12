@@ -23,9 +23,7 @@ export const PLAN_FILE = 'plan.json'
 export default async function (query: string, options: Options) {
   const indexer = new Indexer()
 
-  const plan = await doPlan(indexer, query, options)
-  fs.writeFileSync(PLAN_FILE, JSON.stringify(plan))
-  log(chalk.green(`Excellent! Wrote plan to ${PLAN_FILE}`))
+  await doPlan(indexer, query, options)
 
   cache.close()
 }
@@ -55,27 +53,7 @@ export async function doPlan(indexer: Indexer, query: string, options?: Options)
   agent.systemMessage = SYSTEM_MESSAGE
   agent.addInitialState('What are the most relevant files to this query?', relevantDocs.join('\n'))
 
-  let plan = await agent.runContinuous(query, 10, true)
-
-  const jsonStart = plan.indexOf('{')
-  const jsonEnd = plan.lastIndexOf('}')
-  if (jsonStart > -1 && jsonEnd > -1) {
-    plan = plan.substring(jsonStart, jsonEnd + 1)
-    // sometimes trailing commas are generated. sometimes no commas are generated,
-    const fixedJsonString = plan.replace(/"\n"/g, '",').replace(/,\s*([\]}])/g, '$1')
-
-    // don't accept plans that are not JSON
-    try {
-      const finalPlan: Plan = { request: query, ...JSON.parse(fixedJsonString) }
-      return finalPlan
-    } catch (e) {
-      log(chalk.red('Error:'), 'Oops, that was invalid JSON')
-    }
-  } else {
-    log(chalk.yellow('Warning:'), 'Plan was not updated, got non-JSON response')
-  }
-
-  return { request: query }
+  await agent.runContinuous(query, 10, true)
 }
 
 async function findRelevantDocs(query: string, files: string[], indexer: Indexer) {
