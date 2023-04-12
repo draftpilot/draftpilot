@@ -1,17 +1,10 @@
 import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, Indexer } from '@/db/indexer'
-import { log } from '@/utils/logger'
-import chalk from 'chalk'
 import { cache } from '@/db/cache'
 import { getFilesWithContext } from '@/context/manifest'
-import fs from 'fs'
-import { Plan } from '@/types'
 import { findSimilarDocuments } from '@/utils/similarity'
-import { unixTools } from '@/tools/unix'
-import { generateCodeTools } from '@/tools/code'
 import { Agent } from '@/ai/agent'
-import { systemTools } from '@/tools/system'
 import { splitOnce } from '@/utils/utils'
-import { generateEditingTools } from '@/tools/editing'
+import { getAllTools } from '@/tools'
 
 type Options = {
   glob?: string
@@ -39,13 +32,7 @@ export async function doPlan(indexer: Indexer, query: string, options?: Options)
   await indexer.loadVectors(docs)
 
   const relevantDocs = await findRelevantDocs(query, files, indexer)
-
-  const tools = [
-    ...unixTools,
-    ...systemTools,
-    ...generateCodeTools(indexer),
-    ...generateEditingTools(indexer),
-  ]
+  const tools = getAllTools(indexer)
 
   const outputFormat = `Request is complete`
 

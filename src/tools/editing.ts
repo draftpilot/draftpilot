@@ -10,10 +10,22 @@ import { oraPromise } from 'ora'
 import { git } from '@/utils/git'
 
 export const generateEditingTools = (indexer: Indexer): Tool[] => {
+  const createFileTool: Tool = {
+    name: 'createFile',
+    description:
+      'Uses AI to create a new file according to instructions. e.g. createFile path/to/foo.ts detailed description of what insert, including function names and description of logic',
+
+    run: async (input: string, overallGoal?: string) => {
+      const [file, change] = splitOnce(input, ' ')
+
+      return await doChange(overallGoal || '', indexer, 'new', change, file)
+    },
+  }
+
   const editFileTool: Tool = {
     name: 'editFile',
     description:
-      'Uses AI to edit the file according to instructions. e.g. editFile path/to/foo.ts rename foo to bar',
+      'Uses AI to edit the file according to instructions. e.g. editFile path/to/foo.ts detailed description of edits to make so AI knows what to do',
 
     run: async (input: string, overallGoal?: string) => {
       const [file, change] = splitOnce(input, ' ')
@@ -35,31 +47,7 @@ export const generateEditingTools = (indexer: Indexer): Tool[] => {
     },
   }
 
-  const verifyDiffTool: Tool = {
-    name: 'verifyDiff',
-    description:
-      'Prints git diff of file and verifies if it makes the requested change. e.g. verifyDiff path/to/foo.ts rename foo to bar',
-
-    run: async (input: string, overallGoal?: string) => {
-      const [file, change] = splitOnce(input, ' ')
-
-      const inputFile = fuzzyMatchingFile(file, indexer.files) || file
-      if (!fs.existsSync(inputFile)) return `File ${inputFile} does not exist.`
-
-      const history = git(['diff', '--pretty=format:%H', inputFile])
-
-      const prompt = `Verify that the following diff makes the requested change: ${change}.
-
-${history}`
-
-      const promise = chatCompletion(prompt, '3.5')
-      const response = await oraPromise(promise, 'Waiting for AI to respond')
-
-      return response
-    },
-  }
-
-  return [editFileTool, cloneFileTool, verifyDiffTool]
+  return [createFileTool, editFileTool, cloneFileTool]
 }
 
 async function doChange(
@@ -69,9 +57,11 @@ async function doChange(
   changes: string,
   outputFile?: string
 ) {
-  inputFile = fuzzyMatchingFile(inputFile, indexer.files) || inputFile
-  if (!fs.existsSync(inputFile)) return `File ${inputFile} does not exist.`
-  const fileContents = fs.readFileSync(inputFile, 'utf8')
+  if (inputFile != 'new') {
+    inputFile = fuzzyMatchingFile(inputFile, indexer.files) || inputFile
+    if (!fs.existsSync(inputFile)) return `File ${inputFile} does not exist.`
+  }
+  const fileContents = inputFile == 'new' ? '' : fs.readFileSync(inputFile, 'utf8')
   if (!outputFile) outputFile = inputFile
 
   const similar = await indexer.vectorDB.searchWithScores(overallGoal + '\n' + changes, 4)

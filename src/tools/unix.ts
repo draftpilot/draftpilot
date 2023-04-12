@@ -123,33 +123,61 @@ const gitHistory: Tool = {
   },
 }
 
-const stringToArgs = (input: string) => {
-  const regex = /[^\s"]+|"([^"]*)"/gi
+const gitDiffTool: Tool = {
+  name: 'gitDiff',
+  description: 'Prints git diff of changes to file. e.g. gitDiff file',
+
+  run: async (input: string, overallGoal?: string) => {
+    const args = ['diff', '--pretty=format:%H', input]
+    return spawnPromise('git', args)
+  },
+}
+
+export const stringToArgs = (input: string) => {
+  const regex = /[^\s"']+|'([^']*)'|"([^"]*)"/gi
   const args = []
 
   let match
   do {
     match = regex.exec(input)
     if (match !== null) {
-      args.push(match[1] ? match[1] : match[0])
+      args.push(match[1] ? match[1] : match[2] ? match[2] : match[0])
     }
   } while (match !== null)
 
-  return args
+  return args.map((arg) => {
+    if (arg.startsWith('"') && arg.endsWith('"')) {
+      return arg.slice(1, -1).replace(/\\"/g, '"')
+    } else if (arg.startsWith("'") && arg.endsWith("'")) {
+      return arg.slice(1, -1).replace(/\\'/g, "'")
+    } else {
+      return arg
+    }
+  })
 }
 
-const spawnPromise = (command: string, args: string[], cwd?: string) => {
+export const spawnPromise = (command: string, args: string[], cwd?: string) => {
   const result = child_process.spawn(command, args, { cwd })
   return new Promise<string>((resolve, reject) => {
     const chunks: Buffer[] = []
     const errorChunks: Buffer[] = []
-    result.stdout!.on('data', (chunk) => chunks.push(chunk))
-    result.stdout!.on('end', () => {
+    result.stdout.on('data', (chunk) => chunks.push(chunk))
+    result.stdout.on('end', () => {
       if (chunks.length == 0 && errorChunks.length) reject(Buffer.concat(errorChunks).toString())
       resolve(Buffer.concat(chunks).toString())
     })
-    result.stderr!.on('data', (chunk) => chunks.push(chunk))
+    result.stderr.on('data', (chunk) => chunks.push(chunk))
   })
 }
 
-export const unixTools = [grepTool, findTool, lsTool, gitHistory, cpTool, mvTool, rmTool, sedTool]
+export const unixTools = [
+  grepTool,
+  findTool,
+  lsTool,
+  gitHistory,
+  gitDiffTool,
+  cpTool,
+  mvTool,
+  rmTool,
+  sedTool,
+]

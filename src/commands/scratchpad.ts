@@ -1,10 +1,6 @@
 import { Agent } from '@/ai/agent'
-import { filesToDirectoryTree } from '@/context/manifest'
 import { Indexer } from '@/db/indexer'
-import { generateCodeTools } from '@/tools/code'
-import { generateEditingTools } from '@/tools/editing'
-import { systemTools } from '@/tools/system'
-import { unixTools } from '@/tools/unix'
+import { getAllTools } from '@/tools'
 import { log } from '@/utils/logger'
 import inquirer from 'inquirer'
 
@@ -14,12 +10,7 @@ export default async function () {
   const indexer = new Indexer()
   await indexer.loadFilesIntoVectors()
 
-  const tools = [
-    ...unixTools,
-    ...systemTools,
-    ...generateCodeTools(indexer),
-    ...generateEditingTools(indexer),
-  ]
+  const tools = getAllTools(indexer)
 
   const agent = new Agent(tools, '')
 

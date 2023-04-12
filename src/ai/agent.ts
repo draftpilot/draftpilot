@@ -84,7 +84,8 @@ Final Answer: ${this.outputFormat}`
 
       if (state.observation) {
         const observationLength = encode(state.observation).length
-        if (i > 0 && observationLength > 500) stateText.push('Observation: too long to fit')
+        if (observationLength + inProgressTokens > maxTokens)
+          stateText.push('Observation: too long to fit')
         else stateText.push(`Observation: ${state.observation}`)
       }
 
@@ -107,6 +108,7 @@ Begin!
 Request: ${this.query}
 ${progressText}
 `
+    this.chatHistory.push({ role: 'assistant', content: progress })
     return [prefix, instructions, progress].join('\n\n')
   }
 
@@ -291,10 +293,11 @@ ${progressText}
     const invocations: ToolInvocation[] = []
     const lines = result.split('\n').filter(Boolean)
 
-    for (const line of lines) {
-      let [tool, input] = splitOnce(line, ' ').map((s) => s.trim())
+    for (let line of lines) {
+      const sourceLine = line.startsWith('- ') ? line.slice(2) : line
+      let [tool, input] = splitOnce(sourceLine, ' ').map((s) => s.trim())
 
-      if (tool && input) {
+      if (tool) {
         if (tool.endsWith(':')) tool = tool.slice(0, -1)
         invocations.push({ tool, input })
       } else {

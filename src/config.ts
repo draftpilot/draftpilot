@@ -16,7 +16,7 @@ const config: Config = {
   options: undefined,
   configFolder: '.draftpilot',
   gpt4: 'code-only',
-  temperature: 0.1,
+  temperature: 0,
 }
 
 export default config
