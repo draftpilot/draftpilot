@@ -58,7 +58,7 @@ ${this.toolDescriptions}`
     const instructions = `Use the following format:
 Request: the request you must fulfill
 Thought: you should always think about what to do
-Action: the action to take, should be one of [${this.toolNames}]: input, e.g.
+Action: the action to take, should be one or more of [${this.toolNames}] + input, e.g.
 - grep: foo
 - viewFile: path/to/file
 Observation: the result of the actions
@@ -117,10 +117,12 @@ ${progressText}
       }
 
       this.state.unshift(result)
-      if (!forceAnswer && pauseBetween) {
+      const askedUser = result.parsedAction?.some((invocation) => invocation.tool == 'askUser')
+
+      if (!forceAnswer && pauseBetween && !askedUser) {
         log(
           chalk.bold(
-            "Allow the agent to iterate again? Type 'n' to force answer, or free text to respond to the agent's thought"
+            "Allow the agent to iterate again? Type 'n' to force answer, or type text to add comments for the agent"
           )
         )
         const response = await inquirer.prompt([
@@ -220,26 +222,31 @@ ${progressText}
       thought: '',
     }
 
-    let mode: keyof AgentState = 'thought'
+    let mode: 'thought' | 'action' | 'finalAnswer' = 'thought'
     let buffer: string[] = []
+
+    const transitionMode = () => {
+      result[mode] = (result[mode] || '') + buffer.join('\n')
+    }
+
     for (const line of lines) {
       if (line.startsWith('Thought:')) {
         buffer.push(line.replace('Thought:', '').trim())
       } else if (line.startsWith('Action:')) {
-        result[mode] = buffer.join('\n')
+        transitionMode()
         buffer = []
         mode = 'action'
         buffer.push(line.replace('Action:', '').trim())
       } else if (line.startsWith('Final Answer:')) {
-        result[mode] = buffer.join('\n')
+        transitionMode()
         buffer = []
-        mode = 'action'
+        mode = 'finalAnswer'
         buffer.push(line.replace('Final Answer:', '').trim())
       } else {
         buffer.push(line)
       }
     }
-    result[mode] = buffer.join('\n')
+    transitionMode()
 
     if (result.action) {
       let parsedAction = this.parseActions(result.action)

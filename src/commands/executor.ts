@@ -126,7 +126,7 @@ async function doClone(plan: Plan, indexer: Indexer, file: string) {
   return await doChange(plan, indexer, file, dest.edits, dest.dest)
 }
 
-async function doChange(
+export async function doChange(
   plan: Plan,
   indexer: Indexer,
   inputFile: string,

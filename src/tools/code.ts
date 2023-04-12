@@ -23,6 +23,7 @@ export const generateCodeTools = (indexer: Indexer): Tool[] => {
         )
       }
 
+      if (file != input) return 'Actual path: ' + file + '\n' + contents
       return contents
     },
   }
@@ -43,8 +44,8 @@ export const generateCodeTools = (indexer: Indexer): Tool[] => {
       'Search for file/function names with contents similar to the input. Input: search query',
 
     run: async (input: string) => {
-      const results = await indexer.vectorDB.search(input, 10)
-      return results?.map((r) => r.metadata.path).join('\n') || ''
+      const results = await indexer.vectorDB.searchWithScores(input, 10)
+      return results?.map(([r, score]) => `${r.metadata.path} - score: ${score}`).join('\n') || ''
     },
   }
 

@@ -10,6 +10,8 @@ import { unixTools } from '@/tools/unix'
 import { generateCodeTools } from '@/tools/code'
 import { Agent } from '@/ai/agent'
 import { systemTools } from '@/tools/system'
+import { splitOnce } from '@/utils/utils'
+import { generateEditingTools } from '@/tools/editing'
 
 type Options = {
   glob?: string
@@ -29,7 +31,7 @@ export default async function (query: string, options: Options) {
 }
 
 const SYSTEM_MESSAGE =
-  'You are PlanGPT, you help plan changes to an existing codebase. Respond in the requested format with no extra comments. Do not try to modify anything.'
+  'You are EngineerGPT, you help make changes to an existing codebase in as few steps as possible. Only use the tools provided.'
 
 export async function doPlan(indexer: Indexer, query: string, options?: Options) {
   const baseGlob = query.includes('test') ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS
@@ -39,27 +41,20 @@ export async function doPlan(indexer: Indexer, query: string, options?: Options)
 
   const relevantDocs = await findRelevantDocs(query, files, indexer)
 
-  const tools = [...unixTools, ...systemTools, ...generateCodeTools(indexer)]
+  const tools = [
+    ...unixTools,
+    ...systemTools,
+    ...generateCodeTools(indexer),
+    ...generateEditingTools(indexer),
+  ]
 
-  const outputFormat = `the plan for how to make the changes requested, in the JSON format:
-{
-  "change": {
-    "path/file3": "detailed explanation of change",
-  },
-  "clone": { "from/file":
-    { "dest": "to/file", edits: "making a copy of from/file with changes" } },
-  "create": {
-    "other/file4": "detailed explanation of new file contents",
-  },
-  "rename": { "from/file": "to/file" },
-  "delete": []
-}`
+  const outputFormat = `Request is complete`
 
   const agent = new Agent(tools, outputFormat)
   agent.systemMessage = SYSTEM_MESSAGE
   agent.addInitialState('What are the most relevant files to this query?', relevantDocs.join('\n'))
 
-  let plan = await agent.runContinuous(query, 5, true)
+  let plan = await agent.runContinuous(query, 10, true)
 
   const jsonStart = plan.indexOf('{')
   const jsonEnd = plan.lastIndexOf('}')
@@ -88,7 +83,7 @@ async function findRelevantDocs(query: string, files: string[], indexer: Indexer
   const similarDocs = await indexer.vectorDB.search(query, 10)
 
   similarDocs?.forEach((doc) => {
-    const file = doc.metadata.path.split('#')[0]
+    const file = splitOnce(doc.metadata.path, '#')[0]
     fileSet.add(file)
   })
 

@@ -1,10 +1,10 @@
-import { Tool } from '@/tools/tool'
+import { Tool, confirmPrompt } from '@/tools/tool'
 
 import child_process from 'child_process'
 
 const grepTool: Tool = {
-  name: 'grepFiles',
-  description: 'Search for a pattern and print the matching lines. Input: pattern',
+  name: 'grep',
+  description: 'Search for a pattern and print the matching lines. e.g. grep -r pattern .',
 
   run: (input: string) => {
     const args = stringToArgs(input)
@@ -26,8 +26,8 @@ const grepTool: Tool = {
 }
 
 const findTool: Tool = {
-  name: 'findFiles',
-  description: 'Tool to find files matching a shell pattern. Input: glob pattern',
+  name: 'find',
+  description: 'Tool to find files matching a shell pattern. e.g. find . -name "*.foo.js"',
 
   run: (input: string) => {
     const args = stringToArgs(input)
@@ -37,17 +37,32 @@ const findTool: Tool = {
 }
 
 const lsTool: Tool = {
-  name: 'lsFiles',
-  description: 'List files in a folder. Input: folder1, folder2, ...',
+  name: 'ls',
+  description: 'List files in a folder. e.g. ls folder1 folder2',
   run: (input: string) => {
     const args = stringToArgs(input)
     return spawnPromise('ls', args)
   },
 }
 
+const rmTool: Tool = {
+  name: 'rm',
+  description: 'Removes file. e.g. rm file1 file2',
+  run: async (input: string) => {
+    const args = stringToArgs(input)
+    args.unshift('-rf')
+
+    if (await confirmPrompt(`Run rm ${args.join(' ')}?`)) {
+      return spawnPromise('rm', args)
+    } else {
+      return 'Cancelled by user'
+    }
+  },
+}
+
 const gitHistory: Tool = {
   name: 'gitHistory',
-  description: 'Show git history for a given file. Input: file',
+  description: 'Show git history for a given file. e.g. gitHistory file',
   run: (input: string) => {
     const args = ['log', '--pretty=format:%h %s', input]
     return spawnPromise('git', args)
@@ -83,4 +98,4 @@ const spawnPromise = (command: string, args: string[], cwd?: string) => {
   })
 }
 
-export const unixTools = [grepTool, findTool, lsTool, gitHistory]
+export const unixTools = [grepTool, findTool, lsTool, gitHistory, rmTool]

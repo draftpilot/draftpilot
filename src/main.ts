@@ -17,7 +17,7 @@ import interactive from '@/commands/interactive'
 import patch from '@/commands/patch'
 import scratchpad from '@/commands/scratchpad'
 import commit from '@/commands/commit'
-import agentPlanner from '@/commands/agentPlanner'
+import agent from '@/commands/agent'
 
 export default function () {
   program
@@ -73,9 +73,9 @@ export default function () {
     .argument('<request>', 'The request to make.')
 
   program
-    .command('agentPlan')
-    .description('Use agent to create an execution plan for the request')
-    .action(actionWrapper(agentPlanner))
+    .command('agent')
+    .description('Use agent approach to fulfill the request (experimental)')
+    .action(actionWrapper(agent))
     .argument('<request>', 'The request to make.')
 
   program
