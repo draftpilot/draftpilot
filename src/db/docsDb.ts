@@ -99,20 +99,21 @@ export default class FileDB {
     )
     verboseLog('new files', Object.keys(allDocs))
 
-    // delete files
-    if (docsToDelete.length) {
-      await new Promise((res, rej) =>
-        this.db!.run(
-          `DELETE FROM docs WHERE path IN (${docsToDelete.map(() => '?').join(',')})`,
-          docsToDelete,
-          promisedResult(res, rej)
-        )
-      )
-    }
-
     const newDocs = Object.values(allDocs)
     const docs = [...existingDocs, ...changedDocs, ...newDocs]
-    return { docs, newDocs, changedDocs }
+    return { docs, newDocs, changedDocs, docsToDelete }
+  }
+
+  deleteDocs = async (docs: string[]) => {
+    if (!this.db || !docs.length) return
+
+    await new Promise((res, rej) =>
+      this.db!.run(
+        `DELETE FROM docs WHERE path IN (${docs.map(() => '?').join(',')})`,
+        docs,
+        promisedResult(res, rej)
+      )
+    )
   }
 
   saveVectors = async (docs: CodeDoc[]) => {

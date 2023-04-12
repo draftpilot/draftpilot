@@ -29,7 +29,7 @@ export const GLOB_WITHOUT_TESTS = [
 const TAG = chalk.blue('[indexer]')
 
 // indexer wraps the entire work of indexing
-class Indexer {
+export class Indexer {
   fileDB: FileDB
   vectorDB: VectorDB
   files: string[]
@@ -49,15 +49,16 @@ class Indexer {
 
   // loads index, returns a set of new documents that have changed since last index
   load = async (
-    files?: string[]
+    files?: string[],
+    skipDelete?: boolean
   ): Promise<{ docs: CodeDoc[]; updatedDocs: CodeDoc[]; existing: boolean }> => {
     await this.fileDB.init()
     if (!files) files = await this.getFiles()
-    const { docs } = await this.fileDB.processFiles(files)
+    const { docs, docsToDelete } = await this.fileDB.processFiles(files)
     if (!docs) return { docs: [], updatedDocs: [], existing: false }
 
+    if (!skipDelete) this.fileDB.deleteDocs(docsToDelete)
     const updatedDocs: CodeDoc[] = docs.filter((f) => !f.vectors)
-
     return { docs, updatedDocs, existing: !this.fileDB.dbWasEmpty }
   }
 

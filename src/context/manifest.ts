@@ -117,6 +117,14 @@ function getDirectoryPaths(fileTree: DirectoryNode, prefix: string): string[] {
   return paths
 }
 
+export function filesToDirectoryTreeStruct(files: string[]) {
+  const fileTree: DirectoryNode = {}
+  for (const file of files) {
+    addFileToDirectory(file, fileTree)
+  }
+  return fileTree
+}
+
 export function filesToDirectoryTree(files: string[]) {
   const fileTree: DirectoryNode = {}
   for (const file of files) {

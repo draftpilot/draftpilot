@@ -1,6 +1,6 @@
 import { chatCompletion } from '@/ai/api'
 import { cache } from '@/db/cache'
-import { indexer } from '@/db/indexer'
+import { Indexer, indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/utils/logger'
 import { fuzzyMatchingFile, readConfig } from '@/utils/utils'
 import chalk from 'chalk'
@@ -11,15 +11,16 @@ import config from '@/config'
 import * as Diff from 'diff'
 import { dirname, basename } from 'path'
 import { VectorDB } from '@/db/vectorDb'
+import { encode } from 'gpt-3-encoder'
 
 export class Executor {
-  referencesIndex: VectorDB | undefined
+  referencesIndex: Indexer | undefined
 
   executePlan = async (plan: Plan): Promise<boolean> => {
     const promises: Promise<string | null>[] = []
 
     if (plan.reference) {
-      // todo
+      this.loadReferences(plan.reference)
     }
 
     if (plan.change) {
@@ -74,6 +75,14 @@ export class Executor {
     }
   }
 
+  loadReferences = async (references: string[]) => {
+    if (references.length == 0) return
+
+    this.referencesIndex = new Indexer()
+    const { docs } = await this.referencesIndex.load(references, true)
+    this.referencesIndex.loadVectors(docs)
+  }
+
   createFile = async (plan: Plan, file: string, changes: string) => {
     const prompt = `Create a new file at ${file} based on the following request: ${changes}
   ---
@@ -123,15 +132,19 @@ export class Executor {
     const fileContents = fs.readFileSync(inputFile, 'utf8')
     if (!outputFile) outputFile = inputFile
 
-    const similar = await indexer.vectorDB.searchWithScores(plan.request + '\n' + changes, 4)
-    const notInFile = similar
+    const fromReferences =
+      this.referencesIndex && (await this.referencesIndex.vectorDB.search(changes, 4))
+    const referenceSet = new Set(fromReferences?.map((s) => s.metadata.path))
+    const similar = await indexer.vectorDB.searchWithScores(plan.request + '\n' + changes, 6)
+    const similarFuncs = similar
       ?.filter((s) => {
         const [doc, score] = s
         if (score < 0.15) return false
         if (doc.metadata.path.includes(inputFile)) return false
+        if (referenceSet.has(doc.metadata.path)) return false
         return true
       })
-      .slice(0, 2)
+      .map((s) => s[0])
 
     const fileLines = fileContents.split('\n')
     const outputFormat = fileLines.length < 200 ? 'full' : 'diff'
@@ -139,19 +152,29 @@ export class Executor {
     const decoratedLines =
       outputFormat == 'full' ? fileLines : fileLines.map((l, i) => `${i + 1}: ${l}`)
 
-    const prompt = `
-  Possibly related code:
-  ${notInFile.map((s) => s[0].pageContent).join('\n\n')}
-  
-  ---
-  ${outputFile} contents:
-  
-  ${decoratedLines.join('\n')}
-  
-  ---
-  Overall goal: ${plan.request}
-  
-  Apply the following changes to the ${outputFile}: ${changes}`
+    let tokenBudget = 5000 - encode(outputFile).length
+    const funcsToShow = (similarFuncs || []).concat(fromReferences || []).filter((doc) => {
+      const encoded = encode(doc.pageContent).length
+      if (tokenBudget > encoded) {
+        tokenBudget -= encoded
+        return true
+      }
+      return false
+    })
+    const decoratedFuncs = funcsToShow.length
+      ? 'Possibly related code:\n' + funcsToShow.map((s) => s.pageContent).join('\n\n')
+      : ''
+
+    const prompt = `${decoratedFuncs} 
+---
+${outputFile} contents:
+
+${decoratedLines.join('\n')}
+
+---
+Overall goal: ${plan.request}
+
+Apply the following changes to the ${outputFile}: ${changes}`
 
     const model = config.gpt4 == 'never' ? '3.5' : '4'
 
