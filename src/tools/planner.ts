@@ -1,80 +1,78 @@
-import { getAllTools, getReadOnlyTools } from '@/agent'
-import { Agent } from '@/agent/agent'
-import { getFilesWithContext } from '@/context/manifest'
-import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, Indexer } from '@/db/indexer'
-import { findSimilarDocuments } from '@/utils/similarity'
-import { splitOnce } from '@/utils/utils'
+import { Indexer } from '@/db/indexer'
 
-const SYSTEM_MESSAGE =
-  'You are PlannerGPT, you output plans that will be used by an AI to write code. Be very ' +
-  "efficient with your actions and only use the tools provided. Many edits don't require any " +
-  'tools. Return the plan in the output format specified below:' +
-  `
-  
-{
-  "unixCommands": [
-    "sed -i 's/old/new/g' *",
-  ],
-  "reference": ['up to three files given to AI as reference'],
-  "change": {
-    "path/file3": "detailed explanation of change with all the context that an AI needs",
-  },
-  "clone": { 
-    "from/file": { "dest": "to/file", edits: "any edits to make to the dest file" } 
-  },
-  "create": {
-    "other/file4": "detailed explanation of new file contents",
-  },
-  "rename": { "from/file": "to/file" },
-  "delete": []
+import { Plan } from '@/types'
+import { log } from '@/utils/logger'
+import chalk from 'chalk'
+
+export interface AbstractPlanner {
+  doPlan(indexer: Indexer, query: string, glob?: string): Promise<Plan>
 }
-`
 
-const OUTPUT_FORMAT = `I have the plan:
-{ ... json plan ...}`
+const PLAN_FORMAT: Partial<Plan> = {
+  shellCommands: ["sed -i 's/old/new/g' *"],
+  reference: ['up to three files given to AI as reference'],
+  change: {
+    'path/file3': 'detailed explanation of change with all the context that an AI needs',
+  },
+  clone: {
+    'from/file': { dest: 'to/file', edits: 'any edits to make to the dest file' },
+  },
+  create: {
+    'other/file4': 'detailed explanation of new file contents',
+  },
+  rename: { 'from/file': 'to/file' },
+  delete: [],
+}
+export const PLAN_FORMAT_STR = JSON.stringify(PLAN_FORMAT)
 
-export class Planner {
-  doPlan = async (indexer: Indexer, query: string, glob?: string) => {
-    const baseGlob = query.includes('test') ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS
-    const files = await indexer.getFiles(glob || baseGlob)
-    const { docs, updatedDocs } = await indexer.load(files)
-    await indexer.index(updatedDocs)
-    await indexer.loadVectors(docs)
+export const parsePlan = (request: string, plan: string): Plan | null => {
+  const jsonStart = plan.indexOf('{')
+  const jsonEnd = plan.lastIndexOf('}')
+  if (jsonStart > -1 && jsonEnd > -1) {
+    plan = plan.substring(jsonStart, jsonEnd + 1)
+    // sometimes trailing commas are generated. sometimes no commas are generated,
+    const fixedJsonString = plan.replace(/"\n"/g, '",').replace(/,\s*([\]}])/g, '$1')
 
-    const relevantDocs = await findRelevantDocs(query, files, indexer)
-    const tools = getReadOnlyTools(indexer)
+    // don't accept plans that are not JSON
+    try {
+      const parsedPlan: Plan = JSON.parse(fixedJsonString)
 
-    const outputFormat = OUTPUT_FORMAT
+      // sometimes files are in change & also in create
+      Object.keys(parsedPlan.create || {}).forEach((file) => {
+        delete parsedPlan.change?.[file]
+      })
+      Object.keys(parsedPlan.clone || {}).forEach((file) => {
+        const cloneData = parsedPlan.clone?.[file]
+        if (cloneData) {
+          delete parsedPlan.change?.[cloneData.dest]
+          delete parsedPlan.create?.[cloneData.dest]
+        }
+      })
+      if (parsedPlan.change && Object.keys(parsedPlan.change).length === 0) {
+        delete parsedPlan.change
+      }
+      if (parsedPlan.clone && Object.keys(parsedPlan.clone).length === 0) {
+        delete parsedPlan.clone
+      }
+      if (parsedPlan.create && Object.keys(parsedPlan.create).length === 0) {
+        delete parsedPlan.create
+      }
+      if (parsedPlan.delete && parsedPlan.delete.length === 0) {
+        delete parsedPlan.delete
+      }
+      if (parsedPlan.rename && Object.keys(parsedPlan.rename).length === 0) {
+        delete parsedPlan.rename
+      }
+      if (parsedPlan.shellCommands && parsedPlan.shellCommands.length === 0) {
+        delete parsedPlan.shellCommands
+      }
 
-    const agent = new Agent(tools, outputFormat, SYSTEM_MESSAGE)
-
-    agent.addInitialState(
-      'What are the most relevant files to this query?',
-      relevantDocs.join('\n')
-    )
-
-    await agent.runContinuous(query, 10, true)
+      return { ...parsedPlan, request }
+    } catch (e) {
+      log(chalk.red('Error:'), 'Oops, that was invalid JSON')
+    }
+  } else {
+    log(chalk.yellow('Warning:'), 'Plan was not updated, got non-JSON response')
   }
-}
-
-async function findRelevantDocs(query: string, files: string[], indexer: Indexer) {
-  const filteredFiles = filterFiles(files, query, 20)
-  const fileSet = new Set(filteredFiles)
-  const similarDocs = await indexer.vectorDB.search(query, 10)
-
-  similarDocs?.forEach((doc) => {
-    const file = splitOnce(doc.metadata.path, '#')[0]
-    fileSet.add(file)
-  })
-
-  const relevantFiles = Array.from(fileSet)
-  const filesWithContext = getFilesWithContext(relevantFiles)
-  return filesWithContext
-}
-
-function filterFiles(files: string[], query: string, limit: number) {
-  if (files.length <= limit) return files
-  const similar = findSimilarDocuments(query, files)
-
-  return similar.slice(0, limit)
+  return null
 }

@@ -70,7 +70,7 @@ export default function () {
     .command('plan')
     .description('Create an execution plan for the request')
     .action(actionWrapper(planner))
-    .argument('<request>', 'The request to make.')
+    .argument('[request]', 'The request to make.')
 
   program
     .command('agent')

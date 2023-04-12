@@ -1,9 +1,10 @@
 import { executePlan } from '@/commands/executor'
 import { doInitialize } from '@/commands/init'
-import { doPlan, PLAN_FILE } from '@/commands/planner'
+import { PLAN_FILE } from '@/commands/planner'
 import { getManifestName } from '@/context/manifest'
 import { cache } from '@/db/cache'
 import { Indexer } from '@/db/indexer'
+import { OneShotPlanner } from '@/tools/oneShotPlanner'
 import { log } from '@/utils/logger'
 import { findRoot } from '@/utils/utils'
 import chalk from 'chalk'
@@ -37,7 +38,8 @@ export default async function (options: Options) {
       message: '>',
     },
   ])
-  const plan = await doPlan(indexer, planInput.plan, options)
+  const planner = new OneShotPlanner()
+  const plan = await planner.doPlan(indexer, planInput.plan, options.glob)
 
   fs.writeFileSync(PLAN_FILE, JSON.stringify(plan))
   log(`Wrote plan to ${PLAN_FILE}`)

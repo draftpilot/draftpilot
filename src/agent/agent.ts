@@ -42,10 +42,18 @@ export class Agent {
 
   chatHistory: ChatMessage[] = []
 
+  // how the agent thinks about the user's input
+  requestParam = 'Request'
+  // how the agent thinks about the action to take
+  actionParam = 'Action'
+  // how the agent thinks about the end state
+  finalAnswerParam = 'Final Answer'
+
   constructor(public tools: Tool[], public outputFormat: string, public systemMessage?: string) {
     this.toolNames = tools.map((tool) => tool.name).join(', ')
     this.toolDescriptions = tools.map((tool) => `${tool.name}: ${tool.description}`).join('\n')
     if (systemMessage) this.chatHistory.push({ role: 'system', content: systemMessage })
+    this.chatHistory.push({ role: 'user', content: this.constructPrompt() })
   }
 
   addInitialState = (thought: string, observation: string) => {
@@ -60,15 +68,15 @@ export class Agent {
 ${this.toolDescriptions}`
 
     const instructions = `Use the following format:
-Request: the request you must fulfill
+${this.requestParam}: the request you must fulfill
 Thought: you should always think about what to do
-Action: the action to take, should be one or more of [${this.toolNames}] + input, e.g.
+${this.actionParam}: the action to take, should be one or more of [${this.toolNames}] + input, e.g.
 - grep: foo
 - viewFile: path/to/file
 Observation: the result of the actions
-... (this Thought/Action/Action Input/Observation can repeat N times)
+... (this Thought/${this.actionParam}/Observation can repeat N times)
 Thought: I now know the final answer
-Final Answer: ${this.outputFormat}`
+${this.finalAnswerParam}: ${this.outputFormat}`
 
     const inProgressState: string[] = []
     let inProgressTokens = 0
@@ -104,10 +112,10 @@ Final Answer: ${this.outputFormat}`
 
     const progress = `
 Begin!
-Request: ${this.query}
+${this.requestParam}: ${this.query}
 ${progressText}
 `
-    this.chatHistory.push({ role: 'assistant', content: progress })
+    if (this.query) this.chatHistory.push({ role: 'assistant', content: progress })
     return [prefix, instructions, progress].join('\n\n')
   }
 
@@ -161,7 +169,7 @@ ${progressText}
   runOnce = async (query: string, forceComplete?: boolean): Promise<AgentState> => {
     this.query = query
 
-    const suffix = forceComplete ? 'Final Answer:' : 'Thought:'
+    const suffix = forceComplete ? this.finalAnswerParam + ':' : 'Thought:'
     const prompt = this.constructPrompt() + suffix
 
     verboseLog(prompt)
@@ -173,7 +181,9 @@ ${progressText}
 
     log(chalk.bold(`Response:`))
     this.chatHistory.push({ role: 'assistant', content: response })
-    log(response)
+    const finalAnswerIndex = response.indexOf(this.finalAnswerParam + ':')
+    const outputToLog = finalAnswerIndex > -1 ? response.slice(0, finalAnswerIndex) : response
+    log(outputToLog)
 
     if (forceComplete)
       return {
@@ -188,7 +198,6 @@ ${progressText}
 
   runTools = async (result: AgentState, skipLogObservation?: boolean) => {
     if (result.finalAnswer) {
-      log(chalk.bold('Final Answer:'), result.finalAnswer)
       return result.finalAnswer
     }
 
@@ -221,7 +230,7 @@ ${progressText}
         log(
           chalk.bold('Observation:'),
           result.observation.slice(0, 200),
-          result.observation.length < 200 ? '' : '...'
+          result.observation.length < 200 ? '' : '... (output truncated)'
         )
       }
     }
@@ -244,16 +253,16 @@ ${progressText}
     for (const line of lines) {
       if (line.startsWith('Thought:')) {
         buffer.push(line.replace('Thought:', '').trim())
-      } else if (line.startsWith('Action:')) {
+      } else if (line.startsWith(this.actionParam + ':')) {
         transitionMode()
         buffer = []
         mode = 'action'
-        buffer.push(line.replace('Action:', '').trim())
-      } else if (line.startsWith('Final Answer:')) {
+        buffer.push(line.replace(this.actionParam + ':', '').trim())
+      } else if (line.startsWith(this.finalAnswerParam + ':')) {
         transitionMode()
         buffer = []
         mode = 'finalAnswer'
-        buffer.push(line.replace('Final Answer:', '').trim())
+        buffer.push(line.replace(this.finalAnswerParam + ':', '').trim())
       } else {
         buffer.push(line)
       }
@@ -301,6 +310,7 @@ ${progressText}
         invocations.push({ tool, input })
       } else {
         log(chalk.yellow('Warning:'), `Could not parse line: ${line}`)
+        return null
       }
     }
 

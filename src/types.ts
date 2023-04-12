@@ -28,7 +28,7 @@ export type ChatMessage = {
 export type Plan = {
   // the overall request
   request: string
-  read?: string[]
+  reference?: string[]
   change?: { [file: string]: string }
   create?: { [file: string]: string }
   rename?: { [file: string]: string }
@@ -39,6 +39,7 @@ export type Plan = {
     }
   }
   delete?: string[]
+  shellCommands?: string[]
 }
 
 export type FileInfo = {
