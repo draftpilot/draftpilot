@@ -5,6 +5,7 @@ import { cache } from '@/db/cache'
 import { indexer } from '@/db/indexer'
 import { Executor } from '@/tools/executor'
 import { OneShotPlanner } from '@/tools/oneShotPlanner'
+import { getUnstagedFiles } from '@/utils/git'
 import { log } from '@/utils/logger'
 import { findRoot } from '@/utils/utils'
 import chalk from 'chalk'
@@ -17,6 +18,16 @@ type Options = {
 
 // use the cli in an interactive mode
 export default async function (options: Options) {
+  const unstaged = getUnstagedFiles()
+  if (unstaged) {
+    log(
+      chalk.yellow(
+        'Warning: ',
+        'You have unstaged files in your git repo. We recommend you commit those first in case you need to roll-back.'
+      )
+    )
+  }
+
   // init if necessary
   const root = findRoot()
   const manifestFile = root ? getManifestName(root) : null

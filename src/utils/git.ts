@@ -77,3 +77,15 @@ export function updateGitIgnores(files: string[]) {
 
   fs.writeFileSync(gitIgnore, lines.join('\n'), 'utf-8')
 }
+
+export function getUnstagedFiles() {
+  const status = git(['status', '--porcelain'])
+
+  return status
+    .split('\n')
+    .filter((s) => s.startsWith('??') || s.startsWith(' '))
+    .map((s) => {
+      const [_, file] = splitOnce(s.trim(), ' ')
+      return file
+    })
+}

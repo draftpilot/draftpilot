@@ -1,5 +1,5 @@
 import { chatCompletion } from '@/ai/api'
-import { git } from '@/utils/git'
+import { getUnstagedFiles, git } from '@/utils/git'
 import { log, verboseLog } from '@/utils/logger'
 import { splitOnce } from '@/utils/utils'
 import chalk from 'chalk'
@@ -15,16 +15,7 @@ const NONE = '- none -'
 
 // infer a commit message and commit the changes
 export default async function (options: Options) {
-  const status = git(['status', '--porcelain'])
-  console.log(status)
-
-  let untracked = status
-    .split('\n')
-    .filter((s) => s.startsWith('??') || s.startsWith(' '))
-    .map((s) => {
-      const [_, file] = splitOnce(s.trim(), ' ')
-      return file
-    })
+  let untracked = getUnstagedFiles()
 
   while (untracked.length > 0) {
     const response = await inquirer.prompt([

@@ -162,7 +162,7 @@ export class Executor {
       return false
     })
     const decoratedFuncs = funcsToShow.length
-      ? 'Possibly related code:\n' + funcsToShow.map((s) => s.pageContent).join('\n\n')
+      ? 'Possibly related code:\n' + funcsToShow.map((s) => s.pageContent).join('\n---\n')
       : ''
 
     const prompt = `${decoratedFuncs} 
