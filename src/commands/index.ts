@@ -1,5 +1,5 @@
 import { filesToDirectoryTree, updateFileManifest } from '@/context/manifest'
-import { Indexer } from '@/db/indexer'
+import { indexer } from '@/db/indexer'
 import { log } from '@/utils/logger'
 
 type Options = {
@@ -7,7 +7,6 @@ type Options = {
 }
 
 export default async function (options: Options) {
-  const indexer = new Indexer()
   const files = await indexer.getFiles()
   const { docs, updatedDocs, existing } = await indexer.load(files)
 

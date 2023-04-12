@@ -7,12 +7,12 @@ import { fatal } from '@/utils/utils'
 
 import packageJson from '../package.json'
 import chat from '@/commands/chat'
-import indexer from '@/commands/indexer'
+import index from '@/commands'
 import search from '@/commands/search'
 import codegen from '@/commands/codegen'
-import planner from '@/commands/planner'
+import plan from '@/commands/plan'
 import { cache } from '@/db/cache'
-import executor from '@/commands/executor'
+import execute from '@/commands/execute'
 import interactive from '@/commands/interactive'
 import patch from '@/commands/patch'
 import scratchpad from '@/commands/scratchpad'
@@ -47,7 +47,7 @@ export default function () {
   program
     .command('index')
     .description("Index your project's code")
-    .action(actionWrapper(indexer))
+    .action(actionWrapper(index))
     .option('--reindex', 'Re-build index from scratch')
 
   program
@@ -69,7 +69,7 @@ export default function () {
   program
     .command('plan')
     .description('Create an execution plan for the request')
-    .action(actionWrapper(planner))
+    .action(actionWrapper(plan))
     .argument('[request]', 'The request to make.')
 
   program
@@ -81,7 +81,7 @@ export default function () {
   program
     .command('execute [file]')
     .description('Execute a plan file or a request and modifies code')
-    .action(executor)
+    .action(execute)
     .option('--glob <glob>', 'Custom glob to use for finding files')
 
   program.command('patch').argument('<file>').description('Applies a /tmp patch file').action(patch)

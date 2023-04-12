@@ -1,11 +1,9 @@
-import { Indexer } from '@/db/indexer'
-
 import { Plan } from '@/types'
 import { log } from '@/utils/logger'
 import chalk from 'chalk'
 
 export interface AbstractPlanner {
-  doPlan(indexer: Indexer, query: string, glob?: string): Promise<Plan>
+  doPlan(query: string, glob?: string): Promise<Plan>
 }
 
 const PLAN_FORMAT: Partial<Plan> = {

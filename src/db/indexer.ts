@@ -29,7 +29,7 @@ export const GLOB_WITHOUT_TESTS = [
 const TAG = chalk.blue('[indexer]')
 
 // indexer wraps the entire work of indexing
-export class Indexer {
+class Indexer {
   fileDB: FileDB
   vectorDB: VectorDB
   files: string[]

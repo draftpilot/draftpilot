@@ -1,9 +1,9 @@
-import { executePlan } from '@/commands/executor'
 import { doInitialize } from '@/commands/init'
-import { PLAN_FILE } from '@/commands/planner'
+import { PLAN_FILE } from '@/commands/plan'
 import { getManifestName } from '@/context/manifest'
 import { cache } from '@/db/cache'
-import { Indexer } from '@/db/indexer'
+import { indexer } from '@/db/indexer'
+import { Executor } from '@/tools/executor'
 import { OneShotPlanner } from '@/tools/oneShotPlanner'
 import { log } from '@/utils/logger'
 import { findRoot } from '@/utils/utils'
@@ -22,7 +22,6 @@ export default async function (options: Options) {
   const manifestFile = root ? getManifestName(root) : null
 
   const needsInit = !manifestFile || !fs.existsSync(manifestFile)
-  const indexer = new Indexer()
   if (needsInit) {
     await doInitialize(indexer, options)
   } else {
@@ -39,13 +38,14 @@ export default async function (options: Options) {
     },
   ])
   const planner = new OneShotPlanner()
-  const plan = await planner.doPlan(indexer, planInput.plan, options.glob)
+  const plan = await planner.doPlan(planInput.plan, options.glob)
 
   fs.writeFileSync(PLAN_FILE, JSON.stringify(plan))
   log(`Wrote plan to ${PLAN_FILE}`)
 
   // execute
-  const success = await executePlan(plan, indexer)
+  const executor = new Executor()
+  const success = await executor.executePlan(plan)
 
   if (!success) {
     log(chalk.yellow('Ok. You can check the plan file and run `execute` to try again.'))

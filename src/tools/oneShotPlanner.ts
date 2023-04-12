@@ -1,5 +1,5 @@
 import { chatCompletion, chatWithHistory } from '@/ai/api'
-import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, Indexer } from '@/db/indexer'
+import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/utils/logger'
 import { oraPromise } from 'ora'
 import chalk from 'chalk'
@@ -14,7 +14,7 @@ const SYSTEM_MESSAGE =
   'Respond in the requested format with no extra comments. Do not return actual code, and do not make up files to modify.'
 
 export class OneShotPlanner implements AbstractPlanner {
-  doPlan = async (indexer: Indexer, query: string, glob?: string): Promise<Plan> => {
+  doPlan = async (query: string, glob?: string): Promise<Plan> => {
     const baseGlob = query.includes('test') ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS
 
     const files = await indexer.getFiles(glob || baseGlob)

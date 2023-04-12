@@ -1,5 +1,5 @@
 import { Agent } from '@/agent/agent'
-import { Indexer } from '@/db/indexer'
+import { indexer } from '@/db/indexer'
 import { getAllTools } from '@/agent'
 import { log } from '@/utils/logger'
 import inquirer from 'inquirer'
@@ -7,10 +7,9 @@ import inquirer from 'inquirer'
 export default async function () {
   console.log('tool tester')
 
-  const indexer = new Indexer()
   await indexer.loadFilesIntoVectors()
 
-  const tools = getAllTools(indexer)
+  const tools = getAllTools()
 
   const agent = new Agent(tools, '', '')
 

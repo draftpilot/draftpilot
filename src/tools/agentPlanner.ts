@@ -1,7 +1,7 @@
 import { getReadOnlyTools } from '@/agent'
 import { Agent } from '@/agent/agent'
 import { getFilesWithContext } from '@/context/manifest'
-import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, Indexer } from '@/db/indexer'
+import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, indexer } from '@/db/indexer'
 import { AbstractPlanner, PLAN_FORMAT_STR, parsePlan } from '@/tools/planner'
 import { Plan } from '@/types'
 import { log } from '@/utils/logger'
@@ -23,15 +23,15 @@ const MAX_PLAN_ITERATIONS = 5
 export class AgentPlanner implements AbstractPlanner {
   constructor(public stopEachStep = true) {}
 
-  doPlan = async (indexer: Indexer, query: string, glob?: string): Promise<Plan> => {
+  doPlan = async (query: string, glob?: string): Promise<Plan> => {
     const baseGlob = query.includes('test') ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS
     const files = await indexer.getFiles(glob || baseGlob)
     const { docs, updatedDocs } = await indexer.load(files)
     await indexer.index(updatedDocs)
     await indexer.loadVectors(docs)
 
-    const relevantDocs = await findRelevantDocs(query, files, indexer)
-    const tools = getReadOnlyTools(indexer)
+    const relevantDocs = await findRelevantDocs(query, files)
+    const tools = getReadOnlyTools()
 
     const outputFormat = OUTPUT_FORMAT
 
@@ -68,7 +68,7 @@ export class AgentPlanner implements AbstractPlanner {
   }
 }
 
-async function findRelevantDocs(query: string, files: string[], indexer: Indexer) {
+export async function findRelevantDocs(query: string, files: string[]) {
   const filteredFiles = filterFiles(files, query, 20)
   const fileSet = new Set(filteredFiles)
   const similarDocs = await indexer.vectorDB.search(query, 10)

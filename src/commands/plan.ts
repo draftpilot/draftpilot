@@ -1,4 +1,4 @@
-import { Indexer } from '@/db/indexer'
+import { indexer } from '@/db/indexer'
 import { log } from '@/utils/logger'
 import chalk from 'chalk'
 import { cache } from '@/db/cache'
@@ -29,11 +29,9 @@ export default async function (query: string, options: Options) {
     query = response.query
   }
 
-  const indexer = new Indexer()
-
   const planner = options.oneShot ? new OneShotPlanner() : new AgentPlanner(options.waitEachStep)
 
-  const plan = await planner.doPlan(indexer, query, options.glob)
+  const plan = await planner.doPlan(query, options.glob)
 
   fs.writeFileSync(PLAN_FILE, JSON.stringify(plan))
   log(chalk.green(`Excellent! Wrote plan to ${PLAN_FILE}`))

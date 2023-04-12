@@ -1,14 +1,14 @@
 import { chatCompletion } from '@/ai/api'
 import config from '@/config'
-import { Indexer } from '@/db/indexer'
 import { Tool } from '@/agent/tool'
 import { fuzzyMatchingFile, splitOnce } from '@/utils/utils'
 import fs from 'fs'
 import { basename } from 'path'
 import * as Diff from 'diff'
 import { oraPromise } from 'ora'
+import { indexer } from '@/db/indexer'
 
-export const generateEditingTools = (indexer: Indexer): Tool[] => {
+export const generateEditingTools = (): Tool[] => {
   const createFileTool: Tool = {
     name: 'createFile',
     description:
@@ -17,7 +17,7 @@ export const generateEditingTools = (indexer: Indexer): Tool[] => {
     run: async (input: string, overallGoal?: string) => {
       const [file, change] = splitOnce(input, ' ')
 
-      return await doChange(overallGoal || '', indexer, 'new', change, file)
+      return await doChange(overallGoal || '', 'new', change, file)
     },
   }
 
@@ -29,7 +29,7 @@ export const generateEditingTools = (indexer: Indexer): Tool[] => {
     run: async (input: string, overallGoal?: string) => {
       const [file, change] = splitOnce(input, ' ')
 
-      return await doChange(overallGoal || '', indexer, file, change)
+      return await doChange(overallGoal || '', file, change)
     },
   }
 
@@ -42,7 +42,7 @@ export const generateEditingTools = (indexer: Indexer): Tool[] => {
       const [file, destAndChange] = splitOnce(input, ' ')
       const [dest, change] = splitOnce(destAndChange, ' ')
 
-      return await doChange(overallGoal || '', indexer, file, change, dest)
+      return await doChange(overallGoal || '', file, change, dest)
     },
   }
 
@@ -51,7 +51,6 @@ export const generateEditingTools = (indexer: Indexer): Tool[] => {
 
 async function doChange(
   overallGoal: string,
-  indexer: Indexer,
   inputFile: string,
   changes: string,
   outputFile?: string

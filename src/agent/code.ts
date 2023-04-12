@@ -1,9 +1,9 @@
-import { Indexer } from '@/db/indexer'
 import { Tool } from '@/agent/tool'
+import { indexer } from '@/db/indexer'
 import { fuzzyMatchingFile } from '@/utils/utils'
 import fs from 'fs'
 
-export const generateCodeTools = (indexer: Indexer): Tool[] => {
+export const generateCodeTools = (): Tool[] => {
   const viewFileTool: Tool = {
     name: 'viewFile',
     description: 'Shows the entire contents of the file. Input: file',

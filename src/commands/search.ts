@@ -1,4 +1,4 @@
-import { Indexer } from '@/db/indexer'
+import { indexer } from '@/db/indexer'
 import { log } from '@/utils/logger'
 import { pluralize } from '@/utils/utils'
 import chalk from 'chalk'
@@ -9,8 +9,6 @@ type Options = {
 }
 
 export default async function (query: string, options: Options) {
-  const indexer = new Indexer()
-
   await indexer.loadFilesIntoVectors()
 
   const similar = await indexer.vectorDB.searchWithScores(
