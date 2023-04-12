@@ -7,6 +7,7 @@ import fs from 'fs'
 import { basename } from 'path'
 import * as Diff from 'diff'
 import { oraPromise } from 'ora'
+import { git } from '@/utils/git'
 
 export const generateEditingTools = (indexer: Indexer): Tool[] => {
   const editFileTool: Tool = {
@@ -34,7 +35,31 @@ export const generateEditingTools = (indexer: Indexer): Tool[] => {
     },
   }
 
-  return [editFileTool, cloneFileTool]
+  const verifyDiffTool: Tool = {
+    name: 'verifyDiff',
+    description:
+      'Prints git diff of file and verifies if it makes the requested change. e.g. verifyDiff path/to/foo.ts rename foo to bar',
+
+    run: async (input: string, overallGoal?: string) => {
+      const [file, change] = splitOnce(input, ' ')
+
+      const inputFile = fuzzyMatchingFile(file, indexer.files) || file
+      if (!fs.existsSync(inputFile)) return `File ${inputFile} does not exist.`
+
+      const history = git(['diff', '--pretty=format:%H', inputFile])
+
+      const prompt = `Verify that the following diff makes the requested change: ${change}.
+
+${history}`
+
+      const promise = chatCompletion(prompt, '3.5')
+      const response = await oraPromise(promise, 'Waiting for AI to respond')
+
+      return response
+    },
+  }
+
+  return [editFileTool, cloneFileTool, verifyDiffTool]
 }
 
 async function doChange(

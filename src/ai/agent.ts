@@ -185,7 +185,7 @@ ${progressText}
     return parsedResponse
   }
 
-  runTools = async (result: AgentState) => {
+  runTools = async (result: AgentState, skipLogObservation?: boolean) => {
     if (result.finalAnswer) {
       log(chalk.bold('Final Answer:'), result.finalAnswer)
       return result.finalAnswer
@@ -200,7 +200,7 @@ ${progressText}
           }
 
           try {
-            const result = await tool.run(invocation.input)
+            const result = await tool.run(invocation.input, this.query)
             return (
               `Ran tool ${invocation.tool} with input ${invocation.input}\n` +
               (result ? result : 'Empty output returned')
@@ -216,11 +216,13 @@ ${progressText}
       )
       result.observation = results.join('\n---\n')
 
-      log(
-        chalk.bold('Observation:'),
-        result.observation.slice(0, 200),
-        result.observation.length < 200 ? '' : '...'
-      )
+      if (!skipLogObservation) {
+        log(
+          chalk.bold('Observation:'),
+          result.observation.slice(0, 200),
+          result.observation.length < 200 ? '' : '...'
+        )
+      }
     }
   }
 
