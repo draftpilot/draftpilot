@@ -1,4 +1,4 @@
-import { chatCompletion } from '@/ai/chat'
+import { chatCompletion } from '@/ai/api'
 import config from '@/config'
 import { getSimilarMethods } from '@/context/similar'
 import { cache } from '@/db/cache'

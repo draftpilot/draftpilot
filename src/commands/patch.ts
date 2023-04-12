@@ -2,6 +2,7 @@ import { log } from '@/utils/logger'
 import chalk from 'chalk'
 import fs from 'fs'
 import * as Diff from 'diff'
+import { splitOnce } from '@/utils/utils'
 
 type Options = {}
 
@@ -15,7 +16,7 @@ export default async function (file: string, options: Options) {
 
   const lines = patch.split('\n')
 
-  const fileToEdit = lines[0].split(' ', 2)[1]
+  const fileToEdit = splitOnce(lines[0], ' ')[1]
   const patchContents = lines.slice(2).join('\n')
 
   log('loading file', fileToEdit)

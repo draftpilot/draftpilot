@@ -102,3 +102,9 @@ export const fuzzyMatchingFile = (file: string, files: string[]) => {
 
   return null
 }
+
+export function splitOnce(s: string, on: string) {
+  const index = s.indexOf(on)
+  if (index == -1) return [s]
+  return [s.slice(0, index), s.slice(index + 1)]
+}

@@ -1,8 +1,8 @@
-import { chatCompletion } from '@/ai/chat'
+import { chatCompletion } from '@/ai/api'
 import { Indexer } from '@/db/indexer'
 import { git, gitStatus } from '@/utils/git'
 import { log, verboseLog } from '@/utils/logger'
-import { pluralize } from '@/utils/utils'
+import { pluralize, splitOnce } from '@/utils/utils'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
 import { oraPromise } from 'ora'
@@ -23,7 +23,7 @@ export default async function (options: Options) {
     .split('\n')
     .filter((s) => s.startsWith('??') || s.startsWith(' '))
     .map((s) => {
-      const [_, file] = s.trim().split(' ', 2)
+      const [_, file] = splitOnce(s.trim(), ' ')
       return file
     })
 

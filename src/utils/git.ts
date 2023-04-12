@@ -3,6 +3,7 @@ import { spawnSync } from 'child_process'
 import { verboseLog } from '@/utils/logger'
 import fs from 'fs'
 import path from 'path'
+import { splitOnce } from '@/utils/utils'
 
 export function git(args: string[], cwd?: string) {
   verboseLog('git', ...args)
@@ -46,7 +47,7 @@ export function gitStatus(cwd?: string): GitStatusData {
     copied: [],
   }
   lines.forEach((line) => {
-    const [status, file] = line.split(' ', 2)
+    const [status, file] = splitOnce(line, ' ')
     if (status === 'M') data.modified.push(file)
     else if (status === '??') data.untracked.push(file)
     else if (status === 'A') data.added.push(file)

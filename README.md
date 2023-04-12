@@ -4,14 +4,13 @@ Draftpilot writes code in your codebase based on your instructions.
 
 ## Goal & Philosophy
 
-Draftpilot does not aim to write code in one shot without intervention in every case (though it would be
-nice to do so in simple cases). It aims to partner with the user to translate intent into
+Draftpilot does not aim to write code in one shot without intervention in every case (though it
+would be nice to do so in simple cases). It aims to partner with the user to translate intent into
 code changes in a reliable way, and learn when it gets things wrong.
 
 When Draftpilot is working well, users should be able to start most of the changes using natural
-language, continuing in the IDE for the difficult bits, like a
-junior engineer pair programming with a senior engineer. Draftpilot should also be able to use
-unix tools, git, and the web where appropriate.
+language, continuing in the IDE for the difficult bits, like a junior engineer pair programming with
+a senior engineer. Draftpilot should also be able to use unix tools, git, and the web where appropriate.
 
 ## How to use
 
@@ -27,10 +26,9 @@ After initialization, the following files will be generated in the `.draftpilot`
 
 - manifest.txt - codebase manifest. This should be checked in to git
 - learning.json - a learned log of interactions. This can be checked into git to share learnings across all contributors, or ignored to be kept personal
-- docs.sqlite - an index of all functions in the codebase. This
-  can be ignored by git, as it is derived from the code
-- history.json - a history of invocations. This can be ignored
-  by git
+- docs.sqlite - an index of all functions in the codebase. This can be ignored by git, as it is derived from the code
+- history.json - history of invocations. This can be ignored by git
+- cache.json - cache of API requests. This can be ignored by git
 
 ## How it works
 
@@ -42,13 +40,23 @@ purpose of key folders and files. This is done with the AI in partnership with t
 ### Planning
 
 In the planning phase, the assistant tries to determine how to best fulfill the request. If needed,
-it can read individual files, search the codebase, or search the web for context. The plan is
+it can read individual files, run a command, search the codebase, or search the web for context. The plan is
 presented to the user for approval or modification.
 
 ### Execution
 
 In the execution phase, the plan is put into action - files are created, edited, and deleted. After
 execution, the user can inspect the results and ask for modifications or a redo.
+
+### Validation
+
+In the validation phase, compilation and test commands are run and the assistant tries to get the
+code into a reasonable shape.
+
+### Commit
+
+In the commit phase, the changes are summarized into a git commit. Commits by draftpilot are
+prefixed so that it's clear from `git blame` that these changes were written by an AI.
 
 ## Contributing
 

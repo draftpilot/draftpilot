@@ -1,4 +1,4 @@
-import { chatCompletion } from '@/ai/chat'
+import { chatCompletion } from '@/ai/api'
 import { Indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/utils/logger'
 import { oraPromise } from 'ora'
@@ -45,11 +45,9 @@ src/jobs: background jobs
 
   const tokenCount = encode(prompt).length
   log(`Scanning ${files.length} files (${tokenCount} tokens)`)
-  return
-
   verboseLog(prompt)
 
-  const model = config.gpt4 == 'always' ? '4' : '3.5'
+  const model = tokenCount > 4000 || config.gpt4 == 'always' ? '4' : '3.5'
 
   const promise = chatCompletion(
     prompt,

@@ -1,4 +1,4 @@
-import { chatWithHistory } from '@/ai/chat'
+import { chatWithHistory } from '@/ai/api'
 import { cache } from '@/db/cache'
 import { ChatMessage } from '@/types'
 import inquirer from 'inquirer'

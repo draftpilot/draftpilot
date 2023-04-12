@@ -1,4 +1,4 @@
-import { chatCompletion } from '@/ai/chat'
+import { chatCompletion } from '@/ai/api'
 import { cache } from '@/db/cache'
 import { Indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/utils/logger'

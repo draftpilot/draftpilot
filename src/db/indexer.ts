@@ -6,6 +6,9 @@ import { findRoot } from '@/utils/utils'
 import chalk from 'chalk'
 import FastGlob from 'fast-glob'
 
+// things that glob should never return
+export const GLOB_EXCLUSIONS = ['!**/node_modules/**', '!**/dist/**', '!**/build/**']
+
 export const DEFAULT_GLOB = [
   '**/*.js',
   '**/*.ts',
@@ -13,9 +16,7 @@ export const DEFAULT_GLOB = [
   '**/*.tsx',
   'package.json',
   'README*',
-  '!**/node_modules/**',
-  '!**/dist/**',
-  '!**/build/**',
+  ...GLOB_EXCLUSIONS,
 ]
 
 export const GLOB_WITHOUT_TESTS = [

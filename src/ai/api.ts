@@ -10,7 +10,12 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration)
 
-export async function chatCompletion(prompt: string, model: '3.5' | '4', systemMessage?: string) {
+export async function chatCompletion(
+  prompt: string,
+  model: '3.5' | '4',
+  systemMessage?: string,
+  stop?: string | string[]
+) {
   const existing = await cache.get(prompt)
   if (existing) return existing
 
@@ -18,6 +23,7 @@ export async function chatCompletion(prompt: string, model: '3.5' | '4', systemM
     const completion = await openai.createChatCompletion({
       model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
       temperature: config.temperature,
+      stop: stop,
       messages: systemMessage
         ? [
             { role: 'system', content: systemMessage },

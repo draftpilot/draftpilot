@@ -1,4 +1,4 @@
-import { chatCompletion, chatWithHistory } from '@/ai/chat'
+import { chatCompletion, chatWithHistory } from '@/ai/api'
 import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, Indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/utils/logger'
 import { oraPromise } from 'ora'
@@ -17,7 +17,8 @@ type Options = {
 
 export const PLAN_FILE = 'plan.json'
 
-// write the plan to a file
+// zero-shot planner for how to complete a code task
+// running the command stand-alone writes the plan to a file
 export default async function (query: string, options: Options) {
   const indexer = new Indexer()
 

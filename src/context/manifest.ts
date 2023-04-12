@@ -1,5 +1,5 @@
 import config from '@/config'
-import { findRoot } from '@/utils/utils'
+import { findRoot, splitOnce } from '@/utils/utils'
 import path from 'path'
 import fs from 'fs'
 import { FileInfo, FileManifest } from '@/types'
@@ -15,7 +15,7 @@ export const readManifest = (root: string = findRoot()) => {
   const fileInfo: FileManifest = {}
   let folder: string = ''
   contents.forEach((line) => {
-    let [name, description] = line.split(':', 2)
+    let [name, description] = splitOnce(line, ':')
 
     const isFile = name.startsWith('- ')
     if (!isFile) folder = name
