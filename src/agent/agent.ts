@@ -209,28 +209,28 @@ ${progressText}
     }
 
     if (result.parsedAction) {
-      const results: string[] = await Promise.all(
-        result.parsedAction.map(async (invocation) => {
-          const tool = this.tools.find((tool) => tool.name === invocation.tool)
-          if (!tool) {
-            return `Tool ${invocation.tool} was not found`
-          }
+      const results: string[] = []
+      for (const invocation of result.parsedAction) {
+        const tool = this.tools.find((tool) => tool.name === invocation.tool)
+        if (!tool) {
+          results.push(`Tool ${invocation.tool} was not found`)
+          continue
+        }
 
-          try {
-            const result = await tool.run(invocation.input, this.query!)
-            return (
-              `Ran tool ${invocation.tool} with input ${invocation.input}\n` +
+        try {
+          const result = await tool.run(invocation.input, this.query!)
+          results.push(
+            `Ran tool ${invocation.tool} with input ${invocation.input}\n` +
               (result ? result : 'Empty output returned')
-            )
-          } catch (e: any) {
-            log(chalk.red('Error running tool:'), e.message)
-            return (
-              `Error running tool ${invocation.tool} with input ${invocation.input}\n` +
-              e.toString()
-            )
-          }
-        })
-      )
+          )
+          continue
+        } catch (e: any) {
+          log(chalk.red('Error running tool:'), e.message)
+          results.push(
+            `Error running tool ${invocation.tool} with input ${invocation.input}\n` + e.toString()
+          )
+        }
+      }
       result.observation = results.join('\n---\n')
 
       if (!skipLogObservation) {

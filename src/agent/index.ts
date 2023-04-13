@@ -15,5 +15,5 @@ export function getAllTools() {
 }
 
 export function getReadOnlyTools() {
-  return [...unixReadOnlyTools, ...systemTools, ...generateCodeTools()]
+  return [...unixReadOnlyTools, ...generateCodeTools()]
 }

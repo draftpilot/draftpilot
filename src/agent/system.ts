@@ -22,7 +22,7 @@ const tellUserTool: Tool = {
     const response = await inquirer.prompt([
       {
         type: 'list',
-        choices: ['Continue'],
+        choices: ['Press enter to continue'],
         name: 'input',
         message: input,
       },
