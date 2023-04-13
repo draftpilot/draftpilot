@@ -20,7 +20,7 @@ export default async function () {
       {
         type: 'input',
         name: 'tool',
-        message: 'Input action (e.g. grep: foo)',
+        message: 'Input action (e.g. findInsideFiles: foo)',
       },
     ])
     const action = response.tool
@@ -30,7 +30,7 @@ export default async function () {
       continue
     }
     const state = { thought: 'Tools test', action, parsedAction: tools, observation: '' }
-    await agent.runTools(state)
+    await agent.runTools(state, true)
     log(state.observation)
   }
 }

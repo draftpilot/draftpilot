@@ -3,7 +3,7 @@ import { Extractor } from '@/parsing/extractor'
 import { CodeDoc, SourceFile } from '@/types'
 import { cyrb53 } from '@/utils/utils'
 
-import ts from 'typescript'
+import ts, { isObjectLiteralExpression, isVariableDeclarationList } from 'typescript'
 
 type FuncChunk = {
   name: string
@@ -36,8 +36,22 @@ export class TSExtractor implements Extractor {
           if (!node.body) return []
         } else if (ts.isArrowFunction(node)) {
           const parent = node.parent
+          const grandParent = parent.parent
           if (ts.isVariableDeclaration(parent) || ts.isPropertyAssignment(parent))
             name = parent.name.getText()
+          if (
+            grandParent.kind == ts.SyntaxKind.ObjectLiteralExpression ||
+            grandParent.kind == ts.SyntaxKind.VariableDeclarationList
+          ) {
+            const greatGrandParent = grandParent.parent
+            if (
+              ts.isVariableDeclaration(greatGrandParent) ||
+              ts.isPropertyAssignment(greatGrandParent)
+            ) {
+              name = greatGrandParent.name.getText() + '.' + name
+            }
+          }
+
           if (!node.body || node.body.getText().length < 100) return []
         } else if (ts.isMethodDeclaration(node)) {
           if (!node.body) return []
@@ -49,13 +63,12 @@ export class TSExtractor implements Extractor {
 
         const contents = node.getText()
         const splitContents = contents.split('\n')
-        const start = node.getStart(sourceFile)
 
         const chunks: FuncChunk[] = []
         // chunk every 100 lines, but include the last 10 lines of prev chunk for context
         for (let i = 0; i < splitContents.length; i += CHUNK_SIZE - 10) {
           const chunk = splitContents.slice(i, i + CHUNK_SIZE).join('\n')
-          chunks.push({ name, contents: chunk, line: start + i })
+          chunks.push({ name, contents: chunk, line })
         }
         return chunks
       })

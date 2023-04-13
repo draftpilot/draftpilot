@@ -69,14 +69,19 @@ ${this.toolDescriptions}`
 
     const instructions = `Use the following format:
 ${this.requestParam}: the request you must fulfill
-Thought: you should always think about what to do
+Thought: I know what files to edit
+${this.finalAnswerParam}: ${this.outputFormat}
+
+or
+
+Thought: I need to use a tool to solve this problem
 ${this.actionParam}: the action to take, should be one or more of [${this.toolNames}] + input, e.g.
 - grep: foo
 - viewFile: path/to/file
 Observation: the result of the actions
 ... (this Thought/${this.actionParam}/Observation can repeat N times)
 Thought: I now know the final answer
-${this.finalAnswerParam}: ${this.outputFormat}`
+${this.finalAnswerParam}: ...`
 
     const inProgressState: string[] = []
     let inProgressTokens = 0

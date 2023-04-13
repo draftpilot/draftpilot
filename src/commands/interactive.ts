@@ -3,6 +3,7 @@ import { PLAN_FILE } from '@/commands/plan'
 import { getManifestName } from '@/context/manifest'
 import { cache } from '@/db/cache'
 import { indexer } from '@/db/indexer'
+import { AgentPlanner } from '@/tools/agentPlanner'
 import { Executor } from '@/tools/executor'
 import { OneShotPlanner } from '@/tools/oneShotPlanner'
 import { getUnstagedFiles } from '@/utils/git'
@@ -14,6 +15,8 @@ import inquirer from 'inquirer'
 
 type Options = {
   glob?: string
+  oneShot?: boolean
+  waitEachStep?: boolean
 }
 
 // use the cli in an interactive mode
@@ -46,7 +49,10 @@ export default async function (options: Options) {
       message: '>',
     },
   ])
-  const planner = new OneShotPlanner()
+
+  const planner = options.oneShot ? new OneShotPlanner() : new AgentPlanner(options.waitEachStep)
+
+  log('Using', options.oneShot ? 'one-shot' : 'agent', 'planner')
   const plan = await planner.doPlan(planInput.plan, options.glob)
 
   fs.writeFileSync(PLAN_FILE, JSON.stringify(plan))

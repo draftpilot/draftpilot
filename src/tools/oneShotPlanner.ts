@@ -33,7 +33,7 @@ export class OneShotPlanner implements AbstractPlanner {
     const result = await oraPromise(promise, { text: 'Generating an action plan...' })
 
     log(chalk.bold(`Here's my guess as to which files I'll need to access or change:`))
-    log(result)
+    log(parsePlan(query, result))
 
     const finalPlan = await loopIteratePlan(
       query,

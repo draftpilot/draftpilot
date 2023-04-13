@@ -71,6 +71,9 @@ export default function () {
     .description('Create an execution plan for the request')
     .action(actionWrapper(plan))
     .argument('[request]', 'The request to make.')
+    .option('--glob <glob>', 'Custom glob to use for finding files')
+    .option('--oneShot', 'Use the one-shot planner')
+    .option('--waitEachStep', '(for agent planner) Wait for user input after each step')
 
   program
     .command('agent')
@@ -102,6 +105,7 @@ export default function () {
     .command('interactive', { isDefault: true })
     .description('Interactive mode')
     .action(actionWrapper(interactive))
+    .option('--oneShot', 'Use the one-shot planner')
 
   const options = program.parse()
   config.options = options

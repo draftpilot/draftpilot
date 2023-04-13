@@ -31,6 +31,8 @@ export default async function (query: string, options: Options) {
 
   const planner = options.oneShot ? new OneShotPlanner() : new AgentPlanner(options.waitEachStep)
 
+  log('Using', options.oneShot ? 'one-shot' : 'agent', 'planner')
+
   const plan = await planner.doPlan(query, options.glob)
 
   fs.writeFileSync(PLAN_FILE, JSON.stringify(plan))

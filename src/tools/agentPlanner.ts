@@ -10,8 +10,8 @@ import { splitOnce } from '@/utils/utils'
 import inquirer from 'inquirer'
 
 const SYSTEM_MESSAGE =
-  'You are PlannerGPT, you output plans that will be used by an AI to write code. Be very ' +
-  'efficient with your actions and only use the tools provided. Do not actually modify anything. ' +
+  'You are PlannerGPT, you output a list of files that will be used by an AI to write code.' +
+  'Don\t do any extra work, just return the plan if you know which files to change. Do not actually modify anything. ' +
   'Return the plan in this output format: ' +
   PLAN_FORMAT_STR
 
@@ -79,7 +79,8 @@ export async function findRelevantDocs(query: string, files: string[]) {
   const returnStrings = []
   if (exactMatches.length) returnStrings.push('Exact matches:', exactMatches.join('\n'))
   const relevantFiles = Array.from(fileSet)
-  if (relevantFiles.length) returnStrings.push('Other related files:', relevantFiles.join('\n'))
+  if (returnStrings.length && relevantFiles.length) returnStrings.push('Other related files:')
+  if (relevantFiles.length) returnStrings.push(relevantFiles.join('\n'))
 
   return returnStrings.join('\n')
 }

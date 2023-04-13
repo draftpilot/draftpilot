@@ -1,31 +1,29 @@
 import { Tool, confirmPrompt } from '@/agent/tool'
+import { verboseLog } from '@/utils/logger'
 
 import child_process from 'child_process'
 import FastGlob from 'fast-glob'
 
 const grepTool: Tool = {
-  name: 'findAcrossFiles',
-  description:
-    'Search for a pattern and across files print the matching lines. e.g. findAcrossFiles: pattern',
+  name: 'findInsideFiles',
+  description: 'Search inside files print the matching lines. e.g. findAcrossFiles: hello',
 
   run: (input: string) => {
     const args = stringToArgs(input)
+    console.log('IN:', input, 'ARGS:', args)
     if (!args.includes('-r')) args.push('-r')
+    if (!args.includes('-i')) args.push('-i')
+
     const dir = args[args.length - 1]
     if (dir.startsWith('/')) args.pop()
-    if (dir != '.' && dir != '*') args.push('.')
+    if (dir != '.' && !dir.includes('*') && !dir.includes('/')) args.push('.')
 
     args.push(
-      '--exclude-dir',
-      'node_modules',
-      '--exclude-dir',
-      '.git',
-      '--exclude-dir',
-      '.draftpilot',
-      '--exclude-dir',
-      'dist',
-      '--exclude-dir',
-      'out'
+      '--exclude-dir=node_modules',
+      '--exclude-dir=.*',
+      '--exclude-dir=dist',
+      '--exclude-dir=out',
+      '--exclude-dir=build'
     )
     return spawnPromise('grep', args)
   },
@@ -37,6 +35,10 @@ const findTool: Tool = {
 
   run: (input: string) => {
     const args = stringToArgs(input)
+    if (input.includes('/')) {
+      // if it's a path, use ls instead
+      return spawnPromise('ls', args)
+    }
     if (!input.includes('-name')) args.unshift('.', '-name')
     return spawnPromise('find', args)
   },
@@ -119,7 +121,7 @@ const gitHistory: Tool = {
   name: 'gitHistory',
   description: 'Show git history for a given file. e.g. gitHistory: file',
   run: (input: string) => {
-    const args = ['log', '--pretty=format:%h %s', input]
+    const args = ['log', '--pretty=format:"%h %s"', input]
     return spawnPromise('git', args)
   },
 }
@@ -135,6 +137,8 @@ const gitDiffTool: Tool = {
 }
 
 export const stringToArgs = (input: string) => {
+  if (!input) return []
+
   const args = []
   let currentArg = ''
   let inSingleQuote = false
@@ -176,6 +180,7 @@ export const stringToArgs = (input: string) => {
 }
 
 export const spawnPromise = (command: string, args: string[], cwd?: string) => {
+  verboseLog(`Running ${command} ${args.join(' ')}`)
   const result = child_process.spawn(command, args, { cwd, shell: true })
   return new Promise<string>((resolve, reject) => {
     const chunks: Buffer[] = []
