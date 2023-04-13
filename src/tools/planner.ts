@@ -10,13 +10,13 @@ const PLAN_FORMAT: Partial<Plan> = {
   shellCommands: ["sed -i 's/old/new/g' *"],
   reference: ['up to three files given to AI as reference'],
   change: {
-    'path/file3': 'detailed explanation of change with all the context that an AI needs',
+    'path/file': 'detailed explanation of change with all the context that an AI needs',
   },
   clone: {
     'from/file': { dest: 'to/file', edits: 'any edits to make to the dest file' },
   },
   create: {
-    'other/file4': 'detailed explanation of new file contents',
+    'path/file': 'detailed explanation of new file contents',
   },
   rename: { 'from/file': 'to/file' },
   delete: [],
@@ -66,6 +66,8 @@ export const parsePlan = (request: string, plan: string): Plan | null => {
       if (parsedPlan.rename && Object.keys(parsedPlan.rename).length === 0) {
         delete parsedPlan.rename
       }
+      if (parsedPlan.shellCommands?.[0]?.includes('No shell commands'))
+        delete parsedPlan.shellCommands
       if (parsedPlan.shellCommands && parsedPlan.shellCommands.length === 0) {
         delete parsedPlan.shellCommands
       }
@@ -75,7 +77,7 @@ export const parsePlan = (request: string, plan: string): Plan | null => {
       log(chalk.red('Error:'), 'Oops, that was invalid JSON')
     }
   } else {
-    log(chalk.yellow('Warning:'), 'Plan was not updated, got non-JSON response')
+    log(chalk.yellow('Warning:'), 'Got non-JSON response for plan')
   }
   return null
 }

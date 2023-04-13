@@ -1,11 +1,12 @@
 import path from 'path'
 import fs from 'fs'
 import sqlite3 from 'sqlite3'
-import { cyrb53, fatal } from '@/utils/utils'
+import { fatal } from '@/utils/utils'
 import { verboseLog } from '@/utils/logger'
 import { CodeDoc, SourceFile } from '@/types'
 import config from '@/config'
 import { ExtractorService } from '@/parsing/extractorService'
+import { isBinaryFileSync } from 'isbinaryfile'
 
 const SQLITE_DB_NAME = 'docs.sqlite'
 
@@ -63,6 +64,8 @@ export default class FileDB {
     await Promise.all(
       files.map(async (file) => {
         const contents = fs.readFileSync(file, 'utf-8')
+        if (isBinaryFileSync(file)) return
+
         const sourceFile: SourceFile = { name: file, contents }
         const docs = await extractor.parse(sourceFile)
         docs.forEach((doc) => (allDocs[doc.path] = doc))

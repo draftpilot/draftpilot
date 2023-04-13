@@ -151,8 +151,9 @@ export class Executor {
 
   doChange = async (plan: Plan, inputFile: string, changes: string, outputFile?: string) => {
     inputFile = fuzzyMatchingFile(inputFile, indexer.files) || inputFile
-    if (!fs.existsSync(inputFile)) return chalk.red('Error: ') + `File ${inputFile} does not exist.`
-    const fileContents = fs.readFileSync(inputFile, 'utf8')
+    const fileContents = fs.existsSync(inputFile)
+      ? fs.readFileSync(inputFile, 'utf8')
+      : '<empty file>'
     if (!outputFile) outputFile = inputFile
 
     const fromReferences = this.referencesIndex && (await this.referencesIndex.search(changes, 4))

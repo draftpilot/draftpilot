@@ -2,6 +2,7 @@ import { getReadOnlyTools } from '@/agent'
 import { Agent } from '@/agent/agent'
 import { addToLearning } from '@/context/learning'
 import { getFilesWithContext } from '@/context/manifest'
+import { readConfig } from '@/context/projectConfig'
 import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, indexer } from '@/db/indexer'
 import { AbstractPlanner, PLAN_FORMAT_STR, parsePlan } from '@/tools/planner'
 import { Plan } from '@/types'
@@ -25,7 +26,9 @@ export class AgentPlanner implements AbstractPlanner {
   constructor(public stopEachStep?: boolean) {}
 
   doPlan = async (query: string, glob?: string): Promise<Plan> => {
-    const baseGlob = query.includes('test') ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS
+    const testRelated = query.includes('test')
+    const baseGlob = testRelated ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS
+
     const files = await indexer.getFiles(glob || baseGlob)
     const { docs, updatedDocs } = await indexer.load(files)
     await indexer.index(updatedDocs)
@@ -38,9 +41,13 @@ export class AgentPlanner implements AbstractPlanner {
 
     const agent = new Agent(tools, outputFormat, SYSTEM_MESSAGE)
     agent.actionParam = 'Research Action'
-    agent.finalAnswerParam = 'Action Plan'
+    agent.finalAnswerParam = 'Final Plan'
 
     agent.addInitialState('What are the most relevant files to this query?', relevantDocs)
+    const config = readConfig()
+    if (testRelated && config?.testDir) {
+      agent.addInitialState('Where should tests go?', config.testDir)
+    }
 
     while (true) {
       const planString = await agent.runContinuous(query, MAX_PLAN_ITERATIONS, this.stopEachStep)
@@ -48,6 +55,7 @@ export class AgentPlanner implements AbstractPlanner {
       const parsedPlan = parsePlan(query, planString)
 
       if (parsedPlan) log(parsedPlan)
+      else log(planString)
 
       const prompt = parsedPlan
         ? 'Press enter to accept the plan, or tell me what to change:'

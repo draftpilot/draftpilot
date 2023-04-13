@@ -133,18 +133,26 @@ ${progressText}
     for (let i = 0; i < limit; i++) {
       if (i == limit - 1) forceAnswer = true
 
-      const result = await this.runOnce(query, forceAnswer)
+      let result: AgentState | undefined
+      try {
+        result = await this.runOnce(query, forceAnswer)
+      } catch (e: any) {
+        log(chalk.red('Error: '), e.message)
+      }
+
       const root = findRoot()
       writeFileSync(root + '/.draftpilot/history.json', JSON.stringify(this.chatHistory, null, 2))
 
-      if (result.finalAnswer) {
-        return result.finalAnswer
+      let askedUser = false
+      if (result) {
+        if (result.finalAnswer) {
+          return result.finalAnswer
+        }
+        this.state.unshift(result)
+        askedUser = result.parsedAction?.some((invocation) => invocation.tool == 'askUser') || false
       }
 
-      this.state.unshift(result)
-      const askedUser = result.parsedAction?.some((invocation) => invocation.tool == 'askUser')
-
-      if (!forceAnswer && pauseBetween && !askedUser) {
+      if (!result || (!forceAnswer && pauseBetween && !askedUser)) {
         log(
           chalk.bold(
             "Allow the agent to iterate again? Type 'n' to force answer, or type text to add comments for the agent"
@@ -221,7 +229,9 @@ ${progressText}
       for (const params of result.parsedAction) {
         const tool = this.tools.find((tool) => tool.name === params.tool)
         if (!tool) {
-          results.push(`Tool ${params.tool} was not found`)
+          results.push(
+            `Tool ${params.tool} was not found. You should just provide the ${this.finalAnswerParam}.`
+          )
           continue
         }
         if (tool.serial) serialTools.push({ tool, input: params.input })
@@ -295,16 +305,9 @@ ${progressText}
     if (result.action) {
       let parsedAction = this.parseActions(result.action)
       if (!parsedAction) {
-        log(
-          "I couldn't parse the result. Please help by giving the response in a proper format (Action: toolname: input). " +
-            'If you are able, please submit the result as a issue on GitHub.'
+        throw new Error(
+          'Could not parse action.  You may want to submit the text as a issue on GitHub.'
         )
-        const response = await inquirer.prompt({
-          type: 'input',
-          name: 'response',
-          message: '>',
-        })
-        parsedAction = this.parseActions(response.response)!
       }
       result.parsedAction = parsedAction || undefined
     }
@@ -331,6 +334,10 @@ ${progressText}
       if (tool) {
         if (tool.endsWith(':')) tool = tool.slice(0, -1)
         params.push({ tool, input })
+        if (tool == 'create') {
+          // the agent likes to hallucinate this tool
+          return params
+        }
       } else {
         log(chalk.yellow('Warning:'), `Could not parse line: ${line}`)
         return null

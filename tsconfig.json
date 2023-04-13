@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
-    "module": "commonjs" /* Specify what module code is generated. */,
+    "module": "esnext" /* Specify what module code is generated. */,
     "moduleResolution": "node",
     "noEmit": true,
     "isolatedModules": true,

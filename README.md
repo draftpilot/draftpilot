@@ -14,9 +14,10 @@ a senior engineer. Draftpilot should also be able to use unix tools, git, and th
 
 ## How to use
 
-Draftpilot currently works best with Javascript & Typescript projects.
+Draftpilot currently works best with Javascript & Typescript projects. You'll need to set the
+environment variable `OPENAI_API_KEY` to your OpenAI key.
 
-You can run draftpilot without installing in your codebase with npx (node.js 18+ is required):
+You can run draftpilot without installing in your codebase with npx:
 
 `npx -y draftpilot@latest`
 
@@ -34,10 +35,14 @@ After initialization, the following files will be generated in the `.draftpilot`
 - history.json - history of invocations. This can be ignored by git
 - cache.json - cache of API requests. This can be ignored by git
 
-## Tips for use
+## Tips for use / Limitations
 
 Due to token limits, Draftpilot works on codebases with smaller files. If you have very large files,
-you may want to consider
+i.e. > 500 lines you may want to consider splitting them up if you want to work with them. In the
+future we will implement the ability to edit chunks of a file.
+
+If you want to use Draftpilot with code other than Javascript/Typescript, we recommend writing a
+parser that can break the
 
 ## How it works
 
