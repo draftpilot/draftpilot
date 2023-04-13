@@ -46,6 +46,11 @@ export const parsePlan = (request: string, plan: string): Plan | null => {
           delete parsedPlan.create?.[cloneData.dest]
         }
       })
+      if (parsedPlan.reference) {
+        if (parsedPlan.reference.length === 0) delete parsedPlan.reference
+        else if (parsedPlan.reference.length > 3)
+          parsedPlan.reference = parsedPlan.reference.slice(0, 3)
+      }
       if (parsedPlan.change && Object.keys(parsedPlan.change).length === 0) {
         delete parsedPlan.change
       }

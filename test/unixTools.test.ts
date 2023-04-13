@@ -27,14 +27,31 @@ describe('stringToArgs', () => {
   })
 })
 
-describe('grep', () => {
+const THIS_FILE = 'unixTools.test.ts'
+
+describe('findInsideFiles', () => {
+  it('should run without command line flags', async () => {
+    const tool = unixTools.find((t) => t.name === 'findInsideFiles')!
+
+    const results = await Promise.all([tool.run('Lunchclub', '')])
+    results.forEach((r) => assert(r.includes(THIS_FILE), 'result: ' + r))
+  })
   it('should run with command line flags and find stuff', async () => {
-    const grepTool = unixTools.find((t) => t.name === 'grep')!
+    const tool = unixTools.find((t) => t.name === 'findInsideFiles')!
 
     const results = await Promise.all([
-      grepTool.run('-r "Lunchclub" .', 'blah'),
-      grepTool.run('-r "Lunchclub" *', 'blah'),
+      tool.run('-r "Lunchclub" .', ''),
+      tool.run('-r "Lunchclub" *', ''),
     ])
-    results.forEach((r) => assert(r.includes('test/unix.test.ts'), r))
+    results.forEach((r) => assert(r.includes(THIS_FILE), 'result: ' + r))
+  })
+})
+
+describe('findFileNames', () => {
+  it('should run without command line flags and find stuff', async () => {
+    const tool = unixTools.find((t) => t.name === 'findFileNames')!
+
+    const results = await Promise.all([tool.run('**/*.test.ts', ''), tool.run('*.test.ts', '')])
+    results.forEach((r) => assert(r.includes(THIS_FILE), 'result: ' + r))
   })
 })
