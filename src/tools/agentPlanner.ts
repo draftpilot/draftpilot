@@ -21,7 +21,7 @@ const OUTPUT_FORMAT = `I have the plan:
 const MAX_PLAN_ITERATIONS = 5
 
 export class AgentPlanner implements AbstractPlanner {
-  constructor(public stopEachStep = true) {}
+  constructor(public stopEachStep?: boolean) {}
 
   doPlan = async (query: string, glob?: string): Promise<Plan> => {
     const baseGlob = query.includes('test') ? DEFAULT_GLOB : GLOB_WITHOUT_TESTS
@@ -46,13 +46,17 @@ export class AgentPlanner implements AbstractPlanner {
 
       const parsedPlan = parsePlan(query, planString)
 
-      log(parsedPlan)
+      if (parsedPlan) log(parsedPlan)
+
+      const prompt = parsedPlan
+        ? 'Press enter to accept the plan, or tell me what to change:'
+        : 'No plan was returned. Press enter to continue, or tell me what to change:'
 
       const answer = await inquirer.prompt([
         {
           type: 'input',
           name: 'iterate',
-          message: 'Press enter to accept the plan, or tell me what to change:',
+          message: prompt,
         },
       ])
 
