@@ -10,19 +10,23 @@ export function getConfigPath(root: string = findRoot()) {
   return { folder, file }
 }
 
+let cached: ProjectConfig | null = null
 export function readConfig(root: string = findRoot()): ProjectConfig | null {
+  if (cached) return cached
+
   const { file: configPath } = getConfigPath(root)
   if (!fs.existsSync(configPath)) {
     return null
   }
 
   const data = fs.readFileSync(configPath, 'utf-8')
-  const config: ProjectConfig = JSON.parse(data)
-  if (config.server) overrideServer(config.server)
-  return config
+  cached = JSON.parse(data)
+  if (cached!.server) overrideServer(config.server)
+  return cached
 }
 
 export function writeConfig(config: ProjectConfig, root: string = findRoot()) {
   const configPath = getConfigPath(root)
   fs.writeFileSync(configPath.file, JSON.stringify(config, null, 2))
+  cached = config
 }

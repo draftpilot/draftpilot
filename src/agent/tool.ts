@@ -3,6 +3,7 @@ import inquirer from 'inquirer'
 export interface Tool {
   name: string
   description: string
+  serial?: boolean
 
   run: (input: string, overallGoal: string) => Promise<string>
 }

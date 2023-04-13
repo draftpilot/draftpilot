@@ -4,6 +4,7 @@ import inquirer from 'inquirer'
 const askUserTool: Tool = {
   name: 'askUser',
   description: 'Ask the user to provide text input. Input: prompt',
+  serial: true,
   run: async (input: string) => {
     const response = await inquirer.prompt([
       {
@@ -18,6 +19,7 @@ const askUserTool: Tool = {
 const tellUserTool: Tool = {
   name: 'tellUser',
   description: 'Tell the user to do something. Input: prompt',
+  serial: true,
   run: async (input: string) => {
     const response = await inquirer.prompt([
       {

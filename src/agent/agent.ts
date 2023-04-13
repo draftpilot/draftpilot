@@ -11,15 +11,19 @@ import { findRoot, splitOnce } from '@/utils/utils'
 import { ChatMessage } from '@/types'
 import { writeFileSync } from 'fs'
 
-type ToolInvocation = {
+type ToolParams = {
   tool: string
+  input: string
+}
+type ToolInvocation = {
+  tool: Tool
   input: string
 }
 
 type AgentState = {
   thought: string
   action?: string
-  parsedAction?: ToolInvocation[]
+  parsedAction?: ToolParams[]
   finalAnswer?: string
   observation?: string
 }
@@ -210,27 +214,39 @@ ${progressText}
 
     if (result.parsedAction) {
       const results: string[] = []
-      for (const invocation of result.parsedAction) {
-        const tool = this.tools.find((tool) => tool.name === invocation.tool)
+
+      const serialTools: ToolInvocation[] = []
+      const paralleTools: ToolInvocation[] = []
+
+      for (const params of result.parsedAction) {
+        const tool = this.tools.find((tool) => tool.name === params.tool)
         if (!tool) {
-          results.push(`Tool ${invocation.tool} was not found`)
+          results.push(`Tool ${params.tool} was not found`)
           continue
         }
+        if (tool.serial) serialTools.push({ tool, input: params.input })
+        else paralleTools.push({ tool, input: params.input })
+      }
 
+      const invokeTool = async (data: ToolInvocation) => {
         try {
-          const result = await tool.run(invocation.input, this.query!)
+          const result = await data.tool.run(data.input, this.query!)
           results.push(
-            `Ran tool ${invocation.tool} with input ${invocation.input}\n` +
+            `Ran tool ${data.tool.name} with input ${data.input}\n` +
               (result ? result : 'Empty output returned')
           )
-          continue
         } catch (e: any) {
           log(chalk.red('Error running tool:'), e.message)
           results.push(
-            `Error running tool ${invocation.tool} with input ${invocation.input}\n` + e.toString()
+            `Error running tool ${data.tool.name} with input ${data.input}\n` + e.toString()
           )
         }
       }
+
+      for (const data of serialTools) {
+        await invokeTool(data)
+      }
+      await Promise.all(paralleTools.map((data) => invokeTool(data)))
       result.observation = results.join('\n---\n')
 
       if (!skipLogObservation) {
@@ -304,8 +320,8 @@ ${progressText}
    * Action:
    * - toolName: input
    */
-  parseActions = (result: string): ToolInvocation[] | null => {
-    const invocations: ToolInvocation[] = []
+  parseActions = (result: string): ToolParams[] | null => {
+    const params: ToolParams[] = []
     const lines = result.split('\n').filter(Boolean)
 
     for (let line of lines) {
@@ -314,15 +330,15 @@ ${progressText}
 
       if (tool) {
         if (tool.endsWith(':')) tool = tool.slice(0, -1)
-        invocations.push({ tool, input })
+        params.push({ tool, input })
       } else {
         log(chalk.yellow('Warning:'), `Could not parse line: ${line}`)
         return null
       }
     }
 
-    if (invocations.length) {
-      return invocations
+    if (params.length) {
+      return params
     }
     return null
   }
