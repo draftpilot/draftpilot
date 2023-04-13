@@ -1,11 +1,12 @@
 import FileDB from '@/db/docsDb'
 import { VectorDB } from '@/db/vectorDb'
 import { verboseLog } from '@/utils/logger'
-import { CodeDoc } from '@/types'
+import { CodeDoc, ProjectConfig } from '@/types'
 import { findRoot } from '@/utils/utils'
 import chalk from 'chalk'
 import FastGlob from 'fast-glob'
 import SearchDB from '@/db/searchDb'
+import { readConfig } from '@/context/projectConfig'
 
 // things that glob should never return
 export const GLOB_EXCLUSIONS = ['!**/node_modules/**', '!**/dist/**', '!**/build/**']
@@ -46,7 +47,13 @@ export class Indexer {
   }
 
   getFiles = async (glob?: string | string[]) => {
-    const files = await FastGlob(glob || GLOB_WITHOUT_TESTS)
+    const globs: string[] = !glob ? GLOB_WITHOUT_TESTS : Array.isArray(glob) ? glob : [glob || '']
+
+    const customExclude = (readConfig() || ({} as ProjectConfig)).excludeDir
+    if (customExclude) {
+      customExclude.split(',').forEach((dir) => globs.push(`!${dir}`))
+    }
+    const files = await FastGlob(globs)
     this.files = files
     return files
   }
