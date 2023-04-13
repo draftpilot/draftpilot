@@ -1,4 +1,5 @@
 import { Tool, confirmPrompt } from '@/agent/tool'
+import { readConfig } from '@/context/projectConfig'
 import { verboseLog } from '@/utils/logger'
 
 import child_process from 'child_process'
@@ -12,6 +13,7 @@ const grepTool: Tool = {
     const args = stringToArgs(input)
     if (!args.includes('-r')) args.push('-r')
     if (!args.includes('-i')) args.push('-i')
+    if (!args.includes('-I')) args.push('-I')
 
     const dir = args[args.length - 1]
     if (dir == '.' || dir.startsWith('/')) args.pop()
@@ -22,8 +24,14 @@ const grepTool: Tool = {
       '--exclude-dir=.*',
       '--exclude-dir=dist',
       '--exclude-dir=out',
-      '--exclude-dir=build'
+      '--exclude-dir=build',
+      '--exclude-dir=venv'
     )
+    const config = readConfig()
+    if (config && config.excludeDir) {
+      config.excludeDir.split(',').forEach((dir) => args.push(`--exclude-dir=${dir}`))
+    }
+
     return spawnPromise('grep', args)
   },
 }

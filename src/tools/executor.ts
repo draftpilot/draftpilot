@@ -13,6 +13,8 @@ import { VectorDB } from '@/db/vectorDb'
 import { encode } from 'gpt-3-encoder'
 import child_process from 'child_process'
 
+// for files below this length, have the AI output the entire file
+const FULL_OUTPUT_THRESHOLD = 500
 export class Executor {
   referencesIndex: VectorDB | undefined
 
@@ -170,7 +172,7 @@ export class Executor {
       .map((s) => s[0])
 
     const fileLines = fileContents.split('\n')
-    const outputFormat = fileLines.length < 200 ? 'full' : 'diff'
+    const outputFormat = fileLines.length < FULL_OUTPUT_THRESHOLD ? 'full' : 'diff'
 
     const decoratedLines =
       outputFormat == 'full' ? fileLines : fileLines.map((l, i) => `${i + 1}: ${l}`)
