@@ -10,13 +10,12 @@ const grepTool: Tool = {
 
   run: (input: string) => {
     const args = stringToArgs(input)
-    console.log('IN:', input, 'ARGS:', args)
     if (!args.includes('-r')) args.push('-r')
     if (!args.includes('-i')) args.push('-i')
 
     const dir = args[args.length - 1]
-    if (dir.startsWith('/')) args.pop()
-    if (dir != '.' && !dir.includes('*') && !dir.includes('/')) args.push('.')
+    if (dir == '.' || dir.startsWith('/')) args.pop()
+    if (!dir.includes('*') && !dir.includes('/')) args.push('*')
 
     args.push(
       '--exclude-dir=node_modules',

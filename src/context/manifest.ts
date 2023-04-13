@@ -141,6 +141,9 @@ export function findLargestFolders(dirTree: DirectoryNode, max: number) {
   const map: FolderSizes = {}
   getFolderSizes('.', dirTree, map, max)
   return Object.keys(map)
+    .sort((a, b) => map[b] - map[a])
+    .slice(0, max)
+    .sort((a, b) => a.localeCompare(b))
 }
 
 // recursively list folder sizes

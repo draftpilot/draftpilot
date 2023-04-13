@@ -124,7 +124,7 @@ If you are unable to make the changes or need more information, respond HELP: <d
     try {
       const output = Diff.applyPatch(fileContents, result.trim(), { fuzzFactor: 30 })
       if (output) fs.writeFileSync(outputFile, output)
-      throw 'Unable to apply patch'
+      throw new Error('Unable to apply patch')
     } catch (e: any) {
       if (inputFile != outputFile) fs.writeFileSync(outputFile, fileContents)
       return (

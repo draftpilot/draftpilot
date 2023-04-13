@@ -15,7 +15,7 @@ import { cache } from '@/db/cache'
 import execute from '@/commands/execute'
 import interactive from '@/commands/interactive'
 import patch from '@/commands/patch'
-import scratchpad from '@/commands/scratchpad'
+import tool from '@/commands/tool'
 import commit from '@/commands/commit'
 import agent from '@/commands/agent'
 
@@ -92,9 +92,9 @@ export default function () {
   program.command('chat').description('Talk directly to chatGPT').action(actionWrapper(chat))
 
   program
-    .command('scratchpad')
-    .description('File to run scratchpad code')
-    .action(actionWrapper(scratchpad))
+    .command('tool [command]')
+    .description('Tester for agent tools')
+    .action(actionWrapper(tool))
 
   program
     .command('commit')
