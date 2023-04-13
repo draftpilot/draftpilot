@@ -222,7 +222,7 @@ Apply the following changes to the ${outputFile}: ${changes}`
       }
 
       try {
-        const output = Diff.applyPatch(fileContents, result.trim(), { fuzzFactor: 5 })
+        const output = Diff.applyPatch(fileContents, result.trim(), { fuzzFactor: 30 })
         fs.writeFileSync(outputFile, output)
       } catch (e: any) {
         if (inputFile != outputFile) fs.writeFileSync(outputFile, fileContents)

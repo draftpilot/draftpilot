@@ -63,6 +63,8 @@ export default class FileDB {
 
     await Promise.all(
       files.map(async (file) => {
+        const size = fs.lstatSync(file).size
+        if (size > 100_000) return // skip large files
         const contents = fs.readFileSync(file, 'utf-8')
         if (isBinaryFileSync(file)) return
 

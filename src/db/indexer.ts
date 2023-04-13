@@ -9,7 +9,7 @@ import SearchDB from '@/db/searchDb'
 import { readConfig } from '@/context/projectConfig'
 
 // things that glob should never return
-export const GLOB_EXCLUSIONS = ['!**/node_modules/**', '!**/dist/**', '!**/build/**']
+export const GLOB_EXCLUSIONS = ['!**/node_modules/**', '!**/dist/**', '!**/build/**', '!**/venv/**']
 
 export const DEFAULT_GLOB = [
   '**/*.js',
