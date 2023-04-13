@@ -1,7 +1,7 @@
 {
   "name": "draftpilot",
   "version": "0.0.1",
-  "description": "AI-assisted coding",
+  "description": "AI-assisted codebase helper",
   "main": "dist/index.js",
   "type": "module",
   "repository": {
