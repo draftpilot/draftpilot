@@ -1,5 +1,6 @@
 import { getReadOnlyTools } from '@/agent'
 import { Agent } from '@/agent/agent'
+import { addToLearning } from '@/context/learning'
 import { getFilesWithContext } from '@/context/manifest'
 import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, indexer } from '@/db/indexer'
 import { AbstractPlanner, PLAN_FORMAT_STR, parsePlan } from '@/tools/planner'
@@ -61,7 +62,24 @@ export class AgentPlanner implements AbstractPlanner {
       ])
 
       const iterate = answer.iterate.trim()
-      if (!iterate) return parsedPlan || { request: query }
+      if (!iterate) {
+        if (parsedPlan) {
+          addToLearning('planner', {
+            request: query,
+            output: planString,
+            accepted: true,
+          })
+        }
+
+        return parsedPlan || { request: query }
+      }
+
+      addToLearning('planner', {
+        request: query,
+        output: planString,
+        accepted: false,
+        feedback: iterate,
+      })
 
       agent.addInitialState('The user tells me what to change:', iterate)
       agent.chatHistory.push({ role: 'user', content: iterate })

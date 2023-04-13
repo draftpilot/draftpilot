@@ -1,7 +1,7 @@
 import { GLOB_EXCLUSIONS, Indexer } from '@/db/indexer'
 import { log } from '@/utils/logger'
 import open from 'open'
-import { findRoot, getConfigPath, readConfig } from '@/utils/utils'
+import { findRoot } from '@/utils/utils'
 import { cache } from '@/db/cache'
 import path from 'path'
 import {
@@ -91,9 +91,7 @@ export async function doInitialize(indexer: Indexer, options?: Options) {
       : 'none'
 
   existingConfig.packageManager = packageManager
-
-  const configPath = getConfigPath(root)
-  fs.writeFileSync(configPath.file, JSON.stringify(existingConfig, null, 2))
+  writeConfig(existingConfig, root)
 
   cache.close()
 
@@ -104,6 +102,7 @@ export async function doInitialize(indexer: Indexer, options?: Options) {
 }
 
 import fs from 'fs'
+import { getConfigPath, readConfig, writeConfig } from '@/context/projectConfig'
 
 function checkDir(dir: string) {
   if (fs.existsSync(dir)) {

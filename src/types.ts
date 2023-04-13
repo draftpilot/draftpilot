@@ -48,4 +48,17 @@ export type FileInfo = {
   description?: string
   key?: boolean
 }
+
 export type FileManifest = { [file: string]: FileInfo }
+
+export type LearningItem = {
+  request: string
+  output: string
+  accepted: boolean
+  feedback?: string
+}
+
+export type LearningLog = {
+  planner: LearningItem[]
+  executor: LearningItem[]
+}
