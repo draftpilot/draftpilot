@@ -35,7 +35,7 @@ export const generateCodeTools = (): Tool[] => {
     description: 'Search for code snippets simliar to the input. Input: search query',
 
     run: async (input: string) => {
-      const results = await indexer.vectorDB.search(input, 4)
+      const results = await indexer.vectorAndCodeSearch(input, 4)
       return results?.map((r) => r.pageContent).join('\n') || ''
     },
   }

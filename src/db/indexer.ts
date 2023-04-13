@@ -93,6 +93,18 @@ export class Indexer {
     await vectorDb.init(subsetDocs)
     return vectorDb
   }
+
+  vectorAndCodeSearch = async (query: string, max: number) => {
+    const vectorResults = (await this.vectorDB.search(query, max)) || []
+    const results = await this.searchDB.searchDocuments(query, this.docs!, max)
+
+    const vectorSet = new Set(vectorResults.map((r) => r.metadata.path))
+    return vectorResults.concat(
+      results
+        .filter((r) => !vectorSet.has(r.path))
+        .map((r) => ({ metadata: { path: r.path }, pageContent: r.contents }))
+    )
+  }
 }
 
 // global singleton instance

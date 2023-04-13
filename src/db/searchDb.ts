@@ -8,8 +8,13 @@ export default class SearchDB {
     docs.forEach((doc) => this.index.add(doc.path as any, doc.path + '\n' + doc.contents))
   }
 
-  // returns the document name
+  // returns the document name only
   search = (query: string, max?: number) => {
     return this.index.search(query, { limit: max })
+  }
+
+  searchDocuments = async (query: string, docs: CodeDoc[], max?: number) => {
+    const results = new Set(await this.search(query, max))
+    return docs.filter((doc) => results.has(doc.path))
   }
 }

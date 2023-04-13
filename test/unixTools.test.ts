@@ -32,8 +32,8 @@ describe('grep', () => {
     const grepTool = unixTools.find((t) => t.name === 'grep')!
 
     const results = await Promise.all([
-      grepTool.run('-r "Lunchclub" .'),
-      grepTool.run('-r "Lunchclub" *'),
+      grepTool.run('-r "Lunchclub" .', 'blah'),
+      grepTool.run('-r "Lunchclub" *', 'blah'),
     ])
     results.forEach((r) => assert(r.includes('test/unix.test.ts'), r))
   })
