@@ -174,7 +174,9 @@ ${progressText}
   runOnce = async (query: string, forceComplete?: boolean): Promise<AgentState> => {
     this.query = query
 
-    const suffix = forceComplete ? this.finalAnswerParam + ':' : 'Thought:'
+    const suffix = forceComplete
+      ? 'Thought: the user wants me to answer immediately.\n' + this.finalAnswerParam + ':'
+      : 'Thought:'
     const prompt = this.constructPrompt() + suffix
 
     verboseLog(prompt)

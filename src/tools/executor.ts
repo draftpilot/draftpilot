@@ -12,6 +12,7 @@ import * as Diff from 'diff'
 import { dirname, basename } from 'path'
 import { VectorDB } from '@/db/vectorDb'
 import { encode } from 'gpt-3-encoder'
+import child_process from 'child_process'
 
 export class Executor {
   referencesIndex: VectorDB | undefined
@@ -44,11 +45,13 @@ export class Executor {
     }
 
     if (plan.rename) {
-      // todo
+      Object.keys(plan.rename).forEach((oldFile) =>
+        promises.push(this.renameFile(oldFile, plan.rename![oldFile]))
+      )
     }
 
     if (plan.shellCommands) {
-      // todo
+      plan.shellCommands.forEach((command) => promises.push(this.runShellCommand(command)))
     }
 
     const start = Date.now()
@@ -122,6 +125,29 @@ export class Executor {
     fs.mkdirSync(dir, { recursive: true })
 
     return await this.doChange(plan, file, dest.edits, dest.dest)
+  }
+
+  renameFile = async (oldFile: string, newFile: string) => {
+    if (!fs.existsSync(oldFile)) {
+      return chalk.red('Error: ') + `File ${oldFile} does not exist.`
+    }
+
+    fs.renameSync(oldFile, newFile)
+    return null
+  }
+
+  runShellCommand = async (command: string) => {
+    if (command.includes('rm -rf')) return 'Error: rm -rf is not allowed.'
+
+    return await new Promise<string | null>((res) =>
+      child_process.exec(command, (err, stdout, stderr) => {
+        if (err) {
+          res(chalk.red('Error: ') + `Shell command ${command} failed with error ${err}`)
+        } else {
+          res(null)
+        }
+      })
+    )
   }
 
   doChange = async (plan: Plan, inputFile: string, changes: string, outputFile?: string) => {

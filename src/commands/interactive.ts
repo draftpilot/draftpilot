@@ -22,7 +22,7 @@ type Options = {
 // use the cli in an interactive mode
 export default async function (options: Options) {
   const unstaged = getUnstagedFiles()
-  if (unstaged) {
+  if (unstaged.length) {
     log(
       chalk.yellow('Warning:'),
       'Unstaged files in your git repo. We recommend you quit & commit those first in case you need to roll back.'

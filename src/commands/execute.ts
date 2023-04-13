@@ -16,7 +16,7 @@ type Options = {
 // executes a plan
 export default async function (file: string | undefined, options: Options) {
   const unstaged = getUnstagedFiles()
-  if (unstaged) {
+  if (unstaged.length) {
     log(
       chalk.yellow(
         'Warning: ',
