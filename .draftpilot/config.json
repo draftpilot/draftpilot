@@ -1,1 +1,7 @@
-{"purpose":"cli project to generate ai-assisted code","techstack":"node.js","language":"typescript"}
+{
+  "purpose": "cli project to generate ai-assisted code",
+  "techstack": "node.js",
+  "language": "typescript",
+  "testDir": "test",
+  "packageManager": "yarn"
+}

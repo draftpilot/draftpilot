@@ -1,8 +1,9 @@
 export type ProjectConfig = {
   server?: string
-  language?: string
-  purpose?: string
-  techstack?: string
+  glob?: string
+  testDir?: string
+  excludeDir?: string
+  packageManager?: 'npm' | 'yarn' | 'pnpm' | 'none'
 }
 
 export type SourceFile = {

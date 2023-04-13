@@ -15,6 +15,7 @@ export const readManifest = (root: string = findRoot()) => {
   const fileInfo: FileManifest = {}
   let folder: string = ''
   contents.forEach((line) => {
+    if (line.startsWith('#')) return
     let [name, description] = splitOnce(line, ':')
 
     const isFile = name.startsWith('- ')
@@ -94,7 +95,11 @@ function addFileToDirectory(directory: string, fileTree: DirectoryNode) {
   }
 }
 
-function getDirectoryPaths(fileTree: DirectoryNode, prefix: string): string[] {
+function getDirectoryPaths(
+  fileTree: DirectoryNode,
+  prefix: string,
+  foldersOnly?: boolean
+): string[] {
   const paths: string[] = []
   const fileTreeSorter = (a: string, b: string) =>
     fileTree[a] === true && fileTree[b] === true
@@ -107,7 +112,7 @@ function getDirectoryPaths(fileTree: DirectoryNode, prefix: string): string[] {
   const keys = Object.keys(fileTree).sort(fileTreeSorter)
   for (const path of keys) {
     if (fileTree[path] === true) {
-      paths.push(`- ${path}`)
+      if (!foldersOnly) paths.push(`- ${path}`)
     } else {
       const nextPrefix = prefix ? `${prefix}/${path}` : path
       const subPaths = getDirectoryPaths(fileTree[path] as DirectoryNode, nextPrefix)
@@ -125,14 +130,35 @@ export function filesToDirectoryTreeStruct(files: string[]) {
   return fileTree
 }
 
-export function filesToDirectoryTree(files: string[]) {
-  const fileTree: DirectoryNode = {}
-  for (const file of files) {
-    addFileToDirectory(file, fileTree)
-  }
+export function filesToDirectoryTree(files: string[], foldersOnly?: boolean) {
+  const fileTree: DirectoryNode = filesToDirectoryTreeStruct(files)
 
-  const paths = getDirectoryPaths(fileTree, '')
+  const paths = getDirectoryPaths(fileTree, '', foldersOnly)
   return paths
+}
+
+export function findLargestFolders(dirTree: DirectoryNode, max: number) {
+  const map: FolderSizes = {}
+  getFolderSizes('.', dirTree, map, max)
+  return Object.keys(map)
+}
+
+// recursively list folder sizes
+type FolderSizes = { [key: string]: number }
+function getFolderSizes(
+  prefix: string,
+  dirTree: DirectoryNode,
+  map: FolderSizes = {},
+  max?: number
+) {
+  const size = Object.keys(dirTree).length
+  if (!max || Object.values(map).filter((v) => v > size).length < max) map[prefix] = size
+
+  const folders = Object.keys(dirTree).filter((key) => dirTree[key] !== true)
+  for (const path of folders) {
+    const nextPrefix = `${prefix}/${path}`
+    getFolderSizes(nextPrefix, dirTree[path] as DirectoryNode, map, max)
+  }
 }
 
 export function updateFileManifest(
@@ -169,6 +195,9 @@ export function updateFileManifest(
     outputLines.push(`${folder}: ${folderGuessMap.get(folder)}`)
   }
 
+  outputLines.unshift(
+    '# manifest format: folder: description. lines beginning in ! will be excluded'
+  )
   writeManifest(outputLines.join('\n'), root)
 }
 

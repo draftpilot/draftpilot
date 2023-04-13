@@ -1,41 +1,12 @@
-- cli.js: 
-- esbuild.js: 
-- index.ts: 
-- package.json: 
-- README.md: 
-src: main source folder
-- api.ts: 
-- config.ts: 
-- git.ts: 
-- logger.ts: 
-- main.ts: 
-- types.ts: 
-- utils.ts: 
-src/ai: AI implementation
-- chat.ts: 
-src/commands: command implementations
-- chat.ts: 
-- codegen.ts: 
-- executor.ts: 
-- indexer.ts: 
-- init.ts: 
-- interactive.ts: 
-- patch.ts: 
-- planner.ts: 
-- scratchpad.ts: 
-- search.ts: 
-src/context: context-related functionalities
-- manifest.ts: 
-- similar.ts: 
-src/db: database services
-- cache.ts: 
-- docsDb.ts: 
-- indexer.ts: 
-- vectorDb.ts: 
-src/parsing: file parsing and extraction
-- extractor.ts: 
-- extractorService.ts: 
-- rawExtractor.ts: 
-- tsExtractor.ts: 
-src/types: 
-- cache.d.ts: 
+# manifest format: folder: description. lines beginning in ! will be excluded
+.: root folder
+./src: general stuff here
+./src/agent: ai agent logic and tools
+./src/ai: ai api
+./src/commands: command line commands
+./src/context: for info on the project
+./src/db: files, indexes, databases
+./src/parsing: parsing source code
+./src/tools: planning and executing
+./src/types: typedefs
+./src/utils: utilities

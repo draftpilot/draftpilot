@@ -1,16 +1,19 @@
-import { chatCompletion } from '@/ai/api'
-import { Indexer } from '@/db/indexer'
-import { log, verboseLog } from '@/utils/logger'
-import { oraPromise } from 'ora'
+import { GLOB_EXCLUSIONS, Indexer } from '@/db/indexer'
+import { log } from '@/utils/logger'
 import open from 'open'
-import { findRoot } from '@/utils/utils'
+import { findRoot, getConfigPath, readConfig } from '@/utils/utils'
 import { cache } from '@/db/cache'
 import path from 'path'
-import { filesToDirectoryTree, getManifestName, updateFileManifest } from '@/context/manifest'
+import {
+  filesToDirectoryTreeStruct,
+  findLargestFolders,
+  getManifestName,
+  updateFileManifest,
+} from '@/context/manifest'
 import inquirer from 'inquirer'
 import config from '@/config'
 import { updateGitIgnores } from '@/utils/git'
-import { encode } from 'gpt-3-encoder'
+import chalk from 'chalk'
 
 type Options = {
   glob?: string
@@ -28,46 +31,22 @@ export async function doInitialize(indexer: Indexer, options?: Options) {
   const files = await indexer.getFiles(options?.glob)
   files.sort((a, b) => a.localeCompare(b))
 
-  const dirTree = filesToDirectoryTree(files)
-  const fileListing = dirTree.join('\n')
+  const dirTree = filesToDirectoryTreeStruct(files)
+  const largestFolders = findLargestFolders(dirTree, 15)
 
   const fileLoadPromise = indexer.load(files)
 
-  const prompt = `${fileListing}
-
-Return only the folders, guessing the purpose of each folder with : in front. For example, if you 
-see a folder called "components", you might guess that it contains React components. Example:
-
-src: source folder
-src/components: React components
-src/jobs: background jobs
-`
-
-  const tokenCount = encode(prompt).length
-  log(`Scanning ${files.length} files (${tokenCount} tokens)`)
-  verboseLog(prompt)
-
-  const model = tokenCount > 4000 || config.gpt4 == 'always' ? '4' : '3.5'
-
-  const promise = chatCompletion(
-    prompt,
-    model,
-    'Respond in the requested format with no extra comments'
-  )
   log(
-    `Just like any new member of your team, I’ll need some onboarding. I'm scanning your folders. When I'm done, please:
-
-- correct anything that looks wrong
-- add explanation to important files I’ll probably need
-- put ! in front of any folders/files i should not read when generating code (e.g. tests, generated files, build scripts, etc)
-- put * in front of the files that are most commonly accessed in the project (e.g. api or db access)`
+    'Just like any new member of your team, I’ll need some onboarding. Here are the largest ' +
+      'folders in your repository. It would be great if you wrote a short description of anything ' +
+      'I should know. Feel free to add other folders, and also, put a ! in front of folders I should not ' +
+      'read (e.g. tests, build scripts, etc). '
   )
 
-  const guessedFiles = await oraPromise(promise, { text: 'Scanning and summarizing...' })
-  verboseLog(guessedFiles)
+  log(largestFolders)
 
   const root = findRoot()
-  updateFileManifest(guessedFiles, dirTree, root)
+  updateFileManifest('', largestFolders, root)
   const fileName = getManifestName(root)
 
   await open(fileName)
@@ -75,18 +54,60 @@ src/jobs: background jobs
   const { updatedDocs } = await fileLoadPromise
   indexer.index(updatedDocs)
 
-  // Wait for user to press enter
-  await inquirer.prompt([
+  log(chalk.bold('Save the file and close it when done.'))
+
+  const existingConfig = readConfig(root) || {}
+
+  log("Let's go through some questions.")
+
+  const testDir = existingConfig.testDir || checkDir('test') || checkDir('tests')
+  const responses = await inquirer.prompt([
     {
       type: 'input',
-      name: 'done',
+      name: 'testDir',
+      message: 'Where do you want generated tests to go? (e.g. test/ or alongside source files)',
+      default: testDir,
+    },
+    {
+      type: 'input',
+      name: 'excludes',
       message:
-        "Save the file and press enter when done. While you do that, I'm indexing all files.",
+        'What folders should I ignore? (built-in: ' +
+        GLOB_EXCLUSIONS.map((e) => e.slice(1)).join(', ') +
+        ')',
     },
   ])
+
+  existingConfig.testDir = responses.testDir
+  existingConfig.excludeDir = responses.excludeDir
+
+  const packageManager =
+    existingConfig.packageManager || fs.existsSync('yarn.lock')
+      ? 'yarn'
+      : fs.existsSync('pnpm-lock.yaml')
+      ? 'pnpm'
+      : fs.existsSync('package-lock.json')
+      ? 'npm'
+      : 'none'
+
+  existingConfig.packageManager = packageManager
+
+  const configPath = getConfigPath(root)
+  fs.writeFileSync(configPath.file, JSON.stringify(existingConfig, null, 2))
 
   cache.close()
 
   const gitIgnore = GIT_IGNORE_FILES.map((f) => path.join(config.configFolder, f))
   updateGitIgnores(gitIgnore)
+
+  log('All done!')
+}
+
+import fs from 'fs'
+
+function checkDir(dir: string) {
+  if (fs.existsSync(dir)) {
+    return dir
+  }
+  return null
 }

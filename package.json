@@ -13,7 +13,7 @@
     "clean": "rm -rf dist",
     "draftpilot": "yarn build && yarn go",
     "go": "node --enable-source-maps ./cli.js",
-    "init": "",
+    "init": "yarn go init",
     "prepack": "yarn build",
     "test": "yarn tsc && mocha",
     "watch": "node esbuild.js --watch"
