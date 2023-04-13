@@ -18,7 +18,11 @@ Draftpilot currently works best with Javascript & Typescript projects.
 
 You can run draftpilot without installing in your codebase with npx (node.js 18+ is required):
 
-`npx draftpilot`
+`npx -y draftpilot@latest`
+
+We recommend adding the following alias to your shell login script for convenience to always run the latest version.
+
+`alias dp="npx -y draftpilot@latest"`
 
 Without any commands, it will run in interactive mode, but you can see all commands with `--help`.
 
@@ -29,6 +33,11 @@ After initialization, the following files will be generated in the `.draftpilot`
 - docs.sqlite - an index of all functions in the codebase. This can be ignored by git, as it is derived from the code
 - history.json - history of invocations. This can be ignored by git
 - cache.json - cache of API requests. This can be ignored by git
+
+## Tips for use
+
+Due to token limits, Draftpilot works on codebases with smaller files. If you have very large files,
+you may want to consider
 
 ## How it works
 
@@ -56,7 +65,8 @@ code into a reasonable shape.
 ### Commit
 
 In the commit phase, the changes are summarized into a git commit. Commits by draftpilot are
-prefixed so that it's clear from `git blame` that these changes were written by an AI.
+prefixed so that it's clear from `git blame` that these changes were written by an AI. I recommend
+separating AI commits from user changes so future AI learns from humans and not generated code.
 
 ## Contributing
 

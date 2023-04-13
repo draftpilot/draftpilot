@@ -1,7 +1,7 @@
-import { HNSWLib } from 'langchain/vectorstores'
-import { OpenAIEmbeddings } from 'langchain/embeddings'
+import { HNSWLib } from '@/langchain/hnswlib'
+import { OpenAIEmbeddings } from '@/langchain/openai_embeddings'
 import { CodeDoc } from '@/types'
-import type { Document } from 'langchain/dist/document'
+import type { Document } from '@/langchain/document'
 
 export class VectorDB {
   db?: HNSWLib
