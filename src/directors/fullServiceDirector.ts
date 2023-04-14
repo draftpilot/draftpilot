@@ -3,6 +3,7 @@ import { Agent } from '@/agent/agent'
 import { indexer } from '@/db/indexer'
 import { findRelevantDocs } from '@/directors/agentPlanner'
 import { ChatMessage, MessagePayload } from '@/types'
+import { log } from '@/utils/logger'
 
 // the full-service agent is an all-in-one agent used by the web
 // it is stateless and can do anything (with confirmation)
@@ -53,10 +54,13 @@ export class FullServiceDirector {
     }
 
     const result = await agent.runOnce(query)
+    log(result)
+
+    const content = result.finalAnswer ? result.finalAnswer : 'Thought: ' + result.thought
 
     const newMessage: ChatMessage = {
       role: 'assistant',
-      content: result.thought,
+      content,
       attachments: result.observations?.map((o) => ({
         type: 'observation',
         name: o.tool + o.input ? ' ' + o.input : '',
