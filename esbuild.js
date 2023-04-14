@@ -4,9 +4,9 @@ import { nodeExternalsPlugin } from 'esbuild-node-externals'
 import FastGlob from 'fast-glob'
 
 const mainConfig = {
-  entryPoints: ['src/main.ts'],
+  entryPoints: ['src/main.ts', 'src/server.ts'],
   bundle: true,
-  outfile: 'dist/index.js',
+  outdir: 'dist',
   platform: 'node',
   target: 'node14',
   plugins: [tsPaths(), nodeExternalsPlugin()],

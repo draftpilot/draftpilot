@@ -3,6 +3,8 @@
     "target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
     "module": "esnext" /* Specify what module code is generated. */,
     "moduleResolution": "node",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "react-jsx",
     "noEmit": true,
     "isolatedModules": true,
     "sourceMap": true,
