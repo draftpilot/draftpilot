@@ -1,8 +1,12 @@
 import { useRef, useState } from 'react'
 import ReactTextareaAutocomplete from '@webscopeio/react-textarea-autocomplete'
 
-export default () => {
-  const ref = useRef<HTMLTextAreaElement | null>(null)
+type Props = {
+  innerRef: React.MutableRefObject<HTMLTextAreaElement | null>
+} & React.TextareaHTMLAttributes<HTMLTextAreaElement>
+
+export default (props: Props) => {
+  const { innerRef, ...rest } = props
 
   const loadingComponent = () => <div>Loading...</div>
 
@@ -10,12 +14,15 @@ export default () => {
 
   return (
     <ReactTextareaAutocomplete
+      containerClassName="flex-1"
       autoFocus
-      className="w-full p-4 shadow-md rounded"
-      placeholder='Type "/" to see the list of commands'
+      placeholder='Type "/" to reference a file or folder'
       trigger={trigger}
       loadingComponent={loadingComponent}
-      innerRef={(textarea) => (ref.current = textarea)}
+      innerRef={
+        innerRef ? (textarea: HTMLTextAreaElement) => (innerRef.current = textarea) : undefined
+      }
+      {...rest}
     />
   )
 }

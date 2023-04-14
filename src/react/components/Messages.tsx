@@ -1,9 +1,11 @@
 import Message from '@/react/components/Message'
 import Onboarding from '@/react/components/Onboarding'
+import { messageStore } from '@/react/stores/messageStore'
 import { ChatMessage } from '@/types/types'
+import { useStore } from '@nanostores/react'
 
 export default () => {
-  const messages: ChatMessage[] = []
+  const messages = useStore(messageStore.messages)
 
   return (
     <div className="flex flex-col gap-4 my-4">

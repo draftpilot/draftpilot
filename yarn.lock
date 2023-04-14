@@ -586,6 +586,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@heroicons/react@npm:^2.0.17":
+  version: 2.0.17
+  resolution: "@heroicons/react@npm:2.0.17"
+  peerDependencies:
+    react: ">= 16"
+  checksum: 31677c9b95de4ea92efa205c7a803c33003d3203b0cebf9ca74522485e5351caff7070cbd898885bf050f181682cab8d4815cbef0e7624c56d3312cdf50d2cb9
+  languageName: node
+  linkType: hard
+
 "@jridgewell/gen-mapping@npm:^0.3.0, @jridgewell/gen-mapping@npm:^0.3.2":
   version: 0.3.3
   resolution: "@jridgewell/gen-mapping@npm:0.3.3"
@@ -1859,6 +1868,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "draftpilot@workspace:."
   dependencies:
+    "@heroicons/react": ^2.0.17
     "@nanostores/react": ^0.5.0
     "@types/diff": ^5.0.3
     "@types/express": ^4.17.17

@@ -1,6 +1,6 @@
 export default () => {
   return (
-    <div className="bg-gray-100 justify-self-center p-4 shadow rounded">
+    <div className="bg-green-100 justify-self-center p-4 shadow rounded">
       <h1 className="text-2xl font-bold text-gray-800 mb-4">Welcome to draftpilot!</h1>
 
       <p>Here are some things you can ask me to do:</p>
