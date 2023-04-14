@@ -3,8 +3,8 @@ import { log } from '@/utils/logger'
 import chalk from 'chalk'
 import { cache } from '@/db/cache'
 import fs from 'fs'
-import { OneShotPlanner } from '@/tools/oneShotPlanner'
-import { AgentPlanner } from '@/tools/agentPlanner'
+import { OneShotPlanner } from '@/directors/oneShotPlanner'
+import { AgentPlanner } from '@/directors/agentPlanner'
 import inquirer from 'inquirer'
 
 type Options = {

@@ -2,7 +2,7 @@ import { getAllTools } from '@/agent'
 import { Agent } from '@/agent/agent'
 import { cache } from '@/db/cache'
 import { DEFAULT_GLOB, GLOB_WITHOUT_TESTS, indexer } from '@/db/indexer'
-import { AgentPlanner, findRelevantDocs } from '@/tools/agentPlanner'
+import { AgentPlanner, findRelevantDocs } from '@/directors/agentPlanner'
 import inquirer from 'inquirer'
 
 type Options = {

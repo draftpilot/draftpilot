@@ -8,7 +8,7 @@ import config from '@/config'
 import { ChatMessage, Plan } from '@/types'
 import inquirer from 'inquirer'
 import { findSimilarDocuments } from '@/utils/similarity'
-import { AbstractPlanner, PLAN_FORMAT_STR, parsePlan } from '@/tools/planner'
+import { AbstractPlanner, PLAN_FORMAT_STR, parsePlan } from '@/directors/planner'
 
 const SYSTEM_MESSAGE =
   'Respond in the requested format with no extra comments. Do not return actual code, and do not make up files to modify.'
