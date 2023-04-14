@@ -1,7 +1,7 @@
 import Message from '@/react/components/Message'
 import Onboarding from '@/react/components/Onboarding'
 import { messageStore } from '@/react/stores/messageStore'
-import { ChatMessage } from '@/types/types'
+import { ChatMessage } from '@/types'
 import { useStore } from '@nanostores/react'
 
 export default () => {

@@ -1,5 +1,5 @@
 import { PyExtractor } from '@/parsing/pyExtractor'
-import { SourceFile } from '@/types/types'
+import { SourceFile } from '@/types'
 import assert from 'assert'
 import * as fs from 'fs'
 import * as path from 'path'

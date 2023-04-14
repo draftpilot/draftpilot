@@ -1,5 +1,7 @@
 import { indexer } from '@/db/indexer'
+import { respondToMessages } from '@/server/messenger'
 import { log } from '@/utils/logger'
+import bodyParser from 'body-parser'
 import express from 'express'
 import ViteExpress from 'vite-express'
 
@@ -7,11 +9,20 @@ const PORT = 3000
 
 const app = express()
 
+app.use(bodyParser.json())
+
 app.get('/message', (_, res) => res.send('Hello from express!'))
 
 app.get('/api/files', async (_, res) => {
   const files = await indexer.getFiles()
   res.json({ files })
+})
+
+app.post('/api/message', async (req, res) => {
+  const input = req.body
+  res.setHeader('Content-Type', 'application/json')
+
+  respondToMessages(input, res)
 })
 
 export default function serve(port: number = PORT): Promise<string> {

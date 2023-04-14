@@ -3,10 +3,12 @@ import { fileStore } from '@/react/stores/fileStore'
 import { messageStore } from '@/react/stores/messageStore'
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline'
 import { useEffect, useRef } from 'react'
+import { useStore } from '@nanostores/react'
 
 export default () => {
   const rtaRef = useRef<ReactTextareaAutocomplete<string> | null>(null)
   const ref = useRef<HTMLTextAreaElement | null>(null)
+  const inProgress = useStore(messageStore.inProgress)
 
   useEffect(() => {
     if (!ref.current) return
@@ -16,8 +18,9 @@ export default () => {
 
   const send = () => {
     if (!ref.current || !ref.current.value) return
+    if (inProgress) return
 
-    messageStore.addMessage({ content: ref.current.value, role: 'user' })
+    messageStore.sendMessage({ content: ref.current.value, role: 'user' })
     ref.current.value = ''
   }
 
@@ -33,6 +36,8 @@ export default () => {
 
   const loadingComponent = () => <div>Loading...</div>
 
+  const placeholder = inProgress ? 'Sending...' : 'Type "/" to reference a file'
+
   return (
     <div className="bg-white shadow-md rounded flex relative">
       <ReactTextareaAutocomplete<string>
@@ -40,7 +45,7 @@ export default () => {
         containerClassName="flex-1"
         autoFocus
         trigger={trigger}
-        placeholder='Type "/" to reference a file or folder'
+        placeholder={placeholder}
         loadingComponent={loadingComponent}
         innerRef={(textarea: HTMLTextAreaElement) => (ref.current = textarea)}
         className="p-4 w-full focus-visible:ring-0"
