@@ -124,24 +124,26 @@ const sedTool: Tool = {
   },
 }
 
-const gitHistory: Tool = {
-  name: 'gitHistory',
-  description: 'Show git history for a given file. e.g. gitHistory: file',
-  run: (input: string) => {
-    const args = ['log', '--pretty=format:"%h %s"', input]
-    return spawnPromise('git', args)
-  },
-}
+// the agent is bad at using these tools
 
-const gitDiffTool: Tool = {
-  name: 'gitDiff',
-  description: 'Prints git diff of changes to file. e.g. gitDiff: file',
+// const gitHistory: Tool = {
+//   name: 'gitHistory',
+//   description: 'Show git history for a given file. e.g. gitHistory: file',
+//   run: (input: string) => {
+//     const args = ['log', '--pretty=format:"%h %s"', input]
+//     return spawnPromise('git', args)
+//   },
+// }
 
-  run: async (input: string, overallGoal?: string) => {
-    const args = ['diff', '--pretty=format:%H', input]
-    return spawnPromise('git', args)
-  },
-}
+// const gitDiffTool: Tool = {
+//   name: 'gitDiff',
+//   description: 'Prints git diff of changes to file. e.g. gitDiff: file',
+
+//   run: async (input: string, overallGoal?: string) => {
+//     const args = ['diff', '--pretty=format:%H', input]
+//     return spawnPromise('git', args)
+//   },
+// }
 
 export const stringToArgs = (input: string) => {
   if (!input) return []
@@ -193,24 +195,21 @@ export const spawnPromise = (command: string, args: string[], cwd?: string) => {
     const chunks: Buffer[] = []
     const errorChunks: Buffer[] = []
     result.stdout.on('data', (chunk) => chunks.push(chunk))
-    result.stdout.on('end', () => {
-      if (chunks.length == 0 && errorChunks.length) reject(Buffer.concat(errorChunks).toString())
+    result.stderr.on('data', (chunk) => chunks.push(chunk))
+
+    result.on('error', (err) => {
+      reject(err)
+    })
+
+    result.on('close', (code) => {
+      if (code !== 0) {
+        reject(Buffer.concat(errorChunks).toString())
+      }
       resolve(Buffer.concat(chunks).toString())
     })
-    result.stderr.on('data', (chunk) => chunks.push(chunk))
   })
 }
 
-export const unixTools = [
-  grepTool,
-  findTool,
-  lsTool,
-  gitHistory,
-  gitDiffTool,
-  cpTool,
-  mvTool,
-  rmTool,
-  sedTool,
-]
+export const unixTools = [grepTool, findTool, lsTool, cpTool, mvTool, rmTool, sedTool]
 
-export const unixReadOnlyTools = [grepTool, findTool, lsTool, gitHistory, gitDiffTool]
+export const unixReadOnlyTools = [grepTool, findTool, lsTool]
