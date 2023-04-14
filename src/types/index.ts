@@ -24,13 +24,14 @@ export type CodeDoc = {
 export type Attachment = {
   type: string
   name: string
-  contents: string
+  content: string
 }
 
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'system'
   content: string
   attachments?: Attachment[]
+  state?: any
 }
 
 export type Plan = {
@@ -68,4 +69,9 @@ export type LearningItem = {
 export type LearningLog = {
   planner: LearningItem[]
   executor: LearningItem[]
+}
+
+export type MessagePayload = {
+  message: ChatMessage
+  history: ChatMessage[]
 }

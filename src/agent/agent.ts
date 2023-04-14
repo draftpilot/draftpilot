@@ -13,19 +13,22 @@ import { writeFileSync } from 'fs'
 
 type ToolParams = {
   tool: string
-  input: string
+  input?: string
 }
 type ToolInvocation = {
   tool: Tool
-  input: string
+  input?: string
 }
+type Observation = {
+  output: string
+} & ToolParams
 
 type AgentState = {
   thought: string
   action?: string
   parsedAction?: ToolParams[]
   finalAnswer?: string
-  observation?: string
+  observations?: Observation[]
 }
 
 // an agent iteratively uses tools to solve a problem
@@ -50,7 +53,7 @@ export class Agent {
   requestParam = 'Request'
   // how the agent thinks about the action to take
   actionParam = 'Action'
-  // how the agent thinks about the end state
+  // how the agent thinks about the end state. can be multiple options
   finalAnswerParam = 'Final Answer'
 
   constructor(public tools: Tool[], public outputFormat: string, public systemMessage?: string) {
@@ -63,8 +66,12 @@ export class Agent {
   addInitialState = (thought: string, observation: string) => {
     this.state.unshift({
       thought,
-      observation,
+      observations: [{ tool: 'initial', output: observation }],
     })
+  }
+
+  addState = (state: AgentState) => {
+    this.state.unshift(state)
   }
 
   constructPrompt = () => {
@@ -98,12 +105,13 @@ ${this.finalAnswerParam}: ...`
       if (state.thought) stateText.push(`Thought: ${state.thought}`)
       if (state.action) stateText.push(`Action: ${state.action}`)
 
-      if (state.observation) {
-        const observationLength = encode(state.observation).length
+      state.observations?.forEach((observation) => {
+        const observationLength = encode(observation.output).length
+        const prefix = `Observation: ${observation.tool} ${observation.input || ''}\n`
         if (observationLength + inProgressTokens > maxTokens)
-          stateText.push('Observation: too long to fit')
-        else stateText.push(`Observation: ${state.observation}`)
-      }
+          stateText.push(prefix + 'output too long to fit')
+        else stateText.push(prefix + observation.output)
+      })
 
       const stateBlurb = stateText.join('\n')
       const totalLength = encode(stateBlurb).length
@@ -221,49 +229,55 @@ ${progressText}
     }
 
     if (result.parsedAction) {
-      const results: string[] = []
+      const results: Observation[] = []
 
       const serialTools: ToolInvocation[] = []
-      const paralleTools: ToolInvocation[] = []
+      const parallelTools: ToolInvocation[] = []
 
       for (const params of result.parsedAction) {
         const tool = this.tools.find((tool) => tool.name === params.tool)
         if (!tool) {
-          results.push(
-            `Tool ${params.tool} was not found. You should just provide the ${this.finalAnswerParam}.`
-          )
+          results.push({
+            tool: params.tool,
+            input: params.input,
+            output: `Tool was not found. You should just provide the ${this.finalAnswerParam}.`,
+          })
           continue
         }
         if (tool.serial) serialTools.push({ tool, input: params.input })
-        else paralleTools.push({ tool, input: params.input })
+        else parallelTools.push({ tool, input: params.input })
       }
 
       const invokeTool = async (data: ToolInvocation) => {
         try {
-          const result = await data.tool.run(data.input, this.query!)
-          results.push(
-            `Ran tool ${data.tool.name} with input ${data.input}\n` +
-              (result ? result : 'Empty output returned')
-          )
+          const result = await data.tool.run(data.input || '', this.query!)
+          results.push({
+            tool: data.tool.name,
+            input: data.input,
+            output: result ? result : 'Empty output returned',
+          })
         } catch (e: any) {
           log(chalk.red('Error running tool:'), e.message)
-          results.push(
-            `Error running tool ${data.tool.name} with input ${data.input}\n` + e.toString()
-          )
+          results.push({
+            tool: data.tool.name,
+            input: data.input,
+            output: 'Error: ' + e.toString(),
+          })
         }
       }
 
       for (const data of serialTools) {
         await invokeTool(data)
       }
-      await Promise.all(paralleTools.map((data) => invokeTool(data)))
-      result.observation = results.join('\n---\n')
+      await Promise.all(parallelTools.map((data) => invokeTool(data)))
+      result.observations = results
 
       if (!skipLogObservation) {
         log(
           chalk.bold('Observation:'),
-          result.observation.slice(0, 200),
-          result.observation.length < 200 ? '' : '... (output truncated)'
+          result.observations.map((observation) => {
+            return { ...observation, output: observation.output.slice(0, 100) }
+          })
         )
       }
     }

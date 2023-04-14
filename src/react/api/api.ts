@@ -1,4 +1,4 @@
-import { ChatMessage } from '@/types'
+import { ChatMessage, MessagePayload } from '@/types'
 import { log, warn } from '@/utils/logger'
 import axios, { AxiosError } from 'axios'
 class APIService {
@@ -10,7 +10,7 @@ class APIService {
   }
 
   sendMessage = (
-    message: ChatMessage,
+    payload: MessagePayload,
     onMessage: (message: ChatMessage) => void
   ): Promise<void> => {
     // use fetch since this use of axios doesn't support streaming
@@ -20,7 +20,7 @@ class APIService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(message),
+        body: JSON.stringify(payload),
       })
         .then((response) => {
           if (!response.body) reject(new Error('No response body'))

@@ -49,7 +49,7 @@ export default () => {
         placeholder={placeholder}
         loadingComponent={loadingComponent}
         innerRef={(textarea: HTMLTextAreaElement) => (ref.current = textarea)}
-        className="p-4 w-full focus-visible:ring-0"
+        className="p-4 w-full focus:ring-0 focus-visible:ring-0"
         dropdownClassName="bg-white shadow-md rounded absolute w-full"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {

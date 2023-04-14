@@ -1,24 +1,24 @@
-import { ChatMessage } from '@/types'
+import { FullServiceDirector } from '@/directors/fullServiceDirector'
+import { ChatMessage, MessagePayload } from '@/types'
 import { Response } from 'express'
 
-export function respondToMessages(input: ChatMessage, res: Response) {
-  res.write(
-    JSON.stringify({
-      content: 'I got: ' + input?.content,
-      role: 'assistant',
-    }) + ','
-  )
+export class Messenger {
+  agent = new FullServiceDirector()
 
-  // Send JSON messages every second
-  const intervalId = setInterval(() => {
-    const message = { content: 'Hello, world! ' + Date.now(), role: 'assistant' }
-    // Send message as JSON string
-    res.write(JSON.stringify(message) + ',')
-  }, 1000)
+  constructor() {
+    this.agent.init()
+  }
 
-  // Stop sending messages after 5 seconds
-  setTimeout(() => {
-    clearInterval(intervalId)
+  respondToMessages = async (input: MessagePayload, res: Response) => {
+    if (!input) {
+      res.end()
+      return
+    }
+
+    await this.agent.onMessage(input, (incoming: ChatMessage) => {
+      res.write(JSON.stringify(incoming) + ',')
+    })
+
     res.end()
-  }, 5000)
+  }
 }

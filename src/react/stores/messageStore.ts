@@ -16,10 +16,12 @@ class MessageStore {
   }
 
   sendMessage = async (message: ChatMessage) => {
-    this.messages.set([...this.messages.get(), message])
+    const payload = { message, history: this.messages.get() }
+
+    this.messages.set([...payload.history, message])
 
     this.inProgress.set(true)
-    await API.sendMessage(message, (incoming) => {
+    await API.sendMessage(payload, (incoming) => {
       this.messages.set([...this.messages.get(), incoming])
     })
     this.inProgress.set(false)
