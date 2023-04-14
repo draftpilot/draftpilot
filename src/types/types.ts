@@ -21,9 +21,16 @@ export type CodeDoc = {
   vectors?: number[]
 }
 
+export type Attachment = {
+  type: string
+  name: string
+  contents: string
+}
+
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'system'
   content: string
+  attachments?: Attachment[]
 }
 
 export type Plan = {

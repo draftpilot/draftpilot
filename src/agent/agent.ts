@@ -8,7 +8,7 @@ import { oraPromise } from 'ora'
 import fs from 'fs'
 import { findRoot, splitOnce } from '@/utils/utils'
 
-import { ChatMessage } from '@/types'
+import { ChatMessage } from '@/types/types'
 import { writeFileSync } from 'fs'
 
 type ToolParams = {

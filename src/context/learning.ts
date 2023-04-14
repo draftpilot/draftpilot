@@ -1,5 +1,5 @@
 import config from '@/config'
-import { LearningItem, LearningLog } from '@/types'
+import { LearningItem, LearningLog } from '@/types/types'
 import { findRoot } from '@/utils/utils'
 import fs from 'fs'
 import path from 'path'

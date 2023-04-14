@@ -1,7 +1,7 @@
 import FileDB from '@/db/docsDb'
 import { VectorDB } from '@/db/vectorDb'
 import { verboseLog } from '@/utils/logger'
-import { CodeDoc, ProjectConfig } from '@/types'
+import { CodeDoc, ProjectConfig } from '@/types/types'
 import { findRoot } from '@/utils/utils'
 import chalk from 'chalk'
 import FastGlob from 'fast-glob'

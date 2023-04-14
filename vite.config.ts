@@ -8,7 +8,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      stream: 'readable-stream',
     },
+  },
+  define: {
+    global: 'window',
   },
 })

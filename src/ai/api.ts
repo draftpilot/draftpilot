@@ -1,6 +1,6 @@
 import config from '@/config'
 import { cache } from '@/db/cache'
-import { ChatMessage } from '@/types'
+import { ChatMessage } from '@/types/types'
 import { isAxiosError } from 'axios'
 import { Configuration, OpenAIApi } from 'openai'
 

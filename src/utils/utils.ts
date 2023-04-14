@@ -6,7 +6,7 @@ import path from 'path'
 
 import api from '@/api'
 import config, { overrideServer } from '@/config'
-import { ProjectConfig } from '@/types'
+import { ProjectConfig } from '@/types/types'
 
 // walk up the tree until we find the .draftpilot folder
 let root: string | null = null
