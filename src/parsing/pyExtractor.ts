@@ -1,4 +1,4 @@
-import { CodeDoc, SourceFile } from '@/types/types'
+import { CodeDoc, SourceFile } from '@/types'
 import { Extractor } from './extractor'
 
 type Func = { name: string; contents: string }

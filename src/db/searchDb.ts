@@ -1,4 +1,4 @@
-import { CodeDoc } from '@/types/types'
+import { CodeDoc } from '@/types'
 import FlexSearch, { Index } from 'flexsearch'
 
 export default class SearchDB {

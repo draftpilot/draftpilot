@@ -2,7 +2,7 @@ import config from '@/config'
 import { findRoot, splitOnce } from '@/utils/utils'
 import path from 'path'
 import fs from 'fs'
-import { FileInfo, FileManifest } from '@/types/types'
+import { FileInfo, FileManifest } from '@/types'
 
 const INFO_FILE = 'manifest.txt'
 

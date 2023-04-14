@@ -1,6 +1,6 @@
 import { chatWithHistory } from '@/ai/api'
 import { cache } from '@/db/cache'
-import { ChatMessage } from '@/types/types'
+import { ChatMessage } from '@/types'
 import inquirer from 'inquirer'
 import { oraPromise } from 'ora'
 

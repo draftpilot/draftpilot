@@ -1,6 +1,6 @@
 import { log } from '@/utils/logger'
 import { Extractor } from '@/parsing/extractor'
-import { CodeDoc, SourceFile } from '@/types/types'
+import { CodeDoc, SourceFile } from '@/types'
 import { cyrb53 } from '@/utils/utils'
 
 import ts, { isObjectLiteralExpression, isVariableDeclarationList } from 'typescript'

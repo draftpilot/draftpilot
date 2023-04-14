@@ -1,12 +1,9 @@
-import { isAxiosError } from 'axios'
 import chalk from 'chalk'
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
 
-import api from '@/api'
-import config, { overrideServer } from '@/config'
-import { ProjectConfig } from '@/types/types'
+import config from '@/config'
 
 // walk up the tree until we find the .draftpilot folder
 let root: string | null = null
@@ -32,24 +29,6 @@ export function generateSecretKey() {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/\=/g, '')
-}
-
-export function unwrapError(e: any): string {
-  if (isAxiosError(e)) {
-    return api.unwrapError(e)
-  } else if (e instanceof Error) {
-    return e.message
-  } else {
-    return e.toString()
-  }
-}
-
-export function logErrorMessage(e: any) {
-  if (isAxiosError(e)) {
-    error(api.unwrapError(e))
-  } else {
-    error(e)
-  }
 }
 
 export function error(...args: any[]) {

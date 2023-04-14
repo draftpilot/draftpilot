@@ -1,4 +1,4 @@
-import { Plan } from '@/types/types'
+import { Plan } from '@/types'
 import { log } from '@/utils/logger'
 import chalk from 'chalk'
 

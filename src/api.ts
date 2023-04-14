@@ -10,7 +10,7 @@ export type ErrorResponse = {
   error: string
 }
 
-class API {
+class ServerAPIService {
   // --- error handling
 
   unwrapError(error: AxiosError): string {
@@ -24,4 +24,4 @@ class API {
   }
 }
 
-export default new API()
+export const ServerAPI = new ServerAPIService()

@@ -1,5 +1,5 @@
 import config, { overrideServer } from '@/config'
-import { ProjectConfig } from '@/types/types'
+import { ProjectConfig } from '@/types'
 import { findRoot } from '@/utils/utils'
 import path from 'path'
 import fs from 'fs'

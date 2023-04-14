@@ -2,7 +2,7 @@ import { Extractor } from '@/parsing/extractor'
 import { PyExtractor } from '@/parsing/pyExtractor'
 import { RawExtractor } from '@/parsing/rawExtractor'
 import { TSExtractor } from '@/parsing/tsExtractor'
-import { CodeDoc, SourceFile } from '@/types/types'
+import { CodeDoc, SourceFile } from '@/types'
 import path from 'path'
 
 export class ExtractorService implements Extractor {

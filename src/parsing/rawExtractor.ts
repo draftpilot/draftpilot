@@ -1,5 +1,5 @@
 import { Extractor } from '@/parsing/extractor'
-import { CodeDoc, SourceFile } from '@/types/types'
+import { CodeDoc, SourceFile } from '@/types'
 import { cyrb53 } from '@/utils/utils'
 
 // chunk every 100 lines for long functions
