@@ -37,6 +37,7 @@ export class Indexer {
   searchDB: SearchDB
   files: string[]
   docs?: CodeDoc[]
+  indexed: boolean = false
 
   constructor() {
     const root = findRoot()
@@ -86,10 +87,13 @@ export class Indexer {
   }
 
   loadFilesIntoVectors = async (glob?: string) => {
+    if (this.indexed) return
     const files = await this.getFiles(glob)
     const { docs, updatedDocs } = await this.load(files)
     await this.index(updatedDocs)
     await this.loadVectors(docs)
+
+    this.indexed = true
   }
 
   createPartialIndex = async (prefixes: string[]) => {

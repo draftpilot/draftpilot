@@ -1,6 +1,6 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 
-class API {
+class APIService {
   endpoint = '/api'
 
   loadFiles = async (): Promise<{ files: string[] }> => {
@@ -14,4 +14,6 @@ class API {
   }
 }
 
-export default new API()
+export const API = new APIService()
+
+export const isAxiosError = (item: Error): item is AxiosError => (item as AxiosError).isAxiosError

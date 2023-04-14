@@ -8,3 +8,10 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <App />
   </React.StrictMode>
 )
+
+// debugging shortcut
+window.addEventListener('keydown', function (event) {
+  if (event.key == 'F12') {
+    debugger
+  }
+})
