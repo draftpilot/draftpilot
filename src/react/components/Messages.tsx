@@ -19,7 +19,7 @@ export default () => {
   return (
     <div className="flex flex-col gap-4 my-4 pb-8" ref={ref}>
       {messages.map((message, i) => (
-        <Message key={i} message={message.content} fromUser={message.role == 'user'} />
+        <Message key={i} message={message} fromUser={message.role == 'user'} />
       ))}
       {inProgress && <Message loading />}
 

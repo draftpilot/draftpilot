@@ -41,11 +41,17 @@ export async function chatCompletion(
   }
 }
 
-export async function chatWithHistory(messages: ChatMessage[], model: '3.5' | '4') {
+export async function chatWithHistory(
+  messages: ChatMessage[],
+  model: '3.5' | '4',
+  stop?: string | string[]
+) {
   try {
     const completion = await openai.createChatCompletion({
       model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
       messages,
+      temperature: config.temperature,
+      stop: stop,
     })
     const response = completion.data.choices[0].message
     const responseContent = response?.content || ''

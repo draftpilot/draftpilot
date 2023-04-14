@@ -2,14 +2,18 @@ import ReactTextareaAutocomplete, { TriggerType } from '@webscopeio/react-textar
 import { fileStore } from '@/react/stores/fileStore'
 import { messageStore } from '@/react/stores/messageStore'
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useStore } from '@nanostores/react'
 import Loader from '@/react/components/Loader'
+import Checkbox from '@/react/components/Checkbox'
 
 export default () => {
   const rtaRef = useRef<ReactTextareaAutocomplete<string> | null>(null)
   const ref = useRef<HTMLTextAreaElement | null>(null)
   const inProgress = useStore(messageStore.inProgress)
+
+  const [useTools, setUseTools] = useState(true)
+  const [useGPT4, setUseGPT4] = useState(false)
 
   useEffect(() => {
     if (!ref.current) return
@@ -21,12 +25,13 @@ export default () => {
     if (!ref.current || !ref.current.value || !rtaRef.current) return
     if (inProgress) return
 
-    messageStore.sendMessage({ content: ref.current.value, role: 'user' })
+    const options = { tools: useTools, model: useGPT4 ? '4' : '3.5' }
+    messageStore.sendMessage({ content: ref.current.value, role: 'user' }, options)
     rtaRef.current.setState({ value: '' })
   }
 
   const trigger: TriggerType<string> = {
-    '/': {
+    '@': {
       dataProvider: async (token: string) => {
         return fileStore.search(token)
       },
@@ -37,32 +42,38 @@ export default () => {
 
   const loadingComponent = () => <div>Loading...</div>
 
-  const placeholder = inProgress ? 'Sending...' : 'Type "/" to reference a file'
+  const placeholder = inProgress ? 'Sending...' : 'Type "@" to reference a file'
 
   return (
-    <div className="bg-white shadow-md rounded flex relative mt-4">
-      <ReactTextareaAutocomplete<string>
-        ref={rtaRef}
-        containerClassName="flex-1"
-        autoFocus
-        trigger={trigger}
-        placeholder={placeholder}
-        loadingComponent={loadingComponent}
-        innerRef={(textarea: HTMLTextAreaElement) => (ref.current = textarea)}
-        className="p-4 w-full focus:ring-0 focus-visible:ring-0"
-        dropdownClassName="bg-white shadow-md rounded absolute w-full"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault()
-            send()
-          }
-        }}
-      />
-      <div
-        className=" text-gray-500 hover:text-gray-800 mx-2 my-2 self-end cursor-pointer"
-        onClick={send}
-      >
-        {inProgress ? <Loader size={20} /> : <PaperAirplaneIcon className="w-6 h-6 " />}
+    <div className="my-4">
+      <div className="bg-white shadow-md rounded flex relative">
+        <ReactTextareaAutocomplete<string>
+          ref={rtaRef}
+          containerClassName="flex-1"
+          autoFocus
+          trigger={trigger}
+          placeholder={placeholder}
+          loadingComponent={loadingComponent}
+          innerRef={(textarea: HTMLTextAreaElement) => (ref.current = textarea)}
+          className="p-4 w-full focus:ring-0 focus-visible:ring-0"
+          dropdownClassName="bg-white shadow-md rounded absolute w-full"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              send()
+            }
+          }}
+        />
+        <div
+          className=" text-gray-500 hover:text-gray-800 mx-2 my-2 self-end cursor-pointer"
+          onClick={send}
+        >
+          {inProgress ? <Loader size={20} /> : <PaperAirplaneIcon className="w-6 h-6 " />}
+        </div>
+      </div>
+      <div className="flex my-2 gap-4">
+        <Checkbox label="Use codebase tools" setChecked={setUseTools} checked={useTools} />
+        <Checkbox label="Use GPT-4" setChecked={setUseGPT4} checked={useGPT4} />
       </div>
     </div>
   )

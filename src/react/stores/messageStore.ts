@@ -15,8 +15,8 @@ class MessageStore {
     this.messages.set([])
   }
 
-  sendMessage = async (message: ChatMessage) => {
-    const payload = { message, history: this.messages.get() }
+  sendMessage = async (message: ChatMessage, options?: any) => {
+    const payload = { message, history: this.messages.get(), options }
 
     this.messages.set([...payload.history, message])
 

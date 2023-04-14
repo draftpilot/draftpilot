@@ -74,4 +74,5 @@ export type LearningLog = {
 export type MessagePayload = {
   message: ChatMessage
   history: ChatMessage[]
+  options?: any
 }

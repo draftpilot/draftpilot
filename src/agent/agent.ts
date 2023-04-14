@@ -1,4 +1,4 @@
-import { chatCompletion } from '@/ai/api'
+import { chatCompletion, chatWithHistory } from '@/ai/api'
 import { Tool } from '@/agent/tool'
 import { log, verboseLog } from '@/utils/logger'
 import chalk from 'chalk'
@@ -24,7 +24,7 @@ type Observation = {
 } & ToolParams
 
 type AgentState = {
-  thought: string
+  thought?: string
   action?: string
   parsedAction?: ToolParams[]
   finalAnswer?: string
@@ -48,6 +48,9 @@ export class Agent {
   state: AgentState[] = []
 
   chatHistory: ChatMessage[] = []
+
+  // if there was past conversation before this sequence of requests
+  priorMessages?: ChatMessage[]
 
   // how the agent thinks about the user's input
   requestParam = 'Request'
@@ -75,24 +78,30 @@ export class Agent {
   }
 
   constructPrompt = () => {
-    const prefix = `You have access to the following tools:
+    const prefix = this.tools.length
+      ? `You have access to the following tools:
 ${this.toolDescriptions}`
+      : ''
 
-    const instructions = `Use the following format:
-${this.requestParam}: the request you must fulfill
-Thought: I know what files to edit
-${this.finalAnswerParam}: ${this.outputFormat}
-
-or
+    const toolInstructions = this.tools.length
+      ? `or
 
 Thought: I need to use a tool to solve this problem
 ${this.actionParam}: the action to take, should be one or more of [${this.toolNames}] + input, e.g.
-- grep: foo
+- findInFiles: foo
 - viewFile: path/to/file
 Observation: the result of the actions
 ... (this Thought/${this.actionParam}/Observation can repeat N times)
-Thought: I now know the final answer
+Thought: I'm ready to respond
 ${this.finalAnswerParam}: ...`
+      : ''
+
+    const instructions = `Use the following format:
+${this.requestParam}: the request you must fulfill
+Thought: I'm ready to respond
+${this.finalAnswerParam}: ${this.outputFormat}
+${toolInstructions}
+`
 
     const inProgressState: string[] = []
     let inProgressTokens = 0
@@ -156,6 +165,10 @@ ${progressText}
         if (result.finalAnswer) {
           return result.finalAnswer
         }
+        // no actions were provided
+        if (result.thought && !result.action) {
+          return result.thought
+        }
         this.state.unshift(result)
         askedUser = result.parsedAction?.some((invocation) => invocation.tool == 'askUser') || false
       }
@@ -200,10 +213,19 @@ ${progressText}
     const prompt = this.constructPrompt() + suffix
 
     verboseLog(prompt)
-    const tempInput = '/tmp/agent.prompt'
-    fs.writeFileSync(tempInput, this.systemMessage + '\n\n' + prompt)
 
-    const promise = chatCompletion(prompt, this.model, this.systemMessage, '\nObservation')
+    const messages: ChatMessage[] = []
+    if (this.systemMessage) messages.push({ role: 'system', content: this.systemMessage })
+    if (this.priorMessages) messages.push(...this.priorMessages)
+    messages.push({ role: 'user', content: prompt })
+
+    const stop = '\nObservation'
+
+    const tempInput = '/tmp/agent.prompt'
+    fs.writeFileSync(tempInput, JSON.stringify(messages, null, 2))
+
+    const promise = chatWithHistory(messages, this.model, stop)
+
     const response = await oraPromise(promise, { text: 'Analyzing next steps...' })
 
     log(chalk.bold(`Response:`))
@@ -272,14 +294,14 @@ ${progressText}
       await Promise.all(parallelTools.map((data) => invokeTool(data)))
       result.observations = results
 
-      if (!skipLogObservation) {
-        log(
-          chalk.bold('Observation:'),
-          result.observations.map((observation) => {
-            return { ...observation, output: observation.output.slice(0, 100) }
-          })
-        )
-      }
+      // if (!skipLogObservation) {
+      //   log(
+      //     chalk.bold('Observation:'),
+      //     result.observations.map((observation) => {
+      //       return { ...observation, output: observation.output.slice(0, 100) }
+      //     })
+      //   )
+      // }
     }
   }
 
@@ -305,6 +327,11 @@ ${progressText}
         buffer = []
         mode = 'action'
         buffer.push(line.replace(this.actionParam + ':', '').trim())
+      } else if (line.startsWith('Action:')) {
+        transitionMode()
+        buffer = []
+        mode = 'action'
+        buffer.push(line.replace('Action:', '').trim())
       } else if (line.startsWith(this.finalAnswerParam + ':')) {
         transitionMode()
         buffer = []
@@ -342,7 +369,11 @@ ${progressText}
     const lines = result.split('\n').filter(Boolean)
 
     for (let line of lines) {
-      const sourceLine = line.startsWith('- ') ? line.slice(2) : line
+      let sourceLine = line.startsWith('- ') ? line.slice(2) : line
+
+      // remove quotes, backticks, etc
+      sourceLine = sourceLine.replace(/['"`]/g, '')
+
       let [tool, input] = splitOnce(sourceLine, ' ').map((s) => s.trim())
 
       if (tool) {
