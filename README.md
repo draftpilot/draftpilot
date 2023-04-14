@@ -23,9 +23,9 @@ You can run draftpilot without installing in your codebase with npx:
 
 We recommend adding the following alias to your shell login script for convenience to always run the latest version.
 
-`alias dp="npx -y draftpilot@latest"`
+`alias dpt="npx -y draftpilot@latest"`
 
-Without any commands, it will run in interactive mode, but you can see all commands with `--help`.
+Without any commands, it will run in server mode, but you can see all commands with `--help`.
 
 After initialization, the following files will be generated in the `.draftpilot` folder:
 

@@ -18,6 +18,8 @@ import patch from '@/commands/patch'
 import tool from '@/commands/tool'
 import commit from '@/commands/commit'
 import agent from '@/commands/agent'
+import serve from '@/server/server'
+import open from 'open'
 
 export default function () {
   program
@@ -106,6 +108,17 @@ export default function () {
     .description('Interactive mode')
     .action(actionWrapper(interactive))
     .option('--oneShot', 'Use the one-shot planner')
+
+  program
+    .command('server', { isDefault: true })
+    .description('Server mode')
+    .action(
+      actionWrapper(async (opts) => {
+        const url = await serve()
+        if (!opts.skipOpen) open(url)
+      })
+    )
+    .option('--skip-open', 'Skip opening the browser')
 
   const options = program.parse()
   config.options = options
