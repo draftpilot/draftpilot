@@ -43,7 +43,7 @@ export async function doInitialize(indexer: Indexer, options?: Options) {
 
   if (manifestExists) {
     log(chalk.bold('Manifest file already exists. You can edit it here:'), fileName)
-  } else {
+  } else if (largestFolders.length > 5) {
     log(
       'Just like any new member of your team, I’ll need some onboarding. Here are the largest ' +
         'folders in your repository. It would be great if you wrote a short description of anything ' +
@@ -98,8 +98,15 @@ export async function doInitialize(indexer: Indexer, options?: Options) {
 
   cache.close()
 
-  const gitIgnore = GIT_IGNORE_FILES.map((f) => path.join(config.configFolder, f))
-  updateGitIgnores(gitIgnore)
+  try {
+    const gitIgnore = GIT_IGNORE_FILES.map((f) => path.join(config.configFolder, f))
+    updateGitIgnores(gitIgnore)
+  } catch (e) {
+    log(
+      chalk.yellow('Warning: unable to update .gitignore file.'),
+      'You can do this later with the init command.'
+    )
+  }
 
   log('All done!')
 }

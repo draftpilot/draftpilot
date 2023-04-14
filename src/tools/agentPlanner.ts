@@ -13,8 +13,8 @@ import inquirer from 'inquirer'
 
 const SYSTEM_MESSAGE =
   'You are PlannerGPT, you output a list of files that will be used by an AI to write code.' +
-  'Listen very well to the user, return the plan as soon as you think you know which files to change.' +
-  'Do not actually try to change anything. Return the plan in this output format: ' +
+  'Listen very well to the user, ask if you need clarification, return the plan as soon as you ' +
+  'think you know which files to change, but do not actually change anything. Return in this JSON format: ' +
   PLAN_FORMAT_STR
 
 const OUTPUT_FORMAT = `I have the plan:
