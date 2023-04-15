@@ -53,6 +53,10 @@ class MessageStore {
     this.inProgress.set(false)
   }
 
+  addSystemMessage = (message: ChatMessage) => {
+    this.updateMessages([...this.messages.get(), message])
+  }
+
   updateMessages = (messages: ChatMessage[]) => {
     this.messages.set(messages)
     const id = this.session.get().id

@@ -70,7 +70,7 @@ export default () => {
     }
 
     const newContents = newFile.join('\n')
-    API.saveFile(mergeInfo.file!, newContents)
+    fileStore.saveMerge(mergeInfo, newContents)
   }
 
   return (

@@ -1,4 +1,5 @@
 import { API } from '@/react/api/api'
+import { messageStore } from '@/react/stores/messageStore'
 import { atom } from 'nanostores'
 
 type MergeData = {
@@ -23,7 +24,10 @@ class FileStore {
 
   search = (query: string) => {
     const files = this.files.get()
-    const filteredFiles = query ? files.filter((file) => file.includes(query)) : files
+    const lowerQuery = query.toLowerCase()
+    const filteredFiles = query
+      ? files.filter((file) => file.toLowerCase().includes(lowerQuery))
+      : files
     return filteredFiles.slice(0, 10)
   }
 
@@ -34,6 +38,16 @@ class FileStore {
         this.mergeInfo.set({ file, base: response.file, changes })
       })
     }
+  }
+
+  saveMerge = async (mergeInfo: MergeData, contents: string) => {
+    API.saveFile(mergeInfo.file!, contents)
+    this.mergeInfo.set(null)
+
+    messageStore.addSystemMessage({
+      role: 'system',
+      content: `Saved changes to ${mergeInfo.file}`,
+    })
   }
 }
 

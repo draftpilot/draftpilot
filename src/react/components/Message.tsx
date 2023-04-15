@@ -51,7 +51,7 @@ const Message = ({ message, loading }: Props) => {
 
   let content = message.content
   let output: string = content
-  let bgColor = 'bg-blue-300'
+  let bgColor = message.role == 'system' ? 'bg-green-300' : 'bg-blue-300'
 
   if (content.startsWith('Thought:')) {
     const thought = content.substring(9)
