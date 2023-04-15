@@ -4,6 +4,7 @@ import { log } from '@/utils/logger'
 import bodyParser from 'body-parser'
 import express from 'express'
 import ViteExpress from 'vite-express'
+import fs from 'fs'
 
 const PORT = 3000
 
@@ -18,6 +19,12 @@ export default function serve(port: number = PORT): Promise<string> {
   app.get('/api/files', async (_, res) => {
     const files = await indexer.getFiles()
     res.json({ files })
+  })
+
+  app.get('/api/file', async (req, res) => {
+    const { path } = req.query
+    const file = fs.readFileSync(path as string, 'utf8')
+    res.json({ file })
   })
 
   app.post('/api/message', async (req, res) => {
