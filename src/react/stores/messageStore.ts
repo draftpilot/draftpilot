@@ -1,5 +1,5 @@
 import { API } from '@/react/api/api'
-import { ChatMessage } from '@/types'
+import { ChatMessage, MessagePayload } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
@@ -41,8 +41,8 @@ class MessageStore {
     this.messages.set([])
   }
 
-  sendMessage = async (message: ChatMessage, options?: any) => {
-    const payload = { message, history: this.messages.get(), options }
+  sendMessage = async (message: ChatMessage) => {
+    const payload: MessagePayload = { message, history: this.messages.get() }
 
     if (!this.session.get().name) this.updateSessionName(message)
     this.updateMessages([...this.messages.get(), message])

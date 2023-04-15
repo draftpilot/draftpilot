@@ -1,6 +1,6 @@
 import config from '@/config'
 import { cache } from '@/db/cache'
-import { ChatMessage } from '@/types'
+import { ChatMessage, Model } from '@/types'
 import { isAxiosError } from 'axios'
 import { Configuration, OpenAIApi } from 'openai'
 
@@ -12,7 +12,7 @@ const openai = new OpenAIApi(configuration)
 
 export async function chatCompletion(
   prompt: string,
-  model: '3.5' | '4',
+  model: Model,
   systemMessage?: string,
   stop?: string | string[]
 ) {
@@ -43,7 +43,7 @@ export async function chatCompletion(
 
 export async function chatWithHistory(
   messages: ChatMessage[],
-  model: '3.5' | '4',
+  model: Model,
   stop?: string | string[]
 ) {
   try {

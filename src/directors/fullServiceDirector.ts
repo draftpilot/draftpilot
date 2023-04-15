@@ -36,7 +36,7 @@ export class FullServiceDirector {
   onMessage = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
     // determine what we're doing
 
-    const { message, history, options } = payload
+    const { message, history } = payload
 
     const lastHistoryMessage = history[history.length - 1]
 
@@ -57,7 +57,7 @@ export class FullServiceDirector {
   }
 
   useAnswerAgent = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
-    const { message, history, options } = payload
+    const { message, history } = payload
 
     const attachmentBody = attachmentListToString(message.attachments)
     const messages: ChatMessage[] = history
@@ -72,13 +72,14 @@ export class FullServiceDirector {
         message.content,
     })
 
-    const answer = await chatWithHistory(messages, options.model || '3.5')
+    const options = message.options
+    const answer = await chatWithHistory(messages, options?.model || '3.5')
     log(answer)
 
     if (answer.includes('USE_TOOLS') || answer.includes('your codebase')) {
       await this.usePlanningAgent(payload, attachmentBody, postMessage)
     } else {
-      postMessage({ role: 'assistant', content: answer })
+      postMessage({ role: 'assistant', content: answer, options })
     }
   }
 
@@ -87,8 +88,9 @@ export class FullServiceDirector {
     attachmentBody: string | undefined,
     postMessage: (message: ChatMessage) => void
   ) => {
-    const { message, history, options } = payload
-    const tools = options.tools ? getReadOnlyTools() : []
+    const { message, history } = payload
+    const { options } = message
+    const tools = options?.tools ? getReadOnlyTools() : []
 
     const outputFormat = // mode == AnswerMode.PLANNING ?
       `either ${CONFIRM} <proposed set of actions that user must approve>, ` +
@@ -98,7 +100,7 @@ export class FullServiceDirector {
     const agent = new Agent(tools, outputFormat, SYSTEM_MESSAGE)
     agent.actionParam = 'ResearchAction'
     agent.finalAnswerParam = 'TellUser'
-    agent.model = options.model || '3.5'
+    agent.model = options?.model || '3.5'
 
     const query = message.content
     if (attachmentBody) {
@@ -137,6 +139,7 @@ export class FullServiceDirector {
       const newMessage: ChatMessage = {
         role: 'assistant',
         content,
+        options,
         attachments: result.observations?.map((o) => ({
           type: 'observation',
           name: o.tool + (o.input ? ' ' + o.input : ''),
@@ -152,7 +155,9 @@ export class FullServiceDirector {
   }
 
   useActingAgent = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
-    postMessage({ role: 'assistant', content: 'Acting agent not implemented yet' })
+    const { message } = payload
+    const { options } = message
+    postMessage({ role: 'assistant', content: 'Acting agent not implemented yet', options })
   }
 }
 

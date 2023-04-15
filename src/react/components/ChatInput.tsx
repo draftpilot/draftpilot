@@ -34,17 +34,18 @@ export default () => {
     const message = ref.current.value
     if (!message || inProgress) return
 
-    const options = { tools: useTools, model: useGPT4 ? '4' : '3.5' }
     const toAttach: Attachment[] = Array.from(filesRef.current)
       .filter((f) => message.includes(f))
       .map((f) => ({
         type: 'file',
         name: f,
       }))
-    messageStore.sendMessage(
-      { content: ref.current.value, role: 'user', attachments: toAttach },
-      options
-    )
+    messageStore.sendMessage({
+      content: ref.current.value,
+      role: 'user',
+      attachments: toAttach,
+      options: { tools: useTools, model: useGPT4 ? '4' : '3.5' },
+    })
     setValue('')
     filesRef.current.clear()
   }, [useTools, useGPT4, inProgress])

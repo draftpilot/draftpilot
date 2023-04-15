@@ -1,14 +1,22 @@
+import Button from '@/react/components/Button'
 import CodeActions from '@/react/components/CodeActions'
 import { Attachment, ChatMessage } from '@/types'
 import { splitOnce } from '@/utils/utils'
 import {
+  ArrowPathIcon,
+  ArrowTrendingUpIcon,
+  ChevronDoubleUpIcon,
   ClipboardIcon,
   DocumentIcon,
   DocumentMagnifyingGlassIcon,
   DocumentTextIcon,
+  HandThumbDownIcon,
+  HandThumbUpIcon,
   MagnifyingGlassIcon,
   PaperClipIcon,
+  PencilIcon,
   RectangleStackIcon,
+  RocketLaunchIcon,
   WrenchIcon,
 } from '@heroicons/react/24/outline'
 import hljs from 'highlight.js/lib/common'
@@ -18,10 +26,18 @@ import snarkdown from 'snarkdown'
 
 type Props = {
   message?: ChatMessage
-  loading?: boolean
 }
 
-const Message = ({ message, loading }: Props) => {
+const Message = ({ message }: Props) => {
+  return (
+    <div className="flex group">
+      <MessageContents message={message} />
+      <MessageActions message={message} />
+    </div>
+  )
+}
+
+const MessageContents = ({ message }: Props) => {
   const [expanded, setExpanded] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const [hasMore, setHasMore] = useState(false)
@@ -33,16 +49,16 @@ const Message = ({ message, loading }: Props) => {
     setExpanded(threshold <= 20)
   }, [message])
 
-  if (loading || !message)
+  if (!message)
     return (
-      <div className={`bg-blue-100 p-4 shadow-md rounded`}>
+      <div className={`flex-1 bg-blue-100 p-4 shadow-md rounded`}>
         <div className="dot-flashing ml-4 my-2" />
       </div>
     )
 
   if (message.role == 'user') {
     return (
-      <div className={`bg-white p-4 shadow-md rounded`}>
+      <div className={`flex-1 bg-white p-4 shadow-md rounded`}>
         <span className="whitespace-pre-wrap">{message.content}</span>
         {message.attachments && <Attachments attachments={message.attachments} />}
       </div>
@@ -60,11 +76,11 @@ const Message = ({ message, loading }: Props) => {
   } else if (content.startsWith('CONFIRM:')) {
     bgColor = 'bg-red-200'
     const proposal = content.substring(9)
-    output = `### Confirm Action?\n\n${proposal}*`
+    output = `**Confirm Action?**\n\n${proposal}*`
   } else if (content.startsWith('ASK:')) {
     bgColor = 'bg-yellow-200'
     const ask = content.substring(5)
-    output = `### Question:\n\n${ask}*`
+    output = `**Question:**\n\n${ask}`
   } else if (content.startsWith('ANSWER:')) {
     const answer = content.substring(7)
     output = answer
@@ -73,7 +89,7 @@ const Message = ({ message, loading }: Props) => {
   const contentBlocks = splitCodeBlocks(output)
 
   return (
-    <div className={`${bgColor} shadow-md rounded relative`}>
+    <div className={`flex-1 ${bgColor} shadow-md rounded relative`}>
       <div
         ref={contentRef}
         className={(expanded ? '' : 'max-h-60 ') + 'p-4 overflow-hidden ease-out'}
@@ -104,6 +120,44 @@ const Message = ({ message, loading }: Props) => {
       )}
     </div>
   )
+}
+
+function MessageActions({ message }: Props) {
+  if (!message || message.role == 'system') return <div className="w-8" />
+
+  if (message.role == 'user') {
+    return (
+      <div className="flex flex-col gap-2 invisible group-hover:visible">
+        <Button className="hover:bg-gray-300" title="Edit input">
+          <PencilIcon className="h-4 w-4 text-gray-500" />
+        </Button>
+      </div>
+    )
+  }
+
+  if (message.role == 'assistant') {
+    const options = message.options
+    return (
+      <div className="flex flex-col gap-2 invisible group-hover:visible">
+        {options?.model != '4' && (
+          <Button className="hover:bg-gray-300" title="Use GPT-4">
+            <RocketLaunchIcon className="h-4 w-4 text-gray-500" />
+          </Button>
+        )}
+        <Button className="hover:bg-gray-300" title="Regenerate">
+          <ArrowPathIcon className="h-4 w-4 text-gray-500" />
+        </Button>
+        {/* <Button className="hover:bg-gray-300" title="Good Answer">
+          <HandThumbUpIcon className="h-4 w-4 text-gray-500" />
+        </Button>
+        <Button className="hover:bg-gray-300" title="Bad Answer">
+          <HandThumbDownIcon className="h-4 w-4 text-gray-500" />
+        </Button> */}
+      </div>
+    )
+  }
+
+  return null
 }
 
 function Text({ children }: { children: string }) {

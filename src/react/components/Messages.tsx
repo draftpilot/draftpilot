@@ -24,7 +24,7 @@ export default () => {
       {messages.map((message, i) => (
         <Message key={i} message={message} />
       ))}
-      {inProgress && <Message loading />}
+      {inProgress && <Message />}
       {mergeInfo && <MergeTool />}
 
       {!messages.length && <Onboarding />}

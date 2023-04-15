@@ -27,11 +27,14 @@ export type Attachment = {
   content?: string
 }
 
+export type Model = '3.5' | '4'
+
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'system'
   content: string
   attachments?: Attachment[]
   state?: any
+  options?: { model?: Model; tools?: boolean }
 }
 
 export type Plan = {
@@ -74,5 +77,4 @@ export type LearningLog = {
 export type MessagePayload = {
   message: ChatMessage
   history: ChatMessage[]
-  options?: any
 }
