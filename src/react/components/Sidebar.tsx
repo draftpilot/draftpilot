@@ -1,3 +1,4 @@
+import { fileStore } from '@/react/stores/fileStore'
 import { messageStore } from '@/react/stores/messageStore'
 import { useStore } from '@nanostores/react'
 import { useEffect } from 'react'
@@ -10,10 +11,15 @@ export default () => {
     messageStore.loadSessions()
   }, [])
 
+  const newSession = () => {
+    messageStore.newSession()
+    fileStore.newSession()
+  }
+
   return (
     <div className="p-4 flex flex-col gap-2 overflow-y-auto">
       <button
-        onClick={() => messageStore.newSession()}
+        onClick={() => newSession()}
         className="p-2 rounded border-2 border-gray-600 cursor-pointer hover:bg-gray-400 text-gray-700"
       >
         New Session

@@ -49,6 +49,10 @@ class FileStore {
       content: `Saved changes to ${mergeInfo.file}`,
     })
   }
+
+  newSession = () => {
+    this.mergeInfo.set(null)
+  }
 }
 
 declare global {

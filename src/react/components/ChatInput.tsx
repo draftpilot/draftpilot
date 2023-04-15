@@ -13,6 +13,7 @@ export default () => {
   const rtaRef = useRef<ReactTextareaAutocomplete<string> | null>(null)
   const ref = useRef<HTMLTextAreaElement | null>(null)
   const inProgress = useStore(messageStore.inProgress)
+  const session = useStore(messageStore.session)
 
   const [useTools, setUseTools] = useState(true)
   const [useGPT4, setUseGPT4] = useState(false)
@@ -21,10 +22,12 @@ export default () => {
   const filesRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    if (!ref.current) return
     fileStore.loadData()
-    ref.current.focus()
-  }, [ref.current])
+  }, [])
+
+  useEffect(() => {
+    ref.current?.focus()
+  }, [session.id])
 
   const send = useCallback(() => {
     if (!ref.current || !rtaRef.current) return

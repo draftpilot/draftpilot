@@ -2,6 +2,7 @@ import { API } from '@/react/api/api'
 import { ChatMessage } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
+import { fileStore } from '@/react/stores/fileStore'
 
 type Session = {
   id: string
