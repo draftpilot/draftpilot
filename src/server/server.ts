@@ -13,6 +13,7 @@ export default function serve(port: number = PORT): Promise<string> {
   const messenger = new Messenger()
 
   app.use(bodyParser.json())
+  app.use(bodyParser.text())
 
   app.get('/message', (_, res) => res.send('Hello from express!'))
 
@@ -25,6 +26,13 @@ export default function serve(port: number = PORT): Promise<string> {
     const { path } = req.query
     const file = fs.readFileSync(path as string, 'utf8')
     res.json({ file })
+  })
+
+  app.put('/api/file', async (req, res) => {
+    const { path } = req.query
+    const body = req.body
+    const file = fs.writeFileSync(path as string, body)
+    res.end()
   })
 
   app.post('/api/message', async (req, res) => {

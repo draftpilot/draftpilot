@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline'
 import hljs from 'highlight.js/lib/common'
 import 'highlight.js/styles/github-dark.css'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import snarkdown from 'snarkdown'
 
 type Props = {
@@ -83,10 +83,10 @@ const Message = ({ message, loading }: Props) => {
             return <Text key={i} children={block.content} />
           } else {
             return (
-              <>
-                <Code key={'code' + i} language={block.language} children={block.content} />
-                <CodeActions key={'actions' + i} code={block.content} message={message} />
-              </>
+              <Fragment key={i}>
+                <Code language={block.language} children={block.content} />
+                <CodeActions code={block.content} message={message} />
+              </Fragment>
             )
           }
         })}

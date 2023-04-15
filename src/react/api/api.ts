@@ -9,6 +9,17 @@ class APIService {
     return response.data
   }
 
+  loadFile = async (path: string): Promise<{ file: string }> => {
+    const response = await axios.get(`${this.endpoint}/file?path=${encodeURIComponent(path)}`)
+    return response.data
+  }
+
+  saveFile = async (path: string, contents: string): Promise<void> => {
+    await axios.put(`${this.endpoint}/file?path=${encodeURIComponent(path)}`, contents, {
+      headers: { 'Content-Type': 'text/plain' },
+    })
+  }
+
   sendMessage = (
     payload: MessagePayload,
     onMessage: (message: ChatMessage) => void
