@@ -30,7 +30,7 @@ export default () => {
         New Session
       </button>
 
-      {sessions.length && <div className="my-2">Past Sessions</div>}
+      {sessions.length > 0 && <div className="my-2">Past Sessions</div>}
 
       {sessions.map((session) => (
         <div key={session.id} className="flex flex-col">
