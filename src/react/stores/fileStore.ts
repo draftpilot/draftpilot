@@ -11,6 +11,8 @@ type MergeData = {
 class FileStore {
   // --- services
 
+  cwd = atom<string>('')
+
   files = atom<string[]>([])
 
   mergeInfo = atom<MergeData | null>(null)
@@ -20,6 +22,7 @@ class FileStore {
   loadData = async () => {
     const response = await API.loadFiles()
     this.files.set(response.files || [])
+    this.cwd.set(response.cwd || '')
   }
 
   search = (query: string) => {

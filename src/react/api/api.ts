@@ -4,7 +4,7 @@ import axios, { AxiosError } from 'axios'
 class APIService {
   endpoint = '/api'
 
-  loadFiles = async (): Promise<{ files: string[] }> => {
+  loadFiles = async (): Promise<{ files: string[]; cwd: string }> => {
     const response = await axios.get(`${this.endpoint}/files`)
     return response.data
   }

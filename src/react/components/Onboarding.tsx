@@ -1,7 +1,16 @@
+import { fileStore } from '@/react/stores/fileStore'
+import { useStore } from '@nanostores/react'
+
 export default () => {
+  const cwd = useStore(fileStore.cwd)
+
   return (
     <div className="bg-green-100 justify-self-center p-4 shadow rounded">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">Welcome to draftpilot!</h1>
+      <h1 className="text-2xl font-bold text-gray-800">Welcome to draftpilot!</h1>
+
+      <p className="my-4">
+        Running in: <code>{cwd}</code>
+      </p>
 
       <p>Here are some things you can ask me to do:</p>
 

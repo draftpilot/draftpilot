@@ -29,7 +29,8 @@ export default function serve(
 
   app.get('/api/files', async (_, res) => {
     const files = await indexer.getFiles()
-    res.json({ files })
+    const cwd = process.cwd()
+    res.json({ files, cwd })
   })
 
   app.get('/api/file', async (req, res) => {
