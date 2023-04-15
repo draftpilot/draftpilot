@@ -2,10 +2,11 @@ import ReactTextareaAutocomplete, { TriggerType } from '@webscopeio/react-textar
 import { fileStore } from '@/react/stores/fileStore'
 import { messageStore } from '@/react/stores/messageStore'
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '@nanostores/react'
 import Loader from '@/react/components/Loader'
 import Checkbox from '@/react/components/Checkbox'
+import useAutosizeTextArea from '@/react/hooks/useAutosizeTextArea'
 
 export default () => {
   const rtaRef = useRef<ReactTextareaAutocomplete<string> | null>(null)
@@ -15,39 +16,48 @@ export default () => {
   const [useTools, setUseTools] = useState(true)
   const [useGPT4, setUseGPT4] = useState(false)
 
+  const [value, setValue] = useState('')
+
   useEffect(() => {
     if (!ref.current) return
     fileStore.loadData()
     ref.current.focus()
   }, [ref.current])
 
-  const send = () => {
+  const send = useCallback(() => {
     if (!ref.current || !ref.current.value || !rtaRef.current) return
     if (inProgress) return
 
     const options = { tools: useTools, model: useGPT4 ? '4' : '3.5' }
     messageStore.sendMessage({ content: ref.current.value, role: 'user' }, options)
-    rtaRef.current.setState({ value: '' })
-  }
+    setValue('')
+  }, [useTools, useGPT4, inProgress])
 
-  const trigger: TriggerType<string> = {
-    '@': {
-      dataProvider: async (token: string) => {
-        return fileStore.search(token)
+  const trigger: TriggerType<string> = useMemo(
+    () => ({
+      '@': {
+        dataProvider: async (token: string) => {
+          return fileStore.search(token)
+        },
+        component: FileRow,
+        output: (entity: string) => entity,
       },
-      component: FileRow,
-      output: (entity: string) => entity,
-    },
-  }
+    }),
+    []
+  )
 
-  const loadingComponent = () => <div>Loading...</div>
+  const loadingComponent = useCallback(() => <div>Loading...</div>, [])
 
   const placeholder = inProgress ? 'Sending...' : 'Type "@" to reference a file'
+
+  useAutosizeTextArea(ref.current, value)
 
   return (
     <div className="my-4">
       <div className="bg-white shadow-md rounded flex relative">
         <ReactTextareaAutocomplete<string>
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
           ref={rtaRef}
           containerClassName="flex-1"
           autoFocus
@@ -55,7 +65,7 @@ export default () => {
           placeholder={placeholder}
           loadingComponent={loadingComponent}
           innerRef={(textarea: HTMLTextAreaElement) => (ref.current = textarea)}
-          className="p-4 w-full focus:ring-0 focus-visible:ring-0"
+          className="p-4 h-14 w-full focus:ring-0 focus-visible:ring-0"
           dropdownClassName="bg-white shadow-md rounded absolute w-full"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {

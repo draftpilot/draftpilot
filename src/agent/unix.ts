@@ -1,6 +1,6 @@
 import { Tool, confirmPrompt } from '@/agent/tool'
 import { readConfig } from '@/context/projectConfig'
-import { verboseLog } from '@/utils/logger'
+import { log, verboseLog } from '@/utils/logger'
 
 import child_process from 'child_process'
 import FastGlob from 'fast-glob'
@@ -195,17 +195,24 @@ export const spawnPromise = (command: string, args: string[], cwd?: string) => {
     const chunks: Buffer[] = []
     const errorChunks: Buffer[] = []
     result.stdout.on('data', (chunk) => chunks.push(chunk))
-    result.stderr.on('data', (chunk) => chunks.push(chunk))
+    result.stderr.on('data', (chunk) => errorChunks.push(chunk))
 
     result.on('error', (err) => {
       reject(err)
     })
 
     result.on('close', (code) => {
-      if (code !== 0) {
-        reject(Buffer.concat(errorChunks).toString())
+      log('close', code)
+      const output = Buffer.concat(chunks).toString()
+      const error = Buffer.concat(errorChunks).toString()
+
+      if (output && error) {
+        resolve(`${output}\n${error}`)
+      } else if (output) {
+        resolve(output)
+      } else if (error) {
+        reject(error)
       }
-      resolve(Buffer.concat(chunks).toString())
     })
   })
 }

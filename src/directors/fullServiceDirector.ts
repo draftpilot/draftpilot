@@ -1,5 +1,6 @@
 import { getReadOnlyTools } from '@/agent'
 import { Agent } from '@/agent/agent'
+import { chatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { findRelevantDocs } from '@/directors/agentPlanner'
 import { ChatMessage, MessagePayload } from '@/types'
@@ -10,7 +11,8 @@ import { log } from '@/utils/logger'
 
 const SYSTEM_MESSAGE =
   'You are EngineerGPT, an assistant that helps develop on a codebase. Listen well to ' +
-  "the user, ask if uncertain, don't loop needlessly, respond exactly as instructed."
+  "the user, ask if uncertain, don't loop needlessly, respond exactly in the desired format, " +
+  "and don't use any tools if not absolutely necessary."
 
 const MAX_PLAN_ITERATIONS = 5
 
@@ -27,14 +29,37 @@ export class FullServiceDirector {
     indexer.loadFilesIntoVectors()
   }
 
-  onMessage = async (
-    { message, history, options }: MessagePayload,
+  onMessage = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
+    // determine what we're doing
+
+    const { message, history, options } = payload
+
+    const messages: ChatMessage[] = history
+      ? [...pastMessages(history.slice(history.length - 4))]
+      : []
+    messages.push({
+      role: 'user',
+      content:
+        'Answer this request if it can be answered directly, or if codebase access is needed, return USE_TOOLS:\n\n' +
+        message.content,
+    })
+
+    const answer = await chatWithHistory(messages, '3.5')
+    log(answer)
+
+    if (answer.includes('USE_TOOLS')) {
+      await this.usePlanningAgent(payload, postMessage)
+    } else {
+      postMessage({ role: 'assistant', content: answer })
+    }
+  }
+
+  usePlanningAgent = async (
+    payload: MessagePayload,
     postMessage: (message: ChatMessage) => void
   ) => {
+    const { message, history, options } = payload
     const tools = options.tools ? getReadOnlyTools() : []
-
-    // based on history, determine if we're doing research or taking action
-    // const mode = AnswerMode.PLANNING
 
     const outputFormat = // mode == AnswerMode.PLANNING ?
       `either ${CONFIRM} <proposed set of actions that user must approve>, ` +
@@ -50,15 +75,7 @@ export class FullServiceDirector {
     const relevantDocs = await findRelevantDocs(query, indexer.files)
     agent.addInitialState('What are the most relevant files to this query?', relevantDocs)
 
-    const pastMessages: ChatMessage[] = []
-    history.forEach((msg) => {
-      if (msg.role == 'system') return
-      pastMessages.push({
-        role: msg.role,
-        content: msg.content,
-      })
-    })
-    agent.priorMessages = pastMessages
+    agent.priorMessages = pastMessages(history)
 
     for (let i = 0; i < MAX_PLAN_ITERATIONS; i++) {
       const result = await agent.runOnce(query, i == MAX_PLAN_ITERATIONS - 1)
@@ -102,4 +119,16 @@ export class FullServiceDirector {
       agent.addState(result)
     }
   }
+}
+
+function pastMessages(history: ChatMessage[]) {
+  const pastMessages: ChatMessage[] = []
+  history.forEach((msg) => {
+    if (msg.role == 'system') return
+    pastMessages.push({
+      role: msg.role,
+      content: msg.content,
+    })
+  })
+  return pastMessages
 }

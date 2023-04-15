@@ -1,4 +1,5 @@
 import { Attachment, ChatMessage } from '@/types'
+import { splitOnce } from '@/utils/utils'
 import {
   DocumentIcon,
   MagnifyingGlassIcon,
@@ -7,15 +8,15 @@ import {
   WrenchIcon,
 } from '@heroicons/react/24/outline'
 
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+
 type Props = {
   message?: ChatMessage
-  fromUser?: boolean
   loading?: boolean
 }
 
-const Message = ({ message, fromUser, loading }: Props) => {
-  let bgColor = fromUser ? 'bg-white' : 'bg-blue-300'
-
+const Message = ({ message, loading }: Props) => {
   if (loading || !message)
     return (
       <div className={`bg-blue-100 p-4 shadow-md rounded`}>
@@ -23,40 +24,99 @@ const Message = ({ message, fromUser, loading }: Props) => {
       </div>
     )
 
+  if (message.role == 'user') {
+    return (
+      <div className={`bg-white p-4 shadow-md rounded whitespace-pre-wrap`}>{message.content}</div>
+    )
+  }
+
   let content = message.content
-  let output: string | JSX.Element = message.content
+  let output: string = content
+  let bgColor = 'bg-blue-300'
+
   if (content.startsWith('Thought:')) {
+    const thought = content.substring(9)
     bgColor = 'bg-blue-100'
-    output = <span className="italic">{content}</span>
+    output = `*Thought*: ${thought}`
   } else if (content.startsWith('CONFIRM:')) {
     bgColor = 'bg-red-200'
     const proposal = content.substring(9)
-    output = (
-      <>
-        <div className="font-bold">Confirm Action?</div>
-        {proposal}
-      </>
-    )
+    output = `### Confirm Action?\n\n${proposal}*`
   } else if (content.startsWith('ASK:')) {
     bgColor = 'bg-yellow-200'
     const ask = content.substring(5)
-    output = (
-      <>
-        <div className="font-bold">Question:</div>
-        {ask}
-      </>
-    )
+    output = `### Question:\n\n${ask}*`
   } else if (content.startsWith('ANSWER:')) {
     const answer = content.substring(7)
-    output = <>{answer}</>
+    output = answer
   }
+
+  const contentBlocks = splitCodeBlocks(output)
 
   return (
     <div className={`${bgColor} p-4 shadow-md rounded`}>
-      <span className="whitespace-pre-wrap">{output}</span>
+      {contentBlocks.map((block, i) => {
+        if (block.type === 'text') {
+          return <div key={i} className="whitespace-pre-wrap" children={block.content} />
+        } else {
+          return (
+            <SyntaxHighlighter
+              key={i}
+              language={block.language}
+              style={dark}
+              children={block.content}
+            />
+          )
+        }
+      })}
+
       {message.attachments && <Attachments attachments={message.attachments} />}
     </div>
   )
+}
+
+type Block = {
+  type: 'text' | 'code'
+  language?: string
+  content: string
+}
+
+function splitCodeBlocks(str: string): Block[] {
+  const codeBlockRegex = /```([\s\S]*?)```/g
+  const codeBlocks: Block[] = []
+  let lastIndex = 0
+  let match
+
+  while ((match = codeBlockRegex.exec(str)) !== null) {
+    const codeBlock = match[1]
+    const [language, codeContent] = splitOnce(codeBlock, '\n')
+    const startIndex = match.index
+    const endIndex = codeBlockRegex.lastIndex
+
+    if (startIndex > lastIndex) {
+      codeBlocks.push({
+        type: 'text',
+        content: str.substring(lastIndex, startIndex).trim(),
+      })
+    }
+
+    codeBlocks.push({
+      type: 'code',
+      content: codeContent,
+      language: language.trim(),
+    })
+
+    lastIndex = endIndex
+  }
+
+  if (lastIndex < str.length) {
+    codeBlocks.push({
+      type: 'text',
+      content: str.substring(lastIndex).trim(),
+    })
+  }
+
+  return codeBlocks
 }
 
 function Attachments({ attachments }: { attachments: Attachment[] }) {
