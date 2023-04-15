@@ -7,6 +7,7 @@ import { useStore } from '@nanostores/react'
 import Loader from '@/react/components/Loader'
 import Checkbox from '@/react/components/Checkbox'
 import useAutosizeTextArea from '@/react/hooks/useAutosizeTextArea'
+import { Attachment } from '@/types'
 
 export default () => {
   const rtaRef = useRef<ReactTextareaAutocomplete<string> | null>(null)
@@ -17,6 +18,7 @@ export default () => {
   const [useGPT4, setUseGPT4] = useState(false)
 
   const [value, setValue] = useState('')
+  const [files, setFiles] = useState<string[]>([])
 
   useEffect(() => {
     if (!ref.current) return
@@ -25,13 +27,23 @@ export default () => {
   }, [ref.current])
 
   const send = useCallback(() => {
-    if (!ref.current || !ref.current.value || !rtaRef.current) return
-    if (inProgress) return
+    if (!ref.current || !rtaRef.current) return
+    const message = ref.current.value
+    if (!message || inProgress) return
 
     const options = { tools: useTools, model: useGPT4 ? '4' : '3.5' }
-    messageStore.sendMessage({ content: ref.current.value, role: 'user' }, options)
+    const toAttach: Attachment[] = files
+      .filter((f) => message.includes(f))
+      .map((f) => ({
+        type: 'file',
+        name: f,
+      }))
+    messageStore.sendMessage(
+      { content: ref.current.value, role: 'user', attachments: toAttach },
+      options
+    )
     setValue('')
-  }, [useTools, useGPT4, inProgress])
+  }, [useTools, useGPT4, inProgress, files])
 
   const trigger: TriggerType<string> = useMemo(
     () => ({
@@ -40,7 +52,10 @@ export default () => {
           return fileStore.search(token)
         },
         component: FileRow,
-        output: (entity: string) => entity,
+        output: (entity: string) => {
+          setFiles((files) => [...files, entity])
+          return entity
+        },
       },
     }),
     []

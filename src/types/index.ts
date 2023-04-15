@@ -24,7 +24,7 @@ export type CodeDoc = {
 export type Attachment = {
   type: string
   name: string
-  content: string
+  content?: string
 }
 
 export type ChatMessage = {

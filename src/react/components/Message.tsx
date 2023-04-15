@@ -3,6 +3,8 @@ import { splitOnce } from '@/utils/utils'
 import {
   ClipboardIcon,
   DocumentIcon,
+  DocumentMagnifyingGlassIcon,
+  DocumentTextIcon,
   MagnifyingGlassIcon,
   PaperClipIcon,
   RectangleStackIcon,
@@ -27,7 +29,7 @@ const Message = ({ message, loading }: Props) => {
     if (!contentRef.current) return
     const threshold = contentRef.current.scrollHeight - contentRef.current.offsetHeight
     setHasMore(threshold > 20)
-    setExpanded(threshold <= 20 && threshold > 0)
+    setExpanded(threshold <= 20)
   }, [message])
 
   if (loading || !message)
@@ -39,7 +41,10 @@ const Message = ({ message, loading }: Props) => {
 
   if (message.role == 'user') {
     return (
-      <div className={`bg-white p-4 shadow-md rounded whitespace-pre-wrap`}>{message.content}</div>
+      <div className={`bg-white p-4 shadow-md rounded`}>
+        <span className="whitespace-pre-wrap">{message.content}</span>
+        {message.attachments && <Attachments attachments={message.attachments} />}
+      </div>
     )
   }
 
@@ -192,14 +197,14 @@ function Attachments({ attachments }: { attachments: Attachment[] }) {
 function AttachmentBody({ attachment }: { attachment: Attachment }) {
   const Icon =
     attachment.type == 'file'
-      ? DocumentIcon
+      ? DocumentTextIcon
       : attachment.type == 'observation'
       ? attachment.name.startsWith('find')
         ? MagnifyingGlassIcon
         : attachment.name.startsWith('list')
         ? RectangleStackIcon
         : attachment.name.startsWith('view')
-        ? DocumentIcon
+        ? DocumentMagnifyingGlassIcon
         : WrenchIcon
       : PaperClipIcon
 
