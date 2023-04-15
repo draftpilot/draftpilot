@@ -1,6 +1,7 @@
 import ChatInput from '@/react/components/ChatInput'
 import Messages from '@/react/components/Messages'
 import Sidebar from '@/react/components/Sidebar'
+
 function App() {
   return (
     <div className="flex h-full relative">

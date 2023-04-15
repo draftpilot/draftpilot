@@ -60,7 +60,7 @@ class MessageStore {
   }
 
   updateSessionName = (message: ChatMessage) => {
-    const name = message.content.slice(0, 20)
+    const name = message.content.slice(0, 50)
     const session = { ...this.session.get(), name }
     this.session.set(session)
     this.sessionDb.sessions.put(session)
