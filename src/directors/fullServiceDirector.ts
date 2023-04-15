@@ -19,7 +19,9 @@ const SYSTEM_MESSAGE =
 const MAX_PLAN_ITERATIONS = 5
 
 enum AnswerMode {
-  PLANNING,
+  ANSWER,
+  PLAN,
+  ACT,
 }
 
 const CONFIRM = 'CONFIRM:'
@@ -36,10 +38,32 @@ export class FullServiceDirector {
 
     const { message, history, options } = payload
 
+    const lastHistoryMessage = history[history.length - 1]
+
+    const answerMode =
+      !lastHistoryMessage || !lastHistoryMessage.state
+        ? AnswerMode.ANSWER
+        : lastHistoryMessage.content.startsWith(CONFIRM)
+        ? AnswerMode.ACT
+        : AnswerMode.PLAN
+
+    if (answerMode == AnswerMode.ANSWER) {
+      await this.useAnswerAgent(payload, postMessage)
+    } else if (answerMode == AnswerMode.PLAN) {
+      await this.usePlanningAgent(payload, attachmentListToString(message.attachments), postMessage)
+    } else if (answerMode == AnswerMode.ACT) {
+      await this.useActingAgent(payload, postMessage)
+    }
+  }
+
+  useAnswerAgent = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
+    const { message, history, options } = payload
+
     const attachmentBody = attachmentListToString(message.attachments)
     const messages: ChatMessage[] = history
       ? [...pastMessages(history.slice(history.length - 4))]
       : []
+
     messages.push({
       role: 'user',
       content:
@@ -48,7 +72,7 @@ export class FullServiceDirector {
         message.content,
     })
 
-    const answer = await chatWithHistory(messages, '3.5')
+    const answer = await chatWithHistory(messages, options.model || '3.5')
     log(answer)
 
     if (answer.includes('USE_TOOLS') || answer.includes('your codebase')) {
@@ -104,9 +128,7 @@ export class FullServiceDirector {
         }
         if (index !== -1) {
           result.finalAnswer = result.thought.substring(index)
-        } else if (!result.action) {
-          // if no actions were provided, then the thought is the final answer
-          result.finalAnswer = result.thought
+          result.thought = result.thought.substring(0, index)
         }
       }
 
@@ -124,9 +146,13 @@ export class FullServiceDirector {
       }
       postMessage(newMessage)
 
-      if (result.finalAnswer) break
+      if (result.finalAnswer || !result.action) break
       agent.addState(result)
     }
+  }
+
+  useActingAgent = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
+    postMessage({ role: 'assistant', content: 'Acting agent not implemented yet' })
   }
 }
 

@@ -9,13 +9,14 @@ export default () => {
         <li>
           Write tests for <code>transformer.ts</code>
         </li>
-        <li>Find a package for an autocompleting textarea</li>
+        <li>Find a package for a fuzzy string matcher</li>
         <li>
-          Replace all instances of <code>foo</code> with <code>bar</code>
+          For all instances of <code>FOO</code>, add <code>BAR</code> next to it
         </li>
         <li>
           Look for bugs in <code>importantFile.ts</code>
         </li>
+        <li>Create a React hook for auto-expanding textarea and save it to src/components</li>
       </ul>
     </div>
   )

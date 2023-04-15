@@ -1,3 +1,4 @@
+import CodeActions from '@/react/components/CodeActions'
 import { Attachment, ChatMessage } from '@/types'
 import { splitOnce } from '@/utils/utils'
 import {
@@ -50,18 +51,18 @@ const Message = ({ message, loading }: Props) => {
 
   let content = message.content
   let output: string = content
-  let bgColor = 'blue-300'
+  let bgColor = 'bg-blue-300'
 
   if (content.startsWith('Thought:')) {
     const thought = content.substring(9)
-    bgColor = 'blue-100'
+    bgColor = 'bg-blue-100'
     output = `*Thought*: ${thought}`
   } else if (content.startsWith('CONFIRM:')) {
-    bgColor = 'red-200'
+    bgColor = 'bg-red-200'
     const proposal = content.substring(9)
     output = `### Confirm Action?\n\n${proposal}*`
   } else if (content.startsWith('ASK:')) {
-    bgColor = 'yellow-200'
+    bgColor = 'bg-yellow-200'
     const ask = content.substring(5)
     output = `### Question:\n\n${ask}*`
   } else if (content.startsWith('ANSWER:')) {
@@ -72,16 +73,21 @@ const Message = ({ message, loading }: Props) => {
   const contentBlocks = splitCodeBlocks(output)
 
   return (
-    <div className={`bg-${bgColor} shadow-md rounded relative`}>
+    <div className={`${bgColor} shadow-md rounded relative`}>
       <div
         ref={contentRef}
-        className={(expanded ? '' : 'max-h-60') + ' p-4 overflow-hidden ease-out'}
+        className={(expanded ? '' : 'max-h-60 ') + 'p-4 overflow-hidden ease-out'}
       >
         {contentBlocks.map((block, i) => {
           if (block.type === 'text') {
             return <Text key={i} children={block.content} />
           } else {
-            return <Code key={i} language={block.language} children={block.content} />
+            return (
+              <>
+                <Code key={'code' + i} language={block.language} children={block.content} />
+                <CodeActions key={'actions' + i} code={block.content} message={message} />
+              </>
+            )
           }
         })}
 

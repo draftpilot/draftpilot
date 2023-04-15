@@ -18,7 +18,7 @@ export default () => {
   const [useGPT4, setUseGPT4] = useState(false)
 
   const [value, setValue] = useState('')
-  const [files, setFiles] = useState<string[]>([])
+  const filesRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     if (!ref.current) return
@@ -32,7 +32,7 @@ export default () => {
     if (!message || inProgress) return
 
     const options = { tools: useTools, model: useGPT4 ? '4' : '3.5' }
-    const toAttach: Attachment[] = files
+    const toAttach: Attachment[] = Array.from(filesRef.current)
       .filter((f) => message.includes(f))
       .map((f) => ({
         type: 'file',
@@ -43,7 +43,8 @@ export default () => {
       options
     )
     setValue('')
-  }, [useTools, useGPT4, inProgress, files])
+    filesRef.current.clear()
+  }, [useTools, useGPT4, inProgress])
 
   const trigger: TriggerType<string> = useMemo(
     () => ({
@@ -53,7 +54,7 @@ export default () => {
         },
         component: FileRow,
         output: (entity: string) => {
-          setFiles((files) => [...files, entity])
+          filesRef.current.add(entity)
           return entity
         },
       },
