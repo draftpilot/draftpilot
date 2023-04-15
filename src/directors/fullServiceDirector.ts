@@ -90,7 +90,7 @@ export class FullServiceDirector {
     attachmentBody: string | undefined,
     postMessage: (message: ChatMessage) => void
   ) => {
-    const { message, history } = payload
+    let { message, history } = payload
     const { options } = message
     const tools = options?.tools ? getReadOnlyTools() : []
 
@@ -107,6 +107,15 @@ export class FullServiceDirector {
     agent.finalAnswerParam = 'TellUser'
     agent.model = options?.model || '3.5'
 
+    // user wants to regenerate this message
+    if (message.role == 'assistant') {
+      while (message.role != 'user') {
+        agent.addState(message.state)
+        message = history.pop()!
+      }
+    }
+    agent.priorMessages = pastMessages(history)
+
     const query = message.content
     if (attachmentBody) {
       agent.addInitialState('View the referenced files', attachmentBody)
@@ -114,10 +123,6 @@ export class FullServiceDirector {
       const relevantDocs = await findRelevantDocs(query, indexer.files)
       agent.addInitialState('What are the most relevant files to this query?', relevantDocs)
     }
-
-    // TODO implement re-generate message
-
-    agent.priorMessages = pastMessages(history)
 
     for (let i = 0; i < MAX_PLAN_ITERATIONS; i++) {
       const result = await agent.runOnce(query, i == MAX_PLAN_ITERATIONS - 1)
