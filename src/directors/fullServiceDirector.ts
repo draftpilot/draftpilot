@@ -47,7 +47,7 @@ export class FullServiceDirector {
     const answer = await chatWithHistory(messages, '3.5')
     log(answer)
 
-    if (answer.includes('USE_TOOLS')) {
+    if (answer.includes('USE_TOOLS') || answer.includes('your codebase')) {
       await this.usePlanningAgent(payload, postMessage)
     } else {
       postMessage({ role: 'assistant', content: answer })

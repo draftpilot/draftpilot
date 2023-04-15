@@ -1,15 +1,16 @@
 import { Attachment, ChatMessage } from '@/types'
 import { splitOnce } from '@/utils/utils'
 import {
+  ClipboardIcon,
   DocumentIcon,
   MagnifyingGlassIcon,
   PaperClipIcon,
   RectangleStackIcon,
   WrenchIcon,
 } from '@heroicons/react/24/outline'
-
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import hljs from 'highlight.js/lib/common'
+import 'highlight.js/styles/github-dark.css'
+import { useEffect, useRef, useState } from 'react'
 
 type Props = {
   message?: ChatMessage
@@ -59,19 +60,41 @@ const Message = ({ message, loading }: Props) => {
         if (block.type === 'text') {
           return <div key={i} className="whitespace-pre-wrap" children={block.content} />
         } else {
-          return (
-            <SyntaxHighlighter
-              key={i}
-              language={block.language}
-              style={dark}
-              children={block.content}
-            />
-          )
+          return <Highlight key={i} language={block.language} children={block.content} />
         }
       })}
 
       {message.attachments && <Attachments attachments={message.attachments} />}
     </div>
+  )
+}
+
+function Highlight({ language, children }: { language: string | undefined; children: string }) {
+  const ref = useRef<HTMLPreElement | null>(null)
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!ref.current) return
+    hljs.highlightBlock(ref.current)
+  }, [children])
+
+  const copy = () => {
+    navigator.clipboard.writeText(children)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1000)
+  }
+
+  return (
+    <pre className="rounded overflow-x-auto text-sm my-2 relative">
+      <div
+        className={`absolute top-1 right-1 text-gray-400px-1 rounded hover:bg-white/10 
+        flex ${copied ? 'text-green-500' : 'text-white'} items-center p-1 cursor-pointer`}
+        onClick={copy}
+      >
+        <ClipboardIcon className="h-4 w-4 mr-2" />
+        {copied ? 'copied' : 'copy'}
+      </div>
+      <code ref={ref}>{children}</code>
+    </pre>
   )
 }
 
