@@ -11,6 +11,7 @@ import {
 import hljs from 'highlight.js/lib/common'
 import 'highlight.js/styles/github-dark.css'
 import { useEffect, useRef, useState } from 'react'
+import snarkdown from 'snarkdown'
 
 type Props = {
   message?: ChatMessage
@@ -73,9 +74,9 @@ const Message = ({ message, loading }: Props) => {
       >
         {contentBlocks.map((block, i) => {
           if (block.type === 'text') {
-            return <div key={i} className="whitespace-pre-wrap" children={block.content} />
+            return <Text key={i} children={block.content} />
           } else {
-            return <Highlight key={i} language={block.language} children={block.content} />
+            return <Code key={i} language={block.language} children={block.content} />
           }
         })}
 
@@ -94,7 +95,16 @@ const Message = ({ message, loading }: Props) => {
   )
 }
 
-function Highlight({ language, children }: { language: string | undefined; children: string }) {
+function Text({ children }: { children: string }) {
+  return (
+    <div
+      className="whitespace-pre-wrap"
+      dangerouslySetInnerHTML={{ __html: snarkdown(children) }}
+    />
+  )
+}
+
+function Code({ language, children }: { language: string | undefined; children: string }) {
   const ref = useRef<HTMLPreElement | null>(null)
   const [copied, setCopied] = useState(false)
   useEffect(() => {
