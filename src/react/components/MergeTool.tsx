@@ -24,7 +24,42 @@ export default () => {
     if (mergeInfo.base && mergeInfo.changes) {
       const diff = Diff.diffTrimmedLines(mergeInfo.base, mergeInfo.changes, {})
       log('diff', diff)
-      setDiff(diff)
+
+      // whitespace-insensitive diff lines are trimmed, so we need to re-generate the changes
+      const base = mergeInfo.base.split('\n')
+      const changes = mergeInfo.changes.split('\n')
+
+      // we follow the diff, but since it's trimmed, we can't actually use the contents
+      const newDiff: Diff.Change[] = []
+      let baseIndex = 0,
+        changesIndex = 0
+
+      for (let i = 0; i < diff.length; i++) {
+        const part = diff[i]
+        const lines = part.value.split('\n').length - 1
+
+        if (part.removed) {
+          const baseLines = base.slice(baseIndex, baseIndex + lines)
+          newDiff.push({ removed: true, value: baseLines.join('\n') })
+          baseIndex += lines
+        } else if (part.added) {
+          // try to match previous indent
+          const baseLine = base.slice(baseIndex, baseIndex + 1)[0]
+          const indent = baseLine?.match(/^\s*/)?.[0] || ''
+          const changeLines = changes.slice(changesIndex, changesIndex + lines)
+          const changedIndent = changeLines[0].match(/^\s*/)?.[0] || ''
+          const indentDiff = indent.slice(changedIndent.length)
+          const indentedChangeLines = changeLines.map((line) => indentDiff + line)
+          newDiff.push({ added: true, value: indentedChangeLines.join('\n') })
+          changesIndex += lines
+        } else {
+          const baseLines = base.slice(baseIndex, baseIndex + lines)
+          newDiff.push({ value: baseLines.join('\n') })
+          baseIndex += lines
+          changesIndex += lines
+        }
+      }
+      setDiff(newDiff)
     }
   }, [mergeInfo])
 
@@ -32,40 +67,18 @@ export default () => {
 
   const save = () => {
     if (!mergeInfo.base || !mergeInfo.changes || !diff) return
-    const base = mergeInfo.base.split('\n')
-    const changes = mergeInfo.changes.split('\n')
 
-    // we follow the diff, but since it's trimmed, we can't actually use the contents
     const newFile: string[] = []
-    let baseIndex = 0,
-      changesIndex = 0
-
     for (let i = 0; i < diff.length; i++) {
       const part = diff[i]
-      const lines = part.value.split('\n').length - 1
-
       if (part.removed && (i == 0 || i == diff.length - 1)) {
-        // keep the header and footer parts of the base
-        const baseLines = base.slice(baseIndex, baseIndex + lines)
-        newFile.push(...baseLines)
-        baseIndex += lines
+        newFile.push(part.value)
       } else if (part.added) {
-        // try to match previous indent
-        const baseLine = base.slice(baseIndex, baseIndex + 1)[0]
-        const indent = baseLine?.match(/^\s*/)?.[0] || ''
-        const changeLines = changes.slice(changesIndex, changesIndex + lines)
-        const changedIndent = changeLines[0].match(/^\s*/)?.[0] || ''
-        const indentDiff = indent.slice(changedIndent.length)
-        const indentedChangeLines = changeLines.map((line) => indentDiff + line)
-        newFile.push(...indentedChangeLines)
-        changesIndex += lines
+        newFile.push(part.value)
       } else if (part.removed) {
-        baseIndex += lines
+        // nothing
       } else {
-        const baseLines = base.slice(baseIndex, baseIndex + lines)
-        newFile.push(...baseLines)
-        baseIndex += lines
-        changesIndex += lines
+        newFile.push(part.value)
       }
     }
 
@@ -120,7 +133,7 @@ export default () => {
               if (index == diff.length - 1 && part.removed) return null
 
               const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
-              const lines = part.value.trim().split('\n')
+              const lines = part.value.split('\n')
               const prefix = part.added ? '+' : part.removed ? '-' : ' '
               const content = lines.map((line) => `${prefix} ${line}`).join('\n')
               return (

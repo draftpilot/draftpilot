@@ -11,6 +11,11 @@ export default () => {
     messageStore.loadSessions()
   }, [])
 
+  const loadSession = (id: string) => {
+    messageStore.loadSession(id)
+    fileStore.newSession()
+  }
+
   const newSession = () => {
     messageStore.newSession()
     fileStore.newSession()
@@ -35,7 +40,7 @@ export default () => {
               (session.id === activeSession?.id ? 'bg-blue-100' : '')
             }
             disabled={session.id === activeSession?.id}
-            onClick={() => messageStore.loadSession(session.id)}
+            onClick={() => loadSession(session.id)}
           >
             {session.name}
           </button>

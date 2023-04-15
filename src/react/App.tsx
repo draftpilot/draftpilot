@@ -8,7 +8,7 @@ function App() {
       <div className="hidden sm:block w-56 bg-gray-300">
         <Sidebar />
       </div>
-      <div className="flex-1 overflow-y-auto pt-8 pb-40">
+      <div className="flex-1 overflow-y-auto pb-40">
         <div className="mx-auto w-[768px] max-w-full">
           <Messages />
         </div>
