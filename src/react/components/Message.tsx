@@ -18,6 +18,17 @@ type Props = {
 }
 
 const Message = ({ message, loading }: Props) => {
+  const [expanded, setExpanded] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const [hasMore, setHasMore] = useState(false)
+
+  useEffect(() => {
+    if (!contentRef.current) return
+    const threshold = contentRef.current.scrollHeight - contentRef.current.offsetHeight
+    setHasMore(threshold > 20)
+    setExpanded(threshold <= 20 && threshold > 0)
+  }, [message])
+
   if (loading || !message)
     return (
       <div className={`bg-blue-100 p-4 shadow-md rounded`}>
@@ -33,18 +44,18 @@ const Message = ({ message, loading }: Props) => {
 
   let content = message.content
   let output: string = content
-  let bgColor = 'bg-blue-300'
+  let bgColor = 'blue-300'
 
   if (content.startsWith('Thought:')) {
     const thought = content.substring(9)
-    bgColor = 'bg-blue-100'
+    bgColor = 'blue-100'
     output = `*Thought*: ${thought}`
   } else if (content.startsWith('CONFIRM:')) {
-    bgColor = 'bg-red-200'
+    bgColor = 'red-200'
     const proposal = content.substring(9)
     output = `### Confirm Action?\n\n${proposal}*`
   } else if (content.startsWith('ASK:')) {
-    bgColor = 'bg-yellow-200'
+    bgColor = 'yellow-200'
     const ask = content.substring(5)
     output = `### Question:\n\n${ask}*`
   } else if (content.startsWith('ANSWER:')) {
@@ -55,16 +66,30 @@ const Message = ({ message, loading }: Props) => {
   const contentBlocks = splitCodeBlocks(output)
 
   return (
-    <div className={`${bgColor} p-4 shadow-md rounded`}>
-      {contentBlocks.map((block, i) => {
-        if (block.type === 'text') {
-          return <div key={i} className="whitespace-pre-wrap" children={block.content} />
-        } else {
-          return <Highlight key={i} language={block.language} children={block.content} />
-        }
-      })}
+    <div className={`bg-${bgColor} shadow-md rounded relative`}>
+      <div
+        ref={contentRef}
+        className={(expanded ? '' : 'max-h-60') + ' p-4 overflow-hidden ease-out'}
+      >
+        {contentBlocks.map((block, i) => {
+          if (block.type === 'text') {
+            return <div key={i} className="whitespace-pre-wrap" children={block.content} />
+          } else {
+            return <Highlight key={i} language={block.language} children={block.content} />
+          }
+        })}
 
-      {message.attachments && <Attachments attachments={message.attachments} />}
+        {message.attachments && <Attachments attachments={message.attachments} />}
+      </div>
+
+      {hasMore && !expanded && (
+        <div
+          onClick={() => setExpanded(true)}
+          className={`absolute bottom-0 left-0 right-0 text-center cursor-pointer bg-gray-200/80 p-1`}
+        >
+          Click to view full message
+        </div>
+      )}
     </div>
   )
 }
