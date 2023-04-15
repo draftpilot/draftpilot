@@ -53,6 +53,15 @@ export default ({ code, message, prevBlock }: Props) => {
     fileStore.initiateMerge(undefined, code)
   }
 
+  const gpt4 = () => {
+    const history = messageStore.popMessages(message)
+    if (!message.options) {
+      message.options = {}
+    }
+    message.options.model = '4'
+    messageStore.doCompletion({ message, history })
+  }
+
   const buttonClass = 'bg-gray-600 hover:bg-gray-700'
   return (
     <div className="flex justify-center items-center mb-2 gap-2">
@@ -62,6 +71,11 @@ export default ({ code, message, prevBlock }: Props) => {
       <Button onClick={merge} className={buttonClass}>
         Merge into file
       </Button>
+      {message.options?.model != '4' && (
+        <Button onClick={gpt4} className={buttonClass}>
+          Retry with GPT-4
+        </Button>
+      )}
     </div>
   )
 }

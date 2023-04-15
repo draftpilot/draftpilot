@@ -115,6 +115,8 @@ export class FullServiceDirector {
       agent.addInitialState('What are the most relevant files to this query?', relevantDocs)
     }
 
+    // TODO implement re-generate message
+
     agent.priorMessages = pastMessages(history)
 
     for (let i = 0; i < MAX_PLAN_ITERATIONS; i++) {

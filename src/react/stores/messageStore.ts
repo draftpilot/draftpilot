@@ -25,7 +25,7 @@ class SessionDatabase extends Dexie {
 class MessageStore {
   sessionDb = new SessionDatabase()
 
-  // --- services
+  // --- fields
 
   session = atom<Session>({ id: new Date().toISOString(), name: '' })
 
@@ -34,6 +34,8 @@ class MessageStore {
   messages = atom<ChatMessage[]>([])
 
   inProgress = atom<boolean>(false)
+
+  editMessage = atom<ChatMessage | null>(null)
 
   // --- actions
 
@@ -45,13 +47,17 @@ class MessageStore {
     const payload: MessagePayload = { message, history: this.messages.get() }
 
     if (!this.session.get().name) this.updateSessionName(message)
+    this.doCompletion(payload)
     this.updateMessages([...this.messages.get(), message])
+  }
 
+  doCompletion = async (payload: MessagePayload) => {
     this.inProgress.set(true)
     await API.sendMessage(payload, (incoming) => {
       this.updateMessages([...this.messages.get(), incoming])
     })
     this.inProgress.set(false)
+    this.editMessage.set(null)
   }
 
   addSystemMessage = (message: ChatMessage) => {
@@ -63,6 +69,24 @@ class MessageStore {
     const id = this.session.get().id
     this.sessionDb.messages.put({ id, messages })
   }
+
+  popMessages = (target: ChatMessage) => {
+    const messages = this.messages.get()
+    const index = messages.indexOf(target)
+    if (index === -1) return []
+    const newMessages = messages.slice(0, index)
+
+    // don't update session until we have a new message
+    this.messages.set(newMessages)
+    return newMessages
+  }
+
+  deleteMessage = (target: ChatMessage) => {
+    const messages = this.messages.get()
+    this.messages.set(messages.filter((message) => message !== target))
+  }
+
+  // --- session management
 
   updateSessionName = (message: ChatMessage) => {
     const name = message.content.slice(0, 50)

@@ -23,6 +23,12 @@ export default () => {
 
   useEffect(() => {
     fileStore.loadData()
+    return messageStore.editMessage.listen((message) => {
+      if (!message) return
+      setValue(message.content)
+      if (message.attachments) filesRef.current = new Set(message.attachments.map((a) => a.name))
+      ref.current?.focus()
+    })
   }, [])
 
   useEffect(() => {
