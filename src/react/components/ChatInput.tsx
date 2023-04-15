@@ -53,7 +53,7 @@ export default () => {
   useAutosizeTextArea(ref.current, value)
 
   return (
-    <div className="my-4">
+    <div className="pb-4 bg-gray-200">
       <div className="bg-white shadow-md rounded flex relative">
         <ReactTextareaAutocomplete<string>
           value={value}
