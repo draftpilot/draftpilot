@@ -91,7 +91,7 @@ const MessageContents = ({ message }: Props) => {
   const contentBlocks = splitCodeBlocks(output)
 
   return (
-    <div className={`flex-1 ${bgColor} shadow-md rounded relative`}>
+    <div className={`flex-1 ${bgColor} shadow-md rounded relative overflow-hidden`}>
       <div
         ref={contentRef}
         className={(expanded ? '' : 'max-h-60 ') + 'p-4 overflow-hidden ease-out'}
