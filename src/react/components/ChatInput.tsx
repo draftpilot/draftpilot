@@ -46,6 +46,7 @@ export default () => {
         type: 'file',
         name: f,
       }))
+    fileStore.clearMerge()
     messageStore.sendMessage({
       content: ref.current.value,
       role: 'user',

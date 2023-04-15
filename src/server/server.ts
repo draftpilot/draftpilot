@@ -8,9 +8,16 @@ import fs from 'fs'
 
 const PORT = 3000
 
-export default function serve(port: number = PORT): Promise<string> {
+export default function serve(
+  port: number = PORT,
+  mode?: 'development' | 'production'
+): Promise<string> {
   const app = express()
   const messenger = new Messenger()
+
+  if (mode) {
+    ViteExpress.config({ mode })
+  }
 
   app.use(bodyParser.json())
   app.use(bodyParser.text())

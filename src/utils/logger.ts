@@ -5,8 +5,8 @@ let verbosity = 0
 const VERBOSE = 1
 const VERY_VERBOSE = 2
 
-const VERBOSE_TAG = chalk.blue('[verbose]')
-const VERY_VERBOSE_TAG = chalk.cyan('[very verbose]')
+const VERBOSE_TAG = '[verbose]'
+const VERY_VERBOSE_TAG = '[very verbose]'
 
 export function setVerbose(setting: number) {
   log(VERBOSE_TAG, 'verbose logging:', setting)

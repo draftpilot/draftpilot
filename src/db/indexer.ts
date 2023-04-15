@@ -28,7 +28,7 @@ export const GLOB_WITHOUT_TESTS = [
   '!**/*.spec.*',
 ]
 
-const TAG = chalk.blue('[indexer]')
+const TAG = '[indexer]'
 
 // indexer wraps the entire work of indexing
 export class Indexer {

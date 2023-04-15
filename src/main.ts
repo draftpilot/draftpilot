@@ -114,11 +114,16 @@ export default function () {
     .description('Server mode')
     .action(
       actionWrapper(async (opts) => {
-        const url = await serve()
+        const url = await serve(
+          opts.port ? parseInt(opts.port) : undefined,
+          opts.devServer ? 'development' : 'production'
+        )
         if (!opts.skipOpen) open(url)
       })
     )
     .option('--skip-open', 'Skip opening the browser')
+    .option('--port <port>', 'Listen on specific port')
+    .option('--dev-server', 'Use dev server (for development)')
 
   const options = program.parse()
   config.options = options

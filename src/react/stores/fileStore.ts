@@ -40,6 +40,10 @@ class FileStore {
     }
   }
 
+  clearMerge = () => {
+    this.mergeInfo.set(null)
+  }
+
   saveMerge = async (mergeInfo: MergeData, contents: string) => {
     API.saveFile(mergeInfo.file!, contents)
     this.mergeInfo.set(null)
