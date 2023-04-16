@@ -43,13 +43,9 @@ export const generateCodeTools = (): Tool[] => {
   const tools = [viewFileTool, searchCodeTool]
 
   if (indexer.files.includes('package.json')) {
-    const isYarn = fs.existsSync('yarn.lock')
-
     const listPackages: Tool = {
-      name: 'listPackages',
-      description: `List installed ${
-        isYarn ? 'yarn' : 'npm'
-      } packages. Optional input: filter query e.g. react`,
+      name: 'listNPMPackages',
+      description: `List installed npm packages. Optional input: filter query e.g. react`,
 
       run: async (input: string) => {
         const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'))

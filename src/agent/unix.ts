@@ -220,3 +220,5 @@ export const spawnPromise = (command: string, args: string[], cwd?: string) => {
 export const unixTools = [grepTool, findTool, lsTool, cpTool, mvTool, rmTool, sedTool]
 
 export const unixReadOnlyTools = [grepTool, findTool, lsTool]
+
+export const unixSimpleTools = [findTool]

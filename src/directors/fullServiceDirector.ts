@@ -3,27 +3,26 @@ import { Agent } from '@/agent/agent'
 import { chatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { findRelevantDocs } from '@/directors/agentPlanner'
-import { Attachment, ChatMessage, MessagePayload } from '@/types'
+import { Attachment, ChatMessage, MessagePayload, Model } from '@/types'
 import { log } from '@/utils/logger'
 import { fuzzyMatchingFile } from '@/utils/utils'
 import fs from 'fs'
+import { encode } from 'gpt-3-encoder'
+import path from 'path'
 
 // the full-service agent is an all-in-one agent used by the web
 // it is stateless and can do anything (with confirmation)
 
-const SYSTEM_MESSAGE =
-  'You are EngineerGPT, an assistant that helps develop on a codebase. Listen well to ' +
-  'the user, stop looping if uncertain, respond exactly in the desired format.'
-
 const MAX_PLAN_ITERATIONS = 5
 
-enum AnswerMode {
-  ANSWER,
-  PLAN,
-  ACT,
+enum InitialType {
+  ANSWER = 'DIRECT_ANSWER',
+  EDIT_REQUEST = 'EDIT_REQUEST',
+  CONTEXT_NEEDED = 'CONTEXT_NEEDED',
+  UPGRADE = 'UPGRADE',
 }
 
-enum Outcome {
+enum PlanOutcome {
   CONFIRM = 'CONFIRM:',
   ANSWER = 'ANSWER:',
   ASK = 'ASK:',
@@ -36,26 +35,106 @@ export class FullServiceDirector {
   }
 
   onMessage = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
-    // determine what we're doing
+    const { message } = payload
 
+    if (message.role == 'assistant') {
+      await this.regenerateResponse(payload, postMessage)
+    } else if (message.role == 'user') {
+      await this.detectIntent(payload, postMessage)
+    } else {
+      log('got sent a system message, doing nothing')
+    }
+  }
+
+  regenerateResponse = async (
+    payload: MessagePayload,
+    postMessage: (message: ChatMessage) => void
+  ) => {
+    const { message, history } = payload
+    const model = message.options?.model || '3.5'
+    const messages = compactMessageHistory(history, model)
+
+    const answer = await chatWithHistory(messages, model)
+    log(answer)
+
+    postMessage({
+      role: 'assistant',
+      content: answer,
+      options: { model },
+    })
+  }
+
+  detectIntent = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
+    // determine what we're doing
     const { message, history } = payload
 
-    const lastHistoryMessage = history[history.length - 1]
+    const project = path.basename(process.cwd())
+    const systemMessage =
+      'You are an EngineerGPT, an assistant for software engineers running in a ' +
+      'folder called ' +
+      project
 
-    const answerMode =
-      !lastHistoryMessage || !lastHistoryMessage.state
-        ? AnswerMode.ANSWER
-        : lastHistoryMessage.content.startsWith(Outcome.CONFIRM)
-        ? AnswerMode.ACT
-        : AnswerMode.PLAN
+    const prompt = `Given my input, determine the type of request:
+- can be answered with only the context provided, type = DIRECT_ANSWER, message = answer to the question or request.
+- a file editing request that can be acted upon immediately, type = EDIT_REQUEST, message = proposed course of action
+- requires additional context (from the file system, user, or internet), type = CONTEXT_NEEDED, message = the context needed to fulfill the request
+- if request is complex, type = UPGRADE to upgrade to a slower, more powerful agent
+- if none of these, type = DIRECT_ANSWER, message = ask the user for clarification and tell them to try again
 
-    if (answerMode == AnswerMode.ANSWER) {
-      await this.useAnswerAgent(payload, postMessage)
-    } else if (answerMode == AnswerMode.PLAN) {
-      await this.usePlanningAgent(payload, attachmentListToString(message.attachments), postMessage)
-    } else if (answerMode == AnswerMode.ACT) {
-      await this.useActingAgent(payload, postMessage)
+Return in the format <type>: <message to the user>, e.g. DIRECT_ANSWER: the answer is 42
+
+Analyze and categorize my query: `
+
+    const attachmentBody = attachmentListToString(message.attachments)
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: prompt + message.content + attachmentBody,
     }
+    const model = message.options?.model || '3.5'
+    const messages = compactMessageHistory([...history, userMessage], model, {
+      role: 'system',
+      content: systemMessage,
+    })
+
+    const answer = await chatWithHistory(messages, model)
+    log(answer)
+
+    let foundType: InitialType | undefined
+    let foundResponse: string = answer
+
+    const types = [
+      InitialType.ANSWER,
+      InitialType.EDIT_REQUEST,
+      InitialType.CONTEXT_NEEDED,
+      InitialType.UPGRADE,
+    ]
+    for (const type of types) {
+      if (answer.startsWith(type)) {
+        foundType = type
+        foundResponse = answer.substring(type.length + 1)
+        break
+      }
+    }
+    if (!foundType) {
+      for (const type of types) {
+        if (answer.includes(type)) {
+          foundType = type
+          foundResponse = answer.replace(type, '')
+          break
+        }
+      }
+    }
+    if (!foundType) {
+      foundType = InitialType.ANSWER
+      foundResponse = answer
+    }
+    if (foundResponse.startsWith(':')) foundResponse = foundResponse.substring(1)
+
+    postMessage({
+      role: 'assistant',
+      content: foundResponse,
+      options: { model, type: foundType },
+    })
   }
 
   useAnswerAgent = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
@@ -194,6 +273,28 @@ function pastMessages(history: ChatMessage[]) {
     })
   })
   return pastMessages
+}
+
+// fit as many messages as possible into the token budget
+function compactMessageHistory(messages: ChatMessage[], model: Model, systemMessage?: ChatMessage) {
+  let tokenBudget = model == '4' ? 6000 : 3500
+
+  if (systemMessage) tokenBudget -= encode(systemMessage.content).length
+
+  const history: ChatMessage[] = []
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i]
+
+    tokenBudget -= encode(msg.content).length
+    if (tokenBudget < 0) break
+    history.push({
+      role: msg.role,
+      content: msg.content,
+    })
+  }
+  if (systemMessage) history.push(systemMessage)
+  history.reverse()
+  return history
 }
 
 function attachmentListToString(attachments: Attachment[] | undefined) {

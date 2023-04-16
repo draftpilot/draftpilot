@@ -75,3 +75,23 @@ export function splitOnce(s: string, on: string) {
   if (index == -1) return [s]
   return [s.slice(0, index), s.slice(index + 1)]
 }
+
+export function fuzzyParseJSON(input: string) {
+  const jsonStart = input.indexOf('{')
+  const jsonEnd = input.lastIndexOf('}')
+
+  if (jsonStart == -1 || jsonEnd == -1) return null
+
+  const json = input.substring(jsonStart, jsonEnd + 1)
+  try {
+    return JSON.parse(json)
+  } catch (e) {
+    // sometimes trailing commas are generated. sometimes no commas are generated,
+    const fixedJsonString = json.replace(/"\n"/g, '",').replace(/,\s*([\]}])/g, '$1')
+    try {
+      return JSON.parse(fixedJsonString)
+    } catch (e) {
+      return null
+    }
+  }
+}

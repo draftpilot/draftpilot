@@ -34,7 +34,7 @@ export type ChatMessage = {
   content: string
   attachments?: Attachment[]
   state?: any
-  options?: { model?: Model; tools?: boolean }
+  options?: { model?: Model; tools?: boolean; type?: string }
 }
 
 export type Plan = {

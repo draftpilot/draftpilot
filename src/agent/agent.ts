@@ -6,7 +6,7 @@ import { encode } from 'gpt-3-encoder'
 import inquirer from 'inquirer'
 import { oraPromise } from 'ora'
 import fs from 'fs'
-import { findRoot, splitOnce } from '@/utils/utils'
+import { findRoot, fuzzyParseJSON, splitOnce } from '@/utils/utils'
 
 import { ChatMessage } from '@/types'
 import { writeFileSync } from 'fs'
@@ -78,29 +78,22 @@ export class Agent {
   }
 
   constructPrompt = () => {
-    const prefix = this.tools.length
-      ? `You have access to the following tools:
-${this.toolDescriptions}`
-      : ''
+    const prefix = `You have access to the following tools:
+${this.toolDescriptions}
 
-    const toolInstructions = this.tools.length
-      ? `or
+The way you use the tools is by specifying a json blob. The format is:
+{ "tool": "toolName", "input": "input to the tool" }
+The $JSON_BLOB should only contain a SINGLE action.`
 
-Thought: I need to use a tool to solve this problem
-${this.actionParam}: the action to take, should be one or more of [${this.toolNames}] + input, e.g.
-- findInFiles: foo
-- viewFile: path/to/file
-Observation: the result of the actions
-... (this Thought/${this.actionParam}/Observation can repeat N times)
-Thought: I'm ready to respond
-${this.finalAnswerParam}: ...`
-      : ''
-
-    const instructions = `Use the following format:
+    const instructions = `ALWAYS Use the following format:
 ${this.requestParam}: the request you must fulfill
-Thought: I'm ready to respond
+Thought: you should always think about what to do
+${this.actionParam}:
+$JSON_BLOB
+Observation: the result of the action
+... (this Thought/${this.actionParam}/Observation can repeat 5 times)
+Thought: I can fulfill the request
 ${this.finalAnswerParam}: ${this.outputFormat}
-${toolInstructions}
 `
 
     const inProgressState: string[] = []
@@ -137,7 +130,8 @@ ${toolInstructions}
     const progressText = inProgressState.join('\n')
 
     const progress = `
-Begin!
+Begin! Remember to follow the output format.
+
 ${this.requestParam}: ${this.query}
 ${progressText}
 `
@@ -293,15 +287,10 @@ ${progressText}
       }
       await Promise.all(parallelTools.map((data) => invokeTool(data)))
       result.observations = results
-
-      // if (!skipLogObservation) {
-      //   log(
-      //     chalk.bold('Observation:'),
-      //     result.observations.map((observation) => {
-      //       return { ...observation, output: observation.output.slice(0, 100) }
-      //     })
-      //   )
-      // }
+    } else if (result.action) {
+      result.observations = [
+        { tool: 'error', output: 'unable to parse action', input: result.action },
+      ]
     }
   }
 
@@ -344,13 +333,7 @@ ${progressText}
     transitionMode()
 
     if (result.action) {
-      let parsedAction = this.parseActions(result.action)
-      if (!parsedAction) {
-        throw new Error(
-          'Could not parse action.  You may want to submit the text as a issue on GitHub.'
-        )
-      }
-      result.parsedAction = parsedAction || undefined
+      result.parsedAction = this.parseActions(result.action) || undefined
     }
 
     return result
@@ -365,33 +348,12 @@ ${progressText}
    * - toolName: input
    */
   parseActions = (result: string): ToolParams[] | null => {
-    const params: ToolParams[] = []
-    const lines = result.split('\n').filter(Boolean)
-
-    for (let line of lines) {
-      let sourceLine = line.startsWith('- ') ? line.slice(2) : line
-
-      // remove quotes, backticks, etc
-      sourceLine = sourceLine.replace(/['"`]/g, '')
-
-      let [tool, input] = splitOnce(sourceLine, ' ').map((s) => s.trim())
-
-      if (tool) {
-        if (tool.endsWith(':')) tool = tool.slice(0, -1)
-        params.push({ tool, input })
-        if (tool == 'create') {
-          // the agent likes to hallucinate this tool
-          return params
-        }
-      } else {
-        log(chalk.yellow('Warning:'), `Could not parse line: ${line}`)
-        return null
-      }
+    const parsedAction: ToolParams = fuzzyParseJSON(result)
+    if (!parsedAction) {
+      log(chalk.yellow('Warning:'), `Could not parse action: ${result}`)
+      return null
     }
 
-    if (params.length) {
-      return params
-    }
-    return null
+    return [parsedAction]
   }
 }

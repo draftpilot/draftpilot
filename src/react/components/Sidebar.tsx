@@ -36,7 +36,8 @@ export default () => {
         <div key={session.id} className="flex flex-col">
           <button
             className={
-              'p-2 rounded border-2 border-gray-600 cursor-pointer hover:bg-gray-400 text-gray-700 ' +
+              'p-2 rounded border-2 border-gray-600 cursor-pointer hover:bg-gray-400 ' +
+              'text-gray-700 overflow-ellipsis overflow-hidden ' +
               (session.id === activeSession?.id ? 'bg-blue-100' : '')
             }
             disabled={session.id === activeSession?.id}

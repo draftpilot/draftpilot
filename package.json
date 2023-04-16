@@ -16,7 +16,7 @@
     "init": "yarn go init",
     "prepack": "yarn build",
     "test": "yarn tsc && mocha",
-    "watch": "yarn clean && node esbuild.js --watch & yarn nodemon -w dist cli.js --skip-open --dev-server"
+    "watch": "yarn clean && node esbuild.js --watch & yarn nodemon  --enable-source-maps -w dist cli.js --skip-open --dev-server"
   },
   "author": "Tim Su",
   "license": "LGPL-3.0",
@@ -39,6 +39,7 @@
     "express": "^4.18.2",
     "fast-glob": "^3.2.12",
     "flexsearch": "^0.7.31",
+    "googlethis": "^1.7.1",
     "gpt-3-encoder": "^1.1.4",
     "highlight.js": "^11.7.0",
     "hnswlib-node": "^1.4.2",
