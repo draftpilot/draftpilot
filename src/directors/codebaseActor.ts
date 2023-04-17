@@ -1,9 +1,11 @@
 import { chatCompletion, chatWithHistory } from '@/ai/api'
+import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
 import { fuzzyParseJSON } from '@/utils/utils'
 import fs from 'fs'
+import { encode } from 'gpt-3-encoder'
 
 type EditPlan = { context: string; [path: string]: string }
 
@@ -54,10 +56,7 @@ otherwise reply in JSON:
     }
 
     const systemMessage = `You are a codebase editor. Respond only in the JSON format requested.`
-    const prompt = `You are a codebase editor. You return a sequence of operations in JSON:
-${JSON.stringify(EXAMPLE)}
-
-You are given the following plan: ${plan}
+    const promptPrefix = `You are a codebase editor. You are given the following plan: ${plan}
 
 Now editing: ${file}
 Changes to make: ${changes}
@@ -65,8 +64,40 @@ Changes to make: ${changes}
 ---
 ${contents}
 ---
+`
 
-JSON array of operations:`
+    const promptSuffix = `---
+
+You return a sequence of operations in JSON. This example shows all possible operations & thier
+inputs: ${JSON.stringify(EXAMPLE)}
+
+JSON array of operations to perform:`
+
+    const similar = await indexer.vectorDB.searchWithScores(plan + '\n' + changes, 6)
+    const similarFuncs = similar
+      ?.filter((s) => {
+        const [doc, score] = s
+        if (score < 0.15) return false
+        if (doc.metadata.path.includes(file)) return false
+        return true
+      })
+      .map((s) => s[0])
+
+    let tokenBudget = 7000 - encode(promptPrefix + promptSuffix).length
+    const funcsToShow = (similarFuncs || []).filter((doc) => {
+      const encoded = encode(doc.pageContent).length
+      if (tokenBudget > encoded) {
+        tokenBudget -= encoded
+        return true
+      }
+      return false
+    })
+
+    const decoratedFuncs = funcsToShow.length
+      ? 'Possibly related code:\n' + funcsToShow.map((s) => s.pageContent).join('\n---\n')
+      : ''
+
+    const prompt = promptPrefix + decoratedFuncs + promptSuffix
 
     const response = await chatCompletion(prompt, '4', systemMessage)
 
@@ -126,6 +157,7 @@ type PasteOp = {
 }
 
 type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp
+const ops: Op['op'][] = ['replace', 'insert', 'delete', 'edit', 'copy', 'cut', 'paste']
 
 const EXAMPLE: Op[] = [
   { op: 'replace', search: 'text to search', replace: 'replace with text' },
