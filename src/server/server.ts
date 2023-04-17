@@ -5,7 +5,6 @@ import bodyParser from 'body-parser'
 import express from 'express'
 import ViteExpress from 'vite-express'
 import fs from 'fs'
-import * as Vite from 'vite'
 
 import { fileURLToPath } from 'url'
 import path from 'path'
