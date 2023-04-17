@@ -47,6 +47,7 @@ export class FullServiceDirector {
           intent = Intent.PLANNER
         }
       }
+      if (intent) log('received intent', intent)
       if (intent == Intent.PLANNER) {
         await this.usePlanningAgent(
           payload,

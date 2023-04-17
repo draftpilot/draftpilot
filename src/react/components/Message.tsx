@@ -1,4 +1,4 @@
-import { ChatMessage } from '@/types'
+import { ChatMessage, Intent } from '@/types'
 
 import 'highlight.js/styles/github-dark.css'
 import { useEffect, useRef, useState } from 'react'
@@ -77,6 +77,8 @@ const MessageContents = ({ message, lastMessage }: Props) => {
     const answer = content.substring(8)
     bgColor = 'bg-green-200'
     output = answer
+  } else if (message.intent == Intent.ACTION) {
+    bgColor = 'bg-blue-200'
   }
 
   return (

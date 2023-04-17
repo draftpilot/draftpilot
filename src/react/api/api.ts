@@ -68,6 +68,16 @@ class APIService {
         })
     })
   }
+
+  unwrapError(error: AxiosError): string {
+    if (error.response) {
+      return (error.response.data as any).error || error.response.statusText
+    } else if (error.request) {
+      return 'No response from server'
+    } else {
+      return error.message
+    }
+  }
 }
 
 const parsePartialMessages = (text: string): ChatMessage[] => {

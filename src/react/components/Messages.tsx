@@ -12,6 +12,7 @@ export default () => {
   const messages = useStore(messageStore.messages)
   const inProgress = useStore(messageStore.inProgress)
   const mergeInfo = useStore(fileStore.mergeInfo)
+  const error = useStore(messageStore.error)
 
   useEffect(() => {
     if (!ref.current) return
@@ -25,6 +26,7 @@ export default () => {
         <Message key={i} message={message} lastMessage={i == messages.length - 1} />
       ))}
       {inProgress && <Message />}
+      {error && <div className="my-2 text-red-600">{error}</div>}
       {mergeInfo && <MergeTool />}
 
       {!messages.length && <Onboarding />}

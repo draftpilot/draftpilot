@@ -1,4 +1,4 @@
-import { API } from '@/react/api/api'
+import { API, isAxiosError } from '@/react/api/api'
 import { ChatMessage, MessagePayload } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
@@ -37,17 +37,21 @@ class MessageStore {
 
   editMessage = atom<ChatMessage | null>(null)
 
-  intent = atom<string | null>(null)
+  intent = atom<string | undefined>()
+
+  error = atom<string | undefined>()
 
   // --- actions
 
   clearData = () => {
     this.messages.set([])
-    this.intent.set(null)
+    this.intent.set(undefined)
+    this.error.set(undefined)
   }
 
   sendMessage = async (message: ChatMessage) => {
     const payload: MessagePayload = { message, history: this.messages.get() }
+    if (!message.intent && this.intent.get()) message.intent = this.intent.get()
 
     if (!this.session.get().name) this.updateSessionName(message)
     this.doCompletion(payload)
@@ -56,9 +60,15 @@ class MessageStore {
 
   doCompletion = async (payload: MessagePayload) => {
     this.inProgress.set(true)
-    await API.sendMessage(payload, this.handleIncoming)
+    try {
+      await API.sendMessage(payload, this.handleIncoming)
+    } catch (error: any) {
+      const message = API.unwrapError(error)
+      this.error.set(message)
+    }
     this.inProgress.set(false)
     this.editMessage.set(null)
+    this.error.set(undefined)
   }
 
   handleIncoming = (message: ChatMessage) => {
@@ -120,7 +130,7 @@ class MessageStore {
       .slice()
       .reverse()
       .find((message) => message.intent)
-    this.intent.set(intent?.intent || null)
+    this.intent.set(intent?.intent || undefined)
   }
 
   newSession = () => {
