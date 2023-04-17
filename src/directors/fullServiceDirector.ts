@@ -20,12 +20,19 @@ import path from 'path'
 // it is stateless and can do anything (with confirmation)
 
 export class FullServiceDirector {
+  interrupted = new Set<string>()
+
   init = () => {
     indexer.loadFilesIntoVectors()
   }
 
-  onMessage = async (payload: MessagePayload, postMessage: PostMessage) => {
-    const { message, history } = payload
+  onMessage = async (payload: MessagePayload, origPostMessage: PostMessage) => {
+    const { id, message, history } = payload
+
+    const postMessage = (msg: ChatMessage) => {
+      if (this.interrupted.has(id)) return
+      origPostMessage(msg)
+    }
 
     if (message.role == 'assistant') {
       await this.regenerateResponse(payload, postMessage)
@@ -41,20 +48,17 @@ export class FullServiceDirector {
         }
       }
       if (intent) log('received intent', intent)
-      if (intent == Intent.PLANNER) {
-        await this.usePlanningAgent(
-          payload,
-          attachmentListToString(message.attachments),
-          postMessage
-        )
-      } else if (intent == Intent.ACTION) {
-        await this.useActingAgent(payload, postMessage)
-      } else {
-        await this.detectIntent(payload, postMessage)
-      }
+      await this.handleDetectedIntent(intent as Intent, payload, undefined, postMessage)
     } else {
       log('got sent a system message, doing nothing')
     }
+
+    this.interrupted.delete(id)
+  }
+
+  onInterrupt = async (id: string) => {
+    log('interrupting', id)
+    this.interrupted.add(id)
   }
 
   regenerateResponse = async (payload: MessagePayload, postMessage: PostMessage) => {
@@ -86,9 +90,9 @@ export class FullServiceDirector {
     const model = message.options?.model || '3.5'
     const canTakeAction = history.length > 0 // if there has been previous conversation, allow direct actions
 
-    const prompt = `Given my input & conversation history, determine the type of request:
+    const prompt = `Based on my query + previous history, determine the type of request:
 - product or business discussion that a product manager assistant is better suited for, type = PRODUCT, message = switching to product assistant
-  e.g. "how should this feature work", "what should the ux be", "how do i get user feedback"
+  example requests: "how should this feature work", "what should the ux be", "how do i get user feedback", "help me think through..."
 ${canTakeAction && `- if the user says 'do it' or similar, type = ACTION, message = thinking...`}
 - simple question that can be answered with only the context provided:
   ${
@@ -97,6 +101,7 @@ ${canTakeAction && `- if the user says 'do it' or similar, type = ACTION, messag
   else, `
   }type = DIRECT_ANSWER, message = answer to the question or request with code snippets if relevant
 - requires context or taking action (from the file system, user, or internet), type = PLANNER, message = let the user know planning is happening
+  example requests: "add this feature", "fix this bug", "where is the code for this"
 - if none of these, type = DIRECT_ANSWER, message = ask the user for clarification and tell them to try again
 
 ALWAYS Return in the format "<type>: <message to the user>", e.g. DIRECT_ANSWER: the answer is 42
@@ -114,7 +119,7 @@ Analyze and categorize my query: `
     })
 
     const answer = await chatWithHistory(messages, model)
-    const types = [Intent.ANSWER, Intent.PLANNER, Intent.COMPLEX]
+    const types = Object.values(Intent)
 
     const { type, response } = detectTypeFromResponse(answer, types, Intent.ANSWER)
 
@@ -130,8 +135,8 @@ Analyze and categorize my query: `
 
     if (type == Intent.ANSWER) {
       // we're done
-    } else if (type == Intent.COMPLEX) {
-      await this.handleDetectedIntent(type, payload, attachmentBody, postMessage)
+    } else {
+      await this.handleDetectedIntent(type as Intent, payload, attachmentBody, postMessage)
     }
   }
 
@@ -158,7 +163,7 @@ Analyze and categorize my query: `
     }
   }
 
-  planner = new WebPlanner()
+  planner = new WebPlanner(this.interrupted)
   usePlanningAgent = async (
     payload: MessagePayload,
     attachmentBody: string | undefined,

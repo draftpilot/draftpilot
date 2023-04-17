@@ -28,8 +28,17 @@ const Message = (props: Props) => {
 }
 
 const MessageLoading = () => (
-  <div className={`flex-1 bg-blue-100 p-4 shadow-md rounded`}>
-    <div className="dot-flashing ml-4 my-2" />
+  <div className="mr-8">
+    <div className={`flex-1 bg-blue-100 p-4 shadow-md rounded`}>
+      <div className="dot-flashing ml-4 my-2" />
+    </div>
+    <a
+      href="#"
+      className="text-gray-400 text-xs mt-4 p-2 hover:bg-gray-300 rounded"
+      onClick={() => messageStore.interruptRequest()}
+    >
+      Interrupt
+    </a>
   </div>
 )
 

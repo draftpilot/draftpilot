@@ -21,4 +21,8 @@ export class Messenger {
 
     res.end()
   }
+
+  respondToInterrupt = async (id: string) => {
+    this.agent.onInterrupt(id)
+  }
 }

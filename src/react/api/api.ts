@@ -20,6 +20,10 @@ class APIService {
     })
   }
 
+  interrupt = async (id: string): Promise<void> => {
+    await axios.post(`${this.endpoint}/interrupt?id=${id}`)
+  }
+
   sendMessage = (
     payload: MessagePayload,
     onMessage: (message: ChatMessage) => void

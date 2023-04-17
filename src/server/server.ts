@@ -56,6 +56,12 @@ export default function serve(
     messenger.respondToMessages(input, res)
   })
 
+  app.post('/api/interrupt', async (req, res) => {
+    const { id } = req.query
+    messenger.respondToInterrupt(id as string)
+    res.json({ success: true })
+  })
+
   const listen = (port: number) => {
     return new Promise<string>((resolve, reject) => {
       const server = createServer(mode || 'production', app, port, () => {

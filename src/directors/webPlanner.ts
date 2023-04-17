@@ -15,13 +15,15 @@ enum PlanOutcome {
 
 // planner that exists as part of a multi-intent flow
 export class WebPlanner {
+  constructor(public interrupted: Set<string>) {}
+
   runAgent = async (
     payload: MessagePayload,
     attachmentBody: string | undefined,
     systemMessage: string,
     postMessage: PostMessage
   ) => {
-    let { message, history } = payload
+    let { id, message, history } = payload
     const { options } = message
     const tools = options?.tools ? getReadOnlyTools() : []
 
@@ -55,6 +57,10 @@ export class WebPlanner {
     }
 
     for (let i = 0; i < MAX_PLAN_ITERATIONS; i++) {
+      if (this.interrupted.has(id)) {
+        log('request interrupted')
+        return
+      }
       const result = await agent.runOnce(query, i == MAX_PLAN_ITERATIONS - 1)
       log({ ...result, observations: '...' })
 

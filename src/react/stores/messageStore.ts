@@ -3,6 +3,7 @@ import { ChatMessage, MessagePayload } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
+import { generateUUID } from '@/utils/utils'
 
 type Session = {
   id: string
@@ -33,7 +34,7 @@ class MessageStore {
 
   messages = atom<ChatMessage[]>([])
 
-  inProgress = atom<boolean>(false)
+  inProgress = atom<MessagePayload | undefined>()
 
   editMessage = atom<ChatMessage | null>(null)
 
@@ -49,24 +50,25 @@ class MessageStore {
     this.error.set(undefined)
   }
 
-  sendMessage = async (message: ChatMessage) => {
-    const payload: MessagePayload = { message, history: this.messages.get() }
+  sendMessage = async (message: ChatMessage, skipHistory?: boolean) => {
+    const id = generateUUID()
+    const payload: MessagePayload = { id, message, history: this.messages.get() }
     if (!message.intent && this.intent.get()) message.intent = this.intent.get()
 
     if (!this.session.get().name) this.updateSessionName(message)
     this.doCompletion(payload)
-    this.updateMessages([...this.messages.get(), message])
+    if (!skipHistory) this.updateMessages([...this.messages.get(), message])
   }
 
   doCompletion = async (payload: MessagePayload) => {
-    this.inProgress.set(true)
+    this.inProgress.set(payload)
     try {
       await API.sendMessage(payload, this.handleIncoming)
     } catch (error: any) {
       const message = API.unwrapError(error)
       this.error.set(message)
     }
-    this.inProgress.set(false)
+    this.inProgress.set(undefined)
     this.editMessage.set(null)
     this.error.set(undefined)
   }
@@ -102,10 +104,26 @@ class MessageStore {
     this.messages.set(messages.filter((message) => message !== target))
   }
 
+  interruptRequest = () => {
+    const payload = this.inProgress.get()
+    if (payload) API.interrupt(payload.id)
+    this.inProgress.set(undefined)
+  }
+
   // --- session management
 
   updateSessionName = (message: ChatMessage) => {
-    const name = message.content.slice(0, 50)
+    const input = message.content
+    const truncationPoint = 50
+
+    const previousWordIndex = input.lastIndexOf(' ', truncationPoint)
+    const truncatedString = input.slice(0, previousWordIndex)
+
+    const withoutPrepositions = truncatedString
+      .replace(/\b(with|on|in|at|to|for|of)\b/gi, '')
+      .trim()
+
+    const name = withoutPrepositions
     const session = { ...this.session.get(), name }
     this.session.set(session)
     this.sessionDb.sessions.put(session)
