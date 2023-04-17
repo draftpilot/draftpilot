@@ -127,6 +127,20 @@ class MessageStore {
     this.session.set({ id: new Date().toISOString(), name: '' })
     this.messages.set([])
   }
+
+  deleteSession = async (id: string) => {
+    await this.sessionDb.sessions.delete(id)
+    await this.sessionDb.messages.delete(id)
+    this.sessions.set(this.sessions.get().filter((session) => session.id !== id))
+  }
+
+  renameSession = async (id: string, name: string) => {
+    const session = await this.sessionDb.sessions.get(id)
+    if (!session) return
+    session.name = name
+    await this.sessionDb.sessions.put(session)
+    this.sessions.set(this.sessions.get().map((s) => (s.id === id ? session : s)))
+  }
 }
 
 declare global {

@@ -72,10 +72,14 @@ const MessageContents = ({ message, lastMessage }: Props) => {
   } else if (content.startsWith('ANSWER:')) {
     const answer = content.substring(7)
     output = answer
+  } else if (content.startsWith('OUTCOME:')) {
+    const answer = content.substring(8)
+    bgColor = 'bg-green-200'
+    output = answer
   }
 
   return (
-    <div>
+    <div className="overflow-hidden">
       <div className={`flex-1 ${bgColor} shadow-md rounded relative overflow-hidden`}>
         <div
           ref={contentRef}
@@ -95,7 +99,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
           </div>
         )}
       </div>
-      {!lastMessage && postMessageAction}
+      {lastMessage && postMessageAction}
     </div>
   )
 }

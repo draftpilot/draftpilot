@@ -3,7 +3,7 @@ import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
-import { fuzzyParseJSON } from '@/utils/utils'
+import { fuzzyParseJSON, pluralize } from '@/utils/utils'
 import fs from 'fs'
 import { encode } from 'gpt-3-encoder'
 
@@ -29,10 +29,15 @@ otherwise reply in JSON:
 
     const response = await chatWithHistory(messages, model)
 
-    const parsed: EditPlan = fuzzyParseJSON(response, true)
+    const parsed: EditPlan = fuzzyParseJSON(response)
     if (parsed) {
       const context = parsed.context || history[history.length - 1].content
       const files = Object.keys(parsed).filter((f) => f != 'context')
+      postMessage({
+        role: 'assistant',
+        content: `Editing ${pluralize(files.length, 'file')}...`,
+        options: { model },
+      })
       await Promise.all(
         files.map(async (file) => {
           const changes = parsed[file]
@@ -53,18 +58,26 @@ otherwise reply in JSON:
     }
   }
 
-  editFile = async (plan: string, file: string, changes: string, postMessage: PostMessage) => {
-    let contents = '<empty file>'
+  editFile = async (plan: string, file: string, changes: any, postMessage: PostMessage) => {
+    let contents = ''
+    let decoratedContents = '<empty file>'
 
     if (fs.existsSync(file)) {
+      log('editing file', file)
       contents = fs.readFileSync(file, 'utf8')
+      decoratedContents = contents
+        .split('\n')
+        .map((line, i) => `${i + 1}: ${line}`)
+        .join('\n')
+    } else {
+      log('creating file', file)
     }
 
     const systemMessage = `You are a codebase editor. Respond only in the JSON format requested.`
     const promptPrefix = `You are a codebase editor. You are given the following plan: ${plan}
 
 Now editing: ${file}
-Changes to make: ${changes}
+Changes to make: ${JSON.stringify(changes)}
 
 ---
 ${contents}
@@ -138,6 +151,7 @@ JSON array of operations to perform:`
         case 'edit': {
           const { delLines, insert } = op
           const insertLines = insert.split('\n')
+          matchIndent(lines[line - 1], insertLines)
           lines = lines
             .slice(0, line)
             .concat(insertLines)
@@ -148,6 +162,7 @@ JSON array of operations to perform:`
         case 'insert': {
           const { insert } = op
           const insertLines = insert.split('\n')
+          matchIndent(lines[line - 1], insertLines)
           lines = lines.slice(0, line).concat(insertLines).concat(lines.slice(line))
           updateLines(insertLines.length)
           break
@@ -164,6 +179,7 @@ JSON array of operations to perform:`
           break
         }
         case 'paste': {
+          matchIndent(lines[line - 1], clipboard)
           lines = lines.slice(0, line).concat(clipboard).concat(lines.slice(line))
           updateLines(clipboard.length)
           break
@@ -181,6 +197,17 @@ JSON array of operations to perform:`
     }
 
     return lines.join('\n')
+  }
+}
+
+const matchIndent = (line: string, lines: string[]) => {
+  // try to match previous indent
+  const indent = line?.match(/^\s*/)?.[0] || ''
+  const changedIndent = lines[0].match(/^\s*/)?.[0] || ''
+  const indentDiff = indent.slice(changedIndent.length)
+
+  for (let i = 0; i < lines.length; i++) {
+    lines[i] = indentDiff + lines[i]
   }
 }
 
