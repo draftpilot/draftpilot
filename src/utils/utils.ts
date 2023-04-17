@@ -77,6 +77,7 @@ export function splitOnce(s: string, on: string) {
 }
 
 export function fuzzyParseJSON(input: string) {
+  if (!input) return null
   const firstBracket = input.indexOf('[')
   const firstBrace = input.indexOf('{')
 

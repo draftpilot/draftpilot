@@ -135,7 +135,7 @@ class MessageStore {
 
   newSession = () => {
     this.session.set({ id: new Date().toISOString(), name: '' })
-    this.messages.set([])
+    this.clearData()
   }
 
   deleteSession = async (id: string) => {

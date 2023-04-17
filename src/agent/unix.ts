@@ -210,7 +210,6 @@ export const spawnPromise = (command: string, args: string[], cwd?: string) => {
     })
 
     result.on('close', (code) => {
-      log('close', code)
       const output = Buffer.concat(chunks).toString()
       const error = Buffer.concat(errorChunks).toString()
 
@@ -220,6 +219,8 @@ export const spawnPromise = (command: string, args: string[], cwd?: string) => {
         resolve(output)
       } else if (error) {
         reject(error)
+      } else {
+        resolve('')
       }
     })
   })
