@@ -7,7 +7,7 @@ import { useStore } from '@nanostores/react'
 import Loader from '@/react/components/Loader'
 import Checkbox from '@/react/components/Checkbox'
 import useAutosizeTextArea from '@/react/hooks/useAutosizeTextArea'
-import { Attachment } from '@/types'
+import { Attachment, Intent } from '@/types'
 
 export default () => {
   const rtaRef = useRef<ReactTextareaAutocomplete<string> | null>(null)
@@ -79,6 +79,8 @@ export default () => {
 
   useAutosizeTextArea(ref.current, value)
 
+  const intent = useStore(messageStore.intent)
+
   return (
     <div className="pb-4 bg-gray-200">
       <div className="bg-white shadow-md rounded flex relative">
@@ -108,7 +110,41 @@ export default () => {
           {inProgress ? <Loader size={20} /> : <PaperAirplaneIcon className="w-6 h-6 " />}
         </div>
       </div>
-      <div className="flex my-2 gap-4"></div>
+      {intent && (
+        <div className="flex my-2 gap-4 text-sm">
+          <span>
+            <b>Mode:</b>{' '}
+            {intent == Intent.ACTION
+              ? 'Take Action'
+              : intent == Intent.PLANNER
+              ? 'Planning'
+              : 'Chat'}
+          </span>
+          {intent == Intent.PLANNER && (
+            <a
+              href="#"
+              className="text-red-600 cursor-pointer"
+              onClick={() => messageStore.intent.set(Intent.ACTION)}
+            >
+              Direct Action Mode
+            </a>
+          )}
+          {intent == Intent.ACTION && (
+            <a
+              href="#"
+              className="text-blue-600 cursor-pointer"
+              onClick={() => messageStore.intent.set(Intent.ACTION)}
+            >
+              Planning Mode
+            </a>
+          )}
+          {intent != Intent.ANSWER && (
+            <a href="#" onClick={() => messageStore.intent.set(Intent.ANSWER)}>
+              Chat Mode
+            </a>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -1,8 +1,7 @@
-import { getReadOnlyTools, getSimpleTools } from '@/agent'
+import { getReadOnlyTools } from '@/agent'
 import { Agent } from '@/agent/agent'
 import { chatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
-import { findRelevantDocs } from '@/directors/agentPlanner'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
 import {
   attachmentListToString,
@@ -11,24 +10,14 @@ import {
   detectTypeFromResponse,
   pastMessages,
 } from '@/directors/helpers'
-import { Attachment, ChatMessage, MessagePayload, Model, PostMessage } from '@/types'
+import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
-import { fuzzyMatchingFile } from '@/utils/utils'
-import fs from 'fs'
-import { encode } from 'gpt-3-encoder'
 import path from 'path'
 
 // the full-service agent is an all-in-one agent used by the web
 // it is stateless and can do anything (with confirmation)
 
 const MAX_PLAN_ITERATIONS = 3
-
-enum Intent {
-  ANSWER = 'DIRECT_ANSWER',
-  COMPLEX = 'COMPLEX_ANSWER',
-  PLANNER = 'PLANNER',
-  ACTION = 'ACTION',
-}
 
 enum PlanOutcome {
   CONFIRM = 'CONFIRM:',
@@ -43,18 +32,28 @@ export class FullServiceDirector {
   }
 
   onMessage = async (payload: MessagePayload, postMessage: PostMessage) => {
-    const { message } = payload
+    const { message, history } = payload
 
     if (message.role == 'assistant') {
       await this.regenerateResponse(payload, postMessage)
     } else if (message.role == 'user') {
-      if (message.intent == Intent.PLANNER) {
+      let intent = message.intent
+      if (!intent && history.length) {
+        const lastIntent = history
+          .slice()
+          .reverse()
+          .find((h) => h.intent)?.intent
+        if (lastIntent == Intent.PLANNER || lastIntent == Intent.ACTION) {
+          intent = Intent.PLANNER
+        }
+      }
+      if (intent == Intent.PLANNER) {
         await this.usePlanningAgent(
           payload,
           attachmentListToString(message.attachments),
           postMessage
         )
-      } else if (message.intent == Intent.ACTION) {
+      } else if (intent == Intent.ACTION) {
         await this.useActingAgent(payload, postMessage)
       } else {
         await this.detectIntent(payload, postMessage)

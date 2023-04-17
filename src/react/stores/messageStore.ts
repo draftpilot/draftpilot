@@ -37,10 +37,13 @@ class MessageStore {
 
   editMessage = atom<ChatMessage | null>(null)
 
+  intent = atom<string | null>(null)
+
   // --- actions
 
   clearData = () => {
     this.messages.set([])
+    this.intent.set(null)
   }
 
   sendMessage = async (message: ChatMessage) => {
@@ -53,11 +56,14 @@ class MessageStore {
 
   doCompletion = async (payload: MessagePayload) => {
     this.inProgress.set(true)
-    await API.sendMessage(payload, (incoming) => {
-      this.updateMessages([...this.messages.get(), incoming])
-    })
+    await API.sendMessage(payload, this.handleIncoming)
     this.inProgress.set(false)
     this.editMessage.set(null)
+  }
+
+  handleIncoming = (message: ChatMessage) => {
+    if (message.intent) this.intent.set(message.intent)
+    this.updateMessages([...this.messages.get(), message])
   }
 
   addSystemMessage = (message: ChatMessage) => {
@@ -105,9 +111,16 @@ class MessageStore {
   loadSession = async (id: string) => {
     const session = await this.sessionDb.sessions.get(id)
     if (!session) return
+    this.clearData()
     this.session.set(session)
     const messages = await this.sessionDb.messages.get(id)
     this.messages.set(messages?.messages || [])
+    const intent = this.messages
+      .get()
+      .slice()
+      .reverse()
+      .find((message) => message.intent)
+    this.intent.set(intent?.intent || null)
   }
 
   newSession = () => {

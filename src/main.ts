@@ -20,6 +20,7 @@ import commit from '@/commands/commit'
 import agent from '@/commands/agent'
 import serve from '@/server/server'
 import open from 'open'
+import editOps from '@/commands/editOps'
 
 export default function () {
   program
@@ -104,14 +105,21 @@ export default function () {
     .action(actionWrapper(commit))
 
   program
-    .command('interactive', { isDefault: true })
+    .command('ops')
+    .description('Apply array of ops to a file')
+    .argument('<file>')
+    .argument('<ops>')
+    .action(actionWrapper(editOps))
+
+  program
+    .command('interactive')
     .description('Interactive mode')
     .action(actionWrapper(interactive))
     .option('--oneShot', 'Use the one-shot planner')
 
   program
     .command('server', { isDefault: true })
-    .description('Server mode')
+    .description('Server mode (runs when no command is specified))')
     .action(
       actionWrapper(async (opts) => {
         const url = await serve(

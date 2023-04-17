@@ -6,18 +6,21 @@ import { Attachments } from './Attachments'
 import { MessageActions } from './MessageActions'
 import { MessageBody } from './MessageBody'
 import Button from '@/react/components/Button'
+import { messageStore } from '@/react/stores/messageStore'
 
 export type Props = {
   message?: ChatMessage
+  lastMessage?: boolean
 }
 
-const Message = ({ message }: Props) => {
+const Message = (props: Props) => {
+  const { message } = props
   if (!message) return <MessageLoading />
 
   return (
     <>
       <div className="flex group">
-        <MessageContents message={message} />
+        <MessageContents {...props} />
         <MessageActions message={message} />
       </div>
     </>
@@ -30,7 +33,7 @@ const MessageLoading = () => (
   </div>
 )
 
-const MessageContents = ({ message }: { message: ChatMessage }) => {
+const MessageContents = ({ message, lastMessage }: Props) => {
   const [expanded, setExpanded] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const [hasMore, setHasMore] = useState(false)
@@ -41,6 +44,8 @@ const MessageContents = ({ message }: { message: ChatMessage }) => {
     setHasMore(threshold > 20)
     setExpanded(threshold <= 20)
   }, [message])
+
+  if (!message) return null
 
   const content = message.content
   let output = content
@@ -90,15 +95,24 @@ const MessageContents = ({ message }: { message: ChatMessage }) => {
           </div>
         )}
       </div>
-      {postMessageAction}
+      {!lastMessage && postMessageAction}
     </div>
   )
 }
 
 function ConfirmAction() {
+  const onClick = () => {
+    messageStore.sendMessage({
+      content: 'Proceed',
+      role: 'user',
+      intent: 'ACTION',
+    })
+  }
   return (
     <div className="flex justify-center items-center mt-4 gap-2">
-      <Button className="bg-blue-500 hover:bg-blue-600">Proceed</Button>
+      <Button className="bg-blue-500 hover:bg-blue-600" onClick={onClick}>
+        Proceed
+      </Button>
       <div>or, type below to change the plan</div>
     </div>
   )

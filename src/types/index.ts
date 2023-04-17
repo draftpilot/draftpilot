@@ -81,3 +81,10 @@ export type MessagePayload = {
 }
 
 export type PostMessage = (message: ChatMessage) => void
+
+export enum Intent {
+  ANSWER = 'DIRECT_ANSWER',
+  COMPLEX = 'COMPLEX_ANSWER',
+  PLANNER = 'PLANNER',
+  ACTION = 'ACTION',
+}

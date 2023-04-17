@@ -22,7 +22,7 @@ export default () => {
   return (
     <div className="flex flex-col gap-4 my-4 pb-8" ref={ref}>
       {messages.map((message, i) => (
-        <Message key={i} message={message} />
+        <Message key={i} message={message} lastMessage={i == messages.length - 1} />
       ))}
       {inProgress && <Message />}
       {mergeInfo && <MergeTool />}

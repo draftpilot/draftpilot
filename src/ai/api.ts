@@ -21,26 +21,16 @@ export async function chatCompletion(
   const existing = await cache.get(prompt)
   if (existing) return existing
 
-  try {
-    const completion = await openai.createChatCompletion({
-      model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
-      temperature: config.temperature,
-      stop: stop,
-      messages: systemMessage
-        ? [
-            { role: 'system', content: systemMessage },
-            { role: 'user', content: prompt },
-          ]
-        : [{ role: 'user', content: prompt }],
-    })
-    const response = completion.data.choices[0].message
-    const responseContent = response?.content || ''
+  const messages: ChatMessage[] = systemMessage
+    ? [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: prompt },
+      ]
+    : [{ role: 'user', content: prompt }]
 
-    cache.set(prompt, responseContent)
-    return responseContent
-  } catch (e) {
-    throw parseError(e)
-  }
+  const responseContent = await chatWithHistory(messages, model, stop)
+  cache.set(prompt, responseContent)
+  return responseContent
 }
 
 export async function chatWithHistory(

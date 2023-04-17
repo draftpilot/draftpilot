@@ -12,7 +12,7 @@
     "build": "vite build --mode production --outDir dist && node esbuild.js",
     "clean": "rm -rf dist",
     "draftpilot": "yarn build && yarn go",
-    "go": "node --enable-source-maps ./cli.js --dev-server",
+    "go": "node --enable-source-maps ./cli.js",
     "init": "yarn go init",
     "prepack": "yarn build",
     "test": "yarn tsc && mocha",

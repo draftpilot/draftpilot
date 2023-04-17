@@ -32,13 +32,18 @@ otherwise reply in JSON:
     const parsed: EditPlan = fuzzyParseJSON(response, true)
     if (parsed) {
       const context = parsed.context || history[history.length - 1].content
+      const files = Object.keys(parsed).filter((f) => f != 'context')
       await Promise.all(
-        Object.keys(parsed).map(async (file) => {
-          if (file == 'context') return
+        files.map(async (file) => {
           const changes = parsed[file]
           await this.editFile(context, file, changes, postMessage)
         })
       )
+      postMessage({
+        role: 'assistant',
+        content: `OUTCOME: Files edited: ${files.join(', ')}`,
+        options: { model },
+      })
     } else {
       postMessage({
         role: 'assistant',
@@ -104,15 +109,109 @@ JSON array of operations to perform:`
     const parsed: Op[] = fuzzyParseJSON(response, true)
     if (!parsed) throw new Error(`Could not parse response`)
 
-    // todo apply ops to contents
-    log('TODO')
+    const output = this.applyOps(contents, parsed)
+
+    fs.writeFileSync(file, output)
   }
+
+  applyOps = (contents: string, ops: Op[]) => {
+    let lines = contents.split('\n')
+    let clipboard: string[] = []
+
+    // for ops, line numbers apply to the initial contents, so they need to be offset
+    for (let i = 0; i < ops.length; i++) {
+      const op = ops[i]
+      if (op.op == 'replace') {
+        const { search, replace } = op
+        lines = lines.map((l) => l.replaceAll(search, replace))
+        continue
+      }
+
+      const line = findLineIndex(lines, op)
+      const updateLines = (delta: number) => {
+        ops.slice(i + 1).forEach((op2) => {
+          if (isOpWithLine(op2) && op2.line > line) op2.line += delta
+        })
+      }
+
+      switch (op.op) {
+        case 'edit': {
+          const { delLines, insert } = op
+          const insertLines = insert.split('\n')
+          lines = lines
+            .slice(0, line)
+            .concat(insertLines)
+            .concat(lines.slice(line + delLines))
+          updateLines(insertLines.length - delLines)
+          break
+        }
+        case 'insert': {
+          const { insert } = op
+          const insertLines = insert.split('\n')
+          lines = lines.slice(0, line).concat(insertLines).concat(lines.slice(line))
+          updateLines(insertLines.length)
+          break
+        }
+        case 'delete': {
+          const { delLines } = op
+          lines.splice(line, delLines)
+          updateLines(-delLines)
+          break
+        }
+        case 'copy': {
+          const { copyLines } = op
+          clipboard = lines.slice(line, line + copyLines)
+          break
+        }
+        case 'paste': {
+          lines = lines.slice(0, line).concat(clipboard).concat(lines.slice(line))
+          updateLines(clipboard.length)
+          break
+        }
+        case 'cut': {
+          const { cutLines } = op
+          clipboard = lines.splice(line, cutLines)
+          lines = lines.slice(0, line).concat(lines.slice(line + cutLines))
+          updateLines(-cutLines)
+          break
+        }
+        default:
+          log('unknown op', op)
+      }
+    }
+
+    return lines.join('\n')
+  }
+}
+
+const findLineIndex = (lines: string[], op: OpWithLine) => {
+  const { line, startLine } = op
+  if (!line) return -1
+  if (!startLine) return line
+  const trimmed = startLine.trim()
+  for (let i = 0; i < 10; i++) {
+    if (lines[line + i]?.trim() == trimmed) return line + i
+    if (lines[line - i]?.trim() == trimmed) return line - i
+  }
+  log('could not find starting line for op', op)
+  if (line > lines.length - 0) return lines.length - 1
+  return line
 }
 
 type ReplaceOp = {
   op: 'replace'
   search: string
   replace: string
+}
+
+type OpWithLine = {
+  op: string
+  line: number
+  startLine?: string
+}
+
+function isOpWithLine(op: any): op is OpWithLine {
+  return !!(op as OpWithLine).line
 }
 
 type EditOp = {
