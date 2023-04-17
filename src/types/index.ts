@@ -76,6 +76,7 @@ export type LearningLog = {
 }
 
 export type MessagePayload = {
+  id: string
   message: ChatMessage
   history: ChatMessage[]
 }
@@ -87,4 +88,5 @@ export enum Intent {
   COMPLEX = 'COMPLEX_ANSWER',
   PLANNER = 'PLANNER',
   ACTION = 'ACTION',
+  PRODUCT = 'PRODUCT',
 }

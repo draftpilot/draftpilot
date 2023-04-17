@@ -78,6 +78,14 @@ const MessageContents = ({ message, lastMessage }: Props) => {
     bgColor = 'bg-green-200'
     output = answer
   } else if (message.intent == Intent.ACTION) {
+    bgColor = 'bg-yellow-200'
+  } else if (message.intent == Intent.ANSWER) {
+    // if this is an answer, but it has a code block, then it's a possible action
+    console.log('ANSWER GOT')
+    if (content.includes('```') && messageStore.messages.get().find((m) => m.attachments?.length)) {
+      console.log('po ten tial action')
+      postMessageAction = <PossibleAction />
+    }
     bgColor = 'bg-blue-200'
   }
 
@@ -110,7 +118,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
 function PossibleAction() {
   const onClick = () => {
     messageStore.sendMessage({
-      content: 'Proceed',
+      content: 'Take action',
       role: 'user',
       intent: 'ACTION',
     })

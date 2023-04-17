@@ -13,7 +13,7 @@ export function MessageActions({ message }: Props) {
 
   const regenerate = () => {
     const history = messageStore.popMessages(message)
-    messageStore.doCompletion({ message, history })
+    messageStore.sendMessage(message)
   }
 
   const deleteMessage = () => {

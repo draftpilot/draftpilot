@@ -59,7 +59,7 @@ export default ({ code, message, prevBlock }: Props) => {
       message.options = {}
     }
     message.options.model = '4'
-    messageStore.doCompletion({ message, history })
+    messageStore.sendMessage(message)
   }
 
   const buttonClass = 'bg-gray-600 hover:bg-gray-700'

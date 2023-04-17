@@ -30,7 +30,7 @@ export class WebPlanner {
       (options?.model != '4'
         ? `${PlanOutcome.UPGRADE} to switch to super smart AI mode if request is complex, or `
         : '') +
-      `${PlanOutcome.ANSWER} <answer to user request if no action is needed>, or ` +
+      `${PlanOutcome.ANSWER} <answer to user request if absolutely no action is being requested>, or ` +
       `${PlanOutcome.ASK} <question to ask user if you need more information>`
 
     systemMessage =

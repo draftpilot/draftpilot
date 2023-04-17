@@ -37,8 +37,12 @@ export default () => {
 
   const send = useCallback(() => {
     if (!ref.current || !rtaRef.current) return
+    if (inProgress) {
+      messageStore.interruptRequest()
+      return
+    }
     const message = ref.current.value
-    if (!message || inProgress) return
+    if (!message) return
 
     const toAttach: Attachment[] = Array.from(filesRef.current)
       .filter((f) => message.includes(f))
@@ -110,41 +114,52 @@ export default () => {
           {inProgress ? <Loader size={20} /> : <PaperAirplaneIcon className="w-6 h-6 " />}
         </div>
       </div>
-      {intent && (
-        <div className="flex my-2 gap-4 text-sm">
-          <span>
-            <b>Mode:</b>{' '}
-            {intent == Intent.ACTION
-              ? 'Take Action'
-              : intent == Intent.PLANNER
-              ? 'Planning'
-              : 'Chat'}
-          </span>
-          {intent == Intent.PLANNER && (
-            <a
-              href="#"
-              className="text-red-600 cursor-pointer"
-              onClick={() => messageStore.intent.set(Intent.ACTION)}
-            >
-              Switch to Direct Action
-            </a>
-          )}
-          {intent == Intent.ACTION && (
-            <a
-              href="#"
-              className="text-blue-600 cursor-pointer"
-              onClick={() => messageStore.intent.set(Intent.ACTION)}
-            >
-              Switch to Planning
-            </a>
-          )}
-          {intent != Intent.ANSWER && (
-            <a href="#" onClick={() => messageStore.intent.set(Intent.ANSWER)}>
-              Switch to Chat
-            </a>
-          )}
-        </div>
-      )}
+      <div className="flex my-2 gap-4 text-sm">
+        <span>
+          <b>Mode:</b>{' '}
+          {!intent
+            ? 'Automatic'
+            : intent == Intent.ACTION
+            ? 'Take Action'
+            : intent == Intent.PLANNER
+            ? 'Planning'
+            : intent == Intent.PRODUCT
+            ? 'Product Manager'
+            : 'Chat'}
+        </span>
+        {intent == Intent.PLANNER && (
+          <a
+            href="#"
+            className="text-red-600 cursor-pointer"
+            onClick={() => messageStore.intent.set(Intent.ACTION)}
+          >
+            Switch to Execution Mode
+          </a>
+        )}
+        {intent == Intent.ACTION && (
+          <a
+            href="#"
+            className="text-blue-600 cursor-pointer"
+            onClick={() => messageStore.intent.set(Intent.ACTION)}
+          >
+            Switch to Planning Mode
+          </a>
+        )}
+        {intent != Intent.PRODUCT && (
+          <a
+            href="#"
+            className="text-blue-600 cursor-pointer"
+            onClick={() => messageStore.intent.set(Intent.PRODUCT)}
+          >
+            Product Manager Mode
+          </a>
+        )}
+        {intent && intent != Intent.ANSWER && (
+          <a href="#" onClick={() => messageStore.intent.set(Intent.ANSWER)}>
+            Chat Mode
+          </a>
+        )}
+      </div>
     </div>
   )
 }
