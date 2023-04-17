@@ -83,7 +83,7 @@ ${this.toolDescriptions}
 
 The way you use the tools is by specifying a json blob. The format is:
 { "tool": "toolName", "input": "input to the tool" }
-The $JSON_BLOB should only contain a SINGLE action.`
+The $JSON_BLOB should only contain a SINGLE action. Input is always a string.`
 
     const instructions = `ALWAYS Use the following format:
 ${this.requestParam}: the request you must fulfill

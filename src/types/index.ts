@@ -78,3 +78,5 @@ export type MessagePayload = {
   message: ChatMessage
   history: ChatMessage[]
 }
+
+export type PostMessage = (message: ChatMessage) => void

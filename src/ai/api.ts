@@ -3,6 +3,8 @@ import { cache } from '@/db/cache'
 import { ChatMessage, Model } from '@/types'
 import { isAxiosError } from 'axios'
 import { Configuration, OpenAIApi } from 'openai'
+import fs from 'fs'
+import { log } from '@/utils/logger'
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -47,6 +49,10 @@ export async function chatWithHistory(
   stop?: string | string[]
 ) {
   try {
+    const tempInput = '/tmp/' + Math.random().toString(36).substring(7) + '.json'
+    fs.writeFileSync(tempInput, JSON.stringify(messages, null, 2))
+    log('wrote request to ', tempInput)
+
     const completion = await openai.createChatCompletion({
       model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
       messages,
@@ -55,6 +61,18 @@ export async function chatWithHistory(
     })
     const response = completion.data.choices[0].message
     const responseContent = response?.content || ''
+
+    fs.writeFileSync(
+      tempInput,
+      JSON.stringify(
+        {
+          output: responseContent,
+          messages,
+        },
+        null,
+        2
+      )
+    )
 
     return responseContent
   } catch (e) {
