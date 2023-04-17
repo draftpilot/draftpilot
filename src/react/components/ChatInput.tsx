@@ -126,7 +126,7 @@ export default () => {
               className="text-red-600 cursor-pointer"
               onClick={() => messageStore.intent.set(Intent.ACTION)}
             >
-              Direct Action Mode
+              Switch to Direct Action
             </a>
           )}
           {intent == Intent.ACTION && (
@@ -135,12 +135,12 @@ export default () => {
               className="text-blue-600 cursor-pointer"
               onClick={() => messageStore.intent.set(Intent.ACTION)}
             >
-              Planning Mode
+              Switch to Planning
             </a>
           )}
           {intent != Intent.ANSWER && (
             <a href="#" onClick={() => messageStore.intent.set(Intent.ANSWER)}>
-              Chat Mode
+              Switch to Chat
             </a>
           )}
         </div>
