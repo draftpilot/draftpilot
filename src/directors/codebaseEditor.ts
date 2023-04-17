@@ -1,7 +1,7 @@
 import { chatCompletion, chatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
-import { ChatMessage, MessagePayload, PostMessage } from '@/types'
+import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
 import { fuzzyMatchingFile, fuzzyParseJSON, pluralize } from '@/utils/utils'
 import fs from 'fs'
@@ -48,6 +48,7 @@ otherwise reply in JSON:
         role: 'assistant',
         content: `Editing ${pluralize(files.length, 'file')}: ${basenames.join(', ')}`,
         options: { model },
+        intent: Intent.ACTION,
       })
       await Promise.all(
         files.map(async (file) => {

@@ -18,7 +18,7 @@ export default async function (file: string, ops: string, options: Options) {
 
   const editor = new CodebaseEditor()
 
-  const output = editor.applyOps(file, opsJson)
+  const output = editor.applyOps(fileContents, opsJson)
 
   fs.writeFileSync(file, output)
 
