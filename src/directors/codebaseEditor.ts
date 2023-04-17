@@ -25,7 +25,7 @@ otherwise reply in JSON:
   ...
 }`
     const newMessage = { ...message, content: prompt }
-    const messages = compactMessageHistory([...history, message], model)
+    const messages = compactMessageHistory([...history, newMessage], model)
 
     const response = await chatWithHistory(messages, model)
 

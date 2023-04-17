@@ -1,8 +1,9 @@
-import { getReadOnlyTools } from '@/agent'
+import { getReadOnlyTools, getSimpleTools } from '@/agent'
 import { Agent } from '@/agent/agent'
 import { chatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { findRelevantDocs } from '@/directors/agentPlanner'
+import { CodebaseEditor } from '@/directors/codebaseEditor'
 import {
   attachmentListToString,
   compactMessageHistory,
@@ -10,7 +11,7 @@ import {
   detectTypeFromResponse,
   pastMessages,
 } from '@/directors/helpers'
-import { Attachment, ChatMessage, MessagePayload, Model } from '@/types'
+import { Attachment, ChatMessage, MessagePayload, Model, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
 import { fuzzyMatchingFile } from '@/utils/utils'
 import fs from 'fs'
@@ -20,13 +21,13 @@ import path from 'path'
 // the full-service agent is an all-in-one agent used by the web
 // it is stateless and can do anything (with confirmation)
 
-const MAX_PLAN_ITERATIONS = 5
+const MAX_PLAN_ITERATIONS = 3
 
-enum InitialType {
+enum Intent {
   ANSWER = 'DIRECT_ANSWER',
-  EDIT_REQUEST = 'EDIT_REQUEST',
-  CONTEXT_NEEDED = 'CONTEXT_NEEDED',
-  UPGRADE = 'UPGRADE',
+  COMPLEX = 'COMPLEX_ANSWER',
+  PLANNER = 'PLANNER',
+  ACTION = 'ACTION',
 }
 
 enum PlanOutcome {
@@ -41,32 +42,48 @@ export class FullServiceDirector {
     indexer.loadFilesIntoVectors()
   }
 
-  onMessage = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
+  onMessage = async (payload: MessagePayload, postMessage: PostMessage) => {
     const { message } = payload
 
     if (message.role == 'assistant') {
       await this.regenerateResponse(payload, postMessage)
     } else if (message.role == 'user') {
-      await this.detectIntent(payload, postMessage)
+      if (message.intent == Intent.PLANNER) {
+        await this.usePlanningAgent(
+          payload,
+          attachmentListToString(message.attachments),
+          postMessage
+        )
+      } else if (message.intent == Intent.ACTION) {
+        await this.useActingAgent(payload, postMessage)
+      } else {
+        await this.detectIntent(payload, postMessage)
+      }
     } else {
       log('got sent a system message, doing nothing')
     }
   }
 
-  regenerateResponse = async (
-    payload: MessagePayload,
-    postMessage: (message: ChatMessage) => void
-  ) => {
+  regenerateResponse = async (payload: MessagePayload, postMessage: PostMessage) => {
     const { message, history } = payload
-    const model = message.options?.model || '3.5'
-    const messages = compactMessageHistory(history, model)
-    const answer = await chatWithHistory(messages, model)
-    log(answer)
-    postMessage({
-      role: 'assistant',
-      content: answer,
-      options: { model },
-    })
+
+    const reversedHistory = history.slice().reverse()
+    const lastIntent = reversedHistory.find((h) => h.intent)?.intent
+    const lastUserMessage = reversedHistory.find((h) => h.role == 'user')
+
+    const intent = message.intent || lastIntent
+
+    log('regenerating response for intent', intent)
+
+    if (intent == Intent.PLANNER) {
+      const attachmentBody = attachmentListToString(lastUserMessage?.attachments)
+      await this.usePlanningAgent(payload, attachmentBody, postMessage)
+    } else if (intent == Intent.ACTION) {
+      await this.useActingAgent(payload, postMessage)
+    } else {
+      const newPayload = { message: lastUserMessage!, history }
+      await this.detectIntent(newPayload, postMessage)
+    }
   }
 
   systemMessage = () => {
@@ -83,13 +100,13 @@ export class FullServiceDirector {
 
     const model = message.options?.model || '3.5'
     const prompt = `Given my input & conversation history, determine the type of request:
-- question that can be answered with only the context provided, type = DIRECT_ANSWER, message = answer to the question or request with code snippets if relevant
-- a file editing request that can be acted upon immediately, type = EDIT_REQUEST, message = proposed course of action
-- requires additional context (from the file system, user, or internet), type = CONTEXT_NEEDED, message = the context needed to fulfill the request
-${
-  model != '4' &&
-  '- if request is complex, type = UPGRADE to upgrade to a slower, more powerful agent'
-}
+- question that can be answered with only the context provided:
+  ${
+    model != '4' &&
+    `if requires code generation or other complex reasoning, type = COMPLEX_ANSWER, message = tell the user to wait & why answer is complex
+  else, `
+  }type = DIRECT_ANSWER, message = answer to the question or request with code snippets if relevant
+- requires context or taking action (from the file system, user, or internet), type = PLANNER, message = tell the user to wait & what planning is needed
 - if none of these, type = DIRECT_ANSWER, message = ask the user for clarification and tell them to try again
 
 Return in the format <type>: <message to the user>, e.g. DIRECT_ANSWER: the answer is 42
@@ -107,41 +124,35 @@ Analyze and categorize my query: `
     })
 
     const answer = await chatWithHistory(messages, model)
-    const types = [
-      InitialType.ANSWER,
-      InitialType.EDIT_REQUEST,
-      InitialType.CONTEXT_NEEDED,
-      InitialType.UPGRADE,
-    ]
+    const types = [Intent.ANSWER, Intent.PLANNER, Intent.COMPLEX]
 
-    const { type, response } = detectTypeFromResponse(answer, types, InitialType.ANSWER)
+    const { type, response } = detectTypeFromResponse(answer, types, Intent.ANSWER)
 
     const responseMessage: ChatMessage = {
       role: 'assistant',
       content: response,
       options: { model, type },
+      intent: type,
     }
     history.push(message)
     history.push(responseMessage)
     postMessage(responseMessage)
 
-    if (type == InitialType.ANSWER) {
+    if (type == Intent.ANSWER) {
       // we're done
-    } else if (type == InitialType.UPGRADE) {
+    } else if (type == Intent.COMPLEX) {
       if (!message.options) message.options = {}
       message.options.model = '4'
       await this.detectIntent(payload, postMessage)
-    } else if (type == InitialType.CONTEXT_NEEDED) {
+    } else if (type == Intent.PLANNER) {
       await this.usePlanningAgent(payload, attachmentBody, postMessage)
-    } else if (type == InitialType.EDIT_REQUEST) {
-      await this.useActingAgent(payload, postMessage)
     }
   }
 
   usePlanningAgent = async (
     payload: MessagePayload,
     attachmentBody: string | undefined,
-    postMessage: (message: ChatMessage) => void
+    postMessage: PostMessage
   ) => {
     let { message, history } = payload
     const { options } = message
@@ -155,7 +166,10 @@ Analyze and categorize my query: `
       `${PlanOutcome.ANSWER} <answer to user request if no action is needed>, or ` +
       `${PlanOutcome.ASK} <question to ask user if you need more information>`
 
-    const agent = new Agent(tools, outputFormat, this.systemMessage())
+    const systemMessage =
+      this.systemMessage() +
+      '. You are in planning mode, help figure out which files to edit then send to user for confirmation.'
+    const agent = new Agent(tools, outputFormat, systemMessage)
     agent.actionParam = 'ResearchAction'
     agent.finalAnswerParam = 'TellUser'
     agent.model = options?.model || '3.5'
@@ -172,9 +186,6 @@ Analyze and categorize my query: `
     const query = message.content
     if (attachmentBody) {
       agent.addInitialState('View the referenced files', attachmentBody)
-    } else {
-      const relevantDocs = await findRelevantDocs(query, indexer.files)
-      agent.addInitialState('What are the most relevant files to this query?', relevantDocs)
     }
 
     for (let i = 0; i < MAX_PLAN_ITERATIONS; i++) {
@@ -231,9 +242,8 @@ Analyze and categorize my query: `
     }
   }
 
-  useActingAgent = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
-    const { message } = payload
-    const { options } = message
-    postMessage({ role: 'assistant', content: 'Acting agent not implemented yet', options })
+  editor = new CodebaseEditor()
+  useActingAgent = async (payload: MessagePayload, postMessage: PostMessage) => {
+    await this.editor.planChanges(payload, postMessage)
   }
 }

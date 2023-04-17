@@ -34,6 +34,7 @@ export type ChatMessage = {
   content: string
   attachments?: Attachment[]
   state?: any
+  intent?: string
   options?: { model?: Model; tools?: boolean; type?: string }
 }
 

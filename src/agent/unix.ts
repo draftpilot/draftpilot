@@ -11,9 +11,17 @@ const grepTool: Tool = {
 
   run: (input: string) => {
     const args = stringToArgs(input)
+
+    // grep defaults:
+    // -r for recursive
+    // -i for case insensitive
+    // -I for ignore binary files
+    // -F for fixed strings (not regex)
+
     if (!args.includes('-r')) args.push('-r')
     if (!args.includes('-i')) args.push('-i')
     if (!args.includes('-I')) args.push('-I')
+    if (!args.includes('-F')) args.push('-F')
 
     const dir = args[args.length - 1]
     if (dir == '.' || dir.startsWith('/')) args.pop()
