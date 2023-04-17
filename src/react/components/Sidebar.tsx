@@ -22,7 +22,7 @@ export default () => {
   }
 
   return (
-    <div className="p-4 flex flex-col gap-2 overflow-y-auto">
+    <div className="p-4 flex flex-col gap-2 overflow-y-auto h-full">
       <button
         onClick={() => newSession()}
         className="p-2 rounded border-2 border-gray-600 cursor-pointer hover:bg-gray-400 text-gray-700"

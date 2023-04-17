@@ -108,10 +108,7 @@ export default () => {
           {inProgress ? <Loader size={20} /> : <PaperAirplaneIcon className="w-6 h-6 " />}
         </div>
       </div>
-      <div className="flex my-2 gap-4">
-        <Checkbox label="Use codebase tools" setChecked={setUseTools} checked={useTools} />
-        <Checkbox label="Use GPT-4" setChecked={setUseGPT4} checked={useGPT4} />
-      </div>
+      <div className="flex my-2 gap-4"></div>
     </div>
   )
 }
