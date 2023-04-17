@@ -82,8 +82,8 @@ export class Agent {
 ${this.toolDescriptions}
 
 The way you use the tools is by specifying a json blob. The format is:
-{ "tool": "toolName", "input": "input to the tool" }
-The $JSON_BLOB should only contain a SINGLE action. Input is always a string.`
+[{ "tool": "toolName", "input": "input to the tool" }]
+The json object should only contain tool and input. Input is always a string. Use no more than 3 tools.`
 
     const instructions = `ALWAYS Use the following format:
 ${this.requestParam}: the request you must fulfill
@@ -107,22 +107,24 @@ ${this.finalAnswerParam}: ${this.outputFormat}
       if (state.thought) stateText.push(`Thought: ${state.thought}`)
       if (state.action) stateText.push(`Action: ${state.action}`)
 
+      inProgressTokens += encode(stateText.join('\n')).length
+      if (inProgressTokens > maxTokens) {
+        inProgressState.push('...rest of history truncated...')
+        break
+      }
+
       state.observations?.forEach((observation) => {
         const observationLength = encode(observation.output).length
         const prefix = `Observation: ${observation.tool} ${observation.input || ''}\n`
         if (observationLength + inProgressTokens > maxTokens)
           stateText.push(prefix + 'output too long to fit')
-        else stateText.push(prefix + observation.output)
+        else {
+          stateText.push(prefix + observation.output)
+          inProgressTokens += observationLength
+        }
       })
 
       const stateBlurb = stateText.join('\n')
-      const totalLength = encode(stateBlurb).length
-      if (inProgressTokens + totalLength > maxTokens) {
-        if (i == 0) throw new Error('State too large to fit in prompt')
-        break
-      }
-
-      inProgressTokens += totalLength
       inProgressState.push(stateBlurb)
     }
 
@@ -348,12 +350,16 @@ ${progressText}
    * - toolName: input
    */
   parseActions = (result: string): ToolParams[] | null => {
-    const parsedAction: ToolParams = fuzzyParseJSON(result)
+    let parsedAction: ToolParams | ToolParams[] = fuzzyParseJSON(result)
     if (!parsedAction) {
       log(chalk.yellow('Warning:'), `Could not parse action: ${result}`)
       return null
     }
 
-    return [parsedAction]
+    if (!Array.isArray(parsedAction)) {
+      parsedAction = [parsedAction]
+    }
+
+    return parsedAction
   }
 }

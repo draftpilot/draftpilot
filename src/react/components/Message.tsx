@@ -72,6 +72,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
   } else if (content.startsWith('ANSWER:')) {
     const answer = content.substring(7)
     output = answer
+    postMessageAction = <PossibleAction />
   } else if (content.startsWith('OUTCOME:')) {
     const answer = content.substring(8)
     bgColor = 'bg-green-200'
@@ -100,6 +101,24 @@ const MessageContents = ({ message, lastMessage }: Props) => {
         )}
       </div>
       {lastMessage && postMessageAction}
+    </div>
+  )
+}
+
+function PossibleAction() {
+  const onClick = () => {
+    messageStore.sendMessage({
+      content: 'Proceed',
+      role: 'user',
+      intent: 'ACTION',
+    })
+  }
+  return (
+    <div className="flex justify-center items-center mt-4 gap-2">
+      <Button className="bg-blue-500 hover:bg-blue-600" onClick={onClick}>
+        Take action?
+      </Button>
+      <div>or, type below to continue conversation</div>
     </div>
   )
 }

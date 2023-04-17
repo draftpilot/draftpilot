@@ -102,13 +102,13 @@ export class FullServiceDirector {
 - question that can be answered with only the context provided:
   ${
     model != '4' &&
-    `if requires code generation or other complex reasoning, type = COMPLEX_ANSWER, message = tell the user to wait & why answer is complex
+    `if requires code generation or other complex reasoning, type = COMPLEX_ANSWER, message = let the user know to wait for the next message
   else, `
   }type = DIRECT_ANSWER, message = answer to the question or request with code snippets if relevant
-- requires context or taking action (from the file system, user, or internet), type = PLANNER, message = tell the user to wait & what planning is needed
+- requires context or taking action (from the file system, user, or internet), type = PLANNER, message = let the user know planning is happening
 - if none of these, type = DIRECT_ANSWER, message = ask the user for clarification and tell them to try again
 
-Return in the format <type>: <message to the user>, e.g. DIRECT_ANSWER: the answer is 42
+ALWAYS Return in the format "<type>: <message to the user>", e.g. DIRECT_ANSWER: the answer is 42
 
 Analyze and categorize my query: `
 
@@ -173,13 +173,12 @@ Analyze and categorize my query: `
     agent.finalAnswerParam = 'TellUser'
     agent.model = options?.model || '3.5'
 
-    // user wants to regenerate this message
-    if (message.role == 'assistant') {
-      while (message.role != 'user') {
-        agent.addState(message.state)
-        message = history.pop()!
-      }
-    }
+    // resume from previous state
+    const priorMessages: ChatMessage[] = []
+    history.forEach((m) => {
+      if (message.state) agent.addState(message.state)
+      else priorMessages.push(m)
+    })
     agent.priorMessages = pastMessages(history)
 
     const query = message.content

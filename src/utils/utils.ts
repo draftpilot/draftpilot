@@ -76,7 +76,13 @@ export function splitOnce(s: string, on: string) {
   return [s.slice(0, index), s.slice(index + 1)]
 }
 
-export function fuzzyParseJSON(input: string, isArray = false) {
+export function fuzzyParseJSON(input: string) {
+  const firstBracket = input.indexOf('[')
+  const firstBrace = input.indexOf('{')
+
+  if (firstBracket == -1 && firstBrace == -1) return null
+  const isArray = firstBracket > -1 && firstBracket < firstBrace
+
   const jsonStart = input.indexOf(isArray ? '[' : '{')
   const jsonEnd = input.lastIndexOf(isArray ? ']' : '}')
 

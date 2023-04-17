@@ -3,8 +3,9 @@ import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
-import { fuzzyParseJSON, pluralize } from '@/utils/utils'
+import { fuzzyMatchingFile, fuzzyParseJSON, pluralize } from '@/utils/utils'
 import fs from 'fs'
+import path from 'path'
 import { encode } from 'gpt-3-encoder'
 
 type EditPlan = { context: string; [path: string]: string }
@@ -32,10 +33,20 @@ otherwise reply in JSON:
     const parsed: EditPlan = fuzzyParseJSON(response)
     if (parsed) {
       const context = parsed.context || history[history.length - 1].content
-      const files = Object.keys(parsed).filter((f) => f != 'context')
+      const files = Object.keys(parsed)
+        .filter((f) => f != 'context')
+        .map((f) => {
+          if (f.indexOf('/') == -1) {
+            return fuzzyMatchingFile(f, indexer.files) || f
+          } else {
+            return f
+          }
+        })
+
+      const basenames = files.map((f) => path.basename(f))
       postMessage({
         role: 'assistant',
-        content: `Editing ${pluralize(files.length, 'file')}...`,
+        content: `Editing ${pluralize(files.length, 'file')}: ${basenames.join(', ')}`,
         options: { model },
       })
       await Promise.all(
@@ -119,7 +130,7 @@ JSON array of operations to perform:`
 
     const response = await chatCompletion(prompt, '4', systemMessage)
 
-    const parsed: Op[] = fuzzyParseJSON(response, true)
+    const parsed: Op[] = fuzzyParseJSON(response)
     if (!parsed) throw new Error(`Could not parse response`)
 
     const output = this.applyOps(contents, parsed)

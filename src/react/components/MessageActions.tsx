@@ -7,18 +7,12 @@ export function MessageActions({ message }: Props) {
   if (!message || message.role == 'system') return <div className="w-8" />
 
   const edit = () => {
+    messageStore.popMessages(message)
     messageStore.editMessage.set(message)
   }
 
   const regenerate = () => {
     const history = messageStore.popMessages(message)
-    messageStore.doCompletion({ message, history })
-  }
-
-  const useGPT4 = () => {
-    const history = messageStore.popMessages(message)
-    if (!message.options) message.options = {}
-    message.options.model = '4'
     messageStore.doCompletion({ message, history })
   }
 
