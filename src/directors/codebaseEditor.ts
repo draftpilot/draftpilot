@@ -10,6 +10,9 @@ import { encode } from 'gpt-3-encoder'
 
 type EditPlan = { context: string; [path: string]: string }
 
+// for files below this length, have the AI output the entire file
+const FULL_OUTPUT_THRESHOLD = 500
+
 // actor which can take actions on a codebase
 export class CodebaseEditor {
   planChanges = async (payload: MessagePayload, postMessage: PostMessage) => {
@@ -73,14 +76,18 @@ otherwise reply in JSON:
   editFile = async (plan: string, file: string, changes: any, postMessage: PostMessage) => {
     let contents = ''
     let decoratedContents = '<empty file>'
+    let outputFullFile = true
 
     if (fs.existsSync(file)) {
       log('editing file', file)
       contents = fs.readFileSync(file, 'utf8')
-      decoratedContents = contents
-        .split('\n')
-        .map((line, i) => `${i + 1}: ${line}`)
-        .join('\n')
+      const fileLines = contents.split('\n')
+
+      outputFullFile = fileLines.length < FULL_OUTPUT_THRESHOLD
+
+      decoratedContents = outputFullFile
+        ? contents
+        : fileLines.map((line, i) => `${i + 1}: ${line}`).join('\n')
     } else {
       log('creating file', file)
     }
@@ -96,7 +103,11 @@ ${contents}
 ---
 `
 
-    const promptSuffix = `---
+    const promptSuffix = outputFullFile
+      ? `---
+
+Output the full file that I will write to disk:`
+      : `---
 
 You return a sequence of operations in JSON. This example shows all possible operations & thier
 inputs: ${JSON.stringify(EXAMPLE)}
@@ -131,12 +142,18 @@ JSON array of operations to perform:`
 
     const response = await chatCompletion(prompt, '4', systemMessage)
 
-    const parsed: Op[] = fuzzyParseJSON(response)
-    if (!parsed) throw new Error(`Could not parse response`)
+    let output: string = contents
+    if (outputFullFile) {
+      output = response
+    } else {
+      const parsed: Op[] = fuzzyParseJSON(response)
+      if (!parsed) throw new Error(`Could not parse response`)
 
-    const output = this.applyOps(contents, parsed)
+      output = this.applyOps(contents, parsed)
+    }
 
-    fs.writeFileSync(file, output)
+    if (!contents) fs.mkdirSync(path.dirname(file), { recursive: true })
+    fs.writeFileSync(file, output, 'utf8')
   }
 
   applyOps = (contents: string, ops: Op[]) => {
