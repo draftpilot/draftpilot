@@ -3,7 +3,7 @@ import { Messenger } from '@/server/messenger'
 import { log } from '@/utils/logger'
 import bodyParser from 'body-parser'
 import express from 'express'
-import ViteExpress from 'vite-express'
+import ViteExpress from './vite-express'
 import fs from 'fs'
 
 import { fileURLToPath } from 'url'
@@ -11,6 +11,8 @@ import path from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+ViteExpress.config({ assetRoot: __dirname })
 
 const PORT = 3080
 

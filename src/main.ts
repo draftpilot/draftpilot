@@ -121,7 +121,8 @@ export default function () {
     .command('server', { isDefault: true })
     .description('Server mode (runs when no command is specified))')
     .action(
-      actionWrapper(async (opts) => {
+      actionWrapper(async (workingDir: string, opts) => {
+        if (workingDir) process.chdir(workingDir)
         const url = await serve(
           opts.port ? parseInt(opts.port) : undefined,
           opts.devServer ? 'development' : 'production'
@@ -129,6 +130,7 @@ export default function () {
         if (!opts.skipOpen) open(url)
       })
     )
+    .argument('[workingdir]', 'Working directory (defaults to current directory)')
     .option('--skip-open', 'Skip opening the browser')
     .option('--port <port>', 'Listen on specific port')
     .option('--dev-server', 'Use dev server (for development)')
