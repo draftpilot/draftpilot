@@ -5,7 +5,7 @@ import google from 'googlethis'
 
 const googleTool: Tool = {
   name: 'google',
-  description: 'Search google. Input: search query',
+  description: 'Search google, return JSON results. Input: search query',
   run: async (input: string) => {
     const options = {
       page: 0,
@@ -18,7 +18,7 @@ const googleTool: Tool = {
 }
 const urlTool: Tool = {
   name: 'fetchUrl',
-  description: 'Fetch text from the url. Input: url',
+  description: 'Visit a website and scrape the text. Input: e.g. https://google.com',
   run: async (input: string) => {
     const response = await fetch(input)
     if (!response.ok) {

@@ -3,7 +3,7 @@ import { ChatMessage, MessagePayload } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
-import { generateUUID } from '@/utils/utils'
+import { generateUUID, smartTruncate } from '@/utils/utils'
 
 type Session = {
   id: string
@@ -114,16 +114,7 @@ class MessageStore {
 
   updateSessionName = (message: ChatMessage) => {
     const input = message.content
-    const truncationPoint = 50
-
-    const previousWordIndex = input.lastIndexOf(' ', truncationPoint)
-    const truncatedString = input.slice(0, previousWordIndex)
-
-    const withoutPrepositions = truncatedString
-      .replace(/\b(with|on|in|at|to|for|of)\b/gi, '')
-      .trim()
-
-    const name = withoutPrepositions
+    const name = smartTruncate(input, 50)
     const session = { ...this.session.get(), name }
     this.session.set(session)
     this.sessionDb.sessions.put(session)

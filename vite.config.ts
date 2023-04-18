@@ -5,14 +5,7 @@ import createExternal from 'vite-plugin-external'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    createExternal({
-      externals: {
-        crypto: 'crypto',
-      },
-    }),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

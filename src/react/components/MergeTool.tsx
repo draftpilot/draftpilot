@@ -5,6 +5,7 @@ import * as Diff from 'diff'
 import { log } from '@/utils/logger'
 import Button from '@/react/components/Button'
 import { API } from '@/react/api/api'
+import { XMarkIcon } from '@heroicons/react/24/outline'
 
 export default () => {
   const mergeInfo = useStore(fileStore.mergeInfo)
@@ -88,7 +89,13 @@ export default () => {
 
   return (
     <div className={`bg-orange-100 p-4 shadow-md rounded`}>
-      <h2 className={`text-lg font-bold text-gray-800 mb-4`}>Merge Changes</h2>
+      <div className="flex">
+        <h2 className={`flex-1 text-lg font-bold text-gray-800 mb-4`}>Merge Changes</h2>
+        <XMarkIcon
+          className={`h-6 w-6 text-gray-500 cursor-pointer`}
+          onClick={() => fileStore.clearMerge()}
+        />
+      </div>
 
       {mergeInfo.file && (
         <div className="">

@@ -169,7 +169,22 @@ Analyze and categorize my query: `
     attachmentBody: string | undefined,
     postMessage: PostMessage
   ) => {
-    await this.planner.runAgent(payload, attachmentBody, this.systemMessage(), postMessage)
+    if (payload.history.find((h) => h.state)) {
+      // if we have a state, we're in the middle of a planning session
+      await this.planner.runFollowupPlanner(
+        payload,
+        attachmentBody,
+        this.systemMessage(),
+        postMessage
+      )
+    } else {
+      await this.planner.runInitialPlanning(
+        payload,
+        attachmentBody,
+        this.systemMessage(),
+        postMessage
+      )
+    }
   }
 
   editor = new CodebaseEditor()

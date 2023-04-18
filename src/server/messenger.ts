@@ -15,11 +15,16 @@ export class Messenger {
       return
     }
 
-    await this.agent.onMessage(input, (incoming: ChatMessage) => {
-      res.write(JSON.stringify(incoming) + ',')
-    })
+    try {
+      await this.agent.onMessage(input, (incoming: ChatMessage) => {
+        res.write(JSON.stringify(incoming) + ',')
+      })
 
-    res.end()
+      res.end()
+    } catch (e: any) {
+      const message = e.message || e.toString()
+      res.sendStatus(400).json({ error: message }).end()
+    }
   }
 
   respondToInterrupt = async (id: string) => {

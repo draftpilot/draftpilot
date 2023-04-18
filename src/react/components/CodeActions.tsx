@@ -54,12 +54,12 @@ export default ({ code, message, prevBlock }: Props) => {
   }
 
   const gpt4 = () => {
-    const history = messageStore.popMessages(message)
+    messageStore.popMessages(message)
     if (!message.options) {
       message.options = {}
     }
     message.options.model = '4'
-    messageStore.sendMessage(message)
+    messageStore.sendMessage(message, true)
   }
 
   const buttonClass = 'bg-gray-600 hover:bg-gray-700'

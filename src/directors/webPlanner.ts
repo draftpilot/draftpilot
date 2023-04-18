@@ -17,7 +17,7 @@ enum PlanOutcome {
 export class WebPlanner {
   constructor(public interrupted: Set<string>) {}
 
-  runAgent = async (
+  runInitialPlanning = async (
     payload: MessagePayload,
     attachmentBody: string | undefined,
     systemMessage: string,
@@ -113,4 +113,11 @@ export class WebPlanner {
       agent.addState(result)
     }
   }
+
+  runFollowupPlanner = async (
+    payload: MessagePayload,
+    attachmentBody: string | undefined,
+    systemMessage: string,
+    postMessage: PostMessage
+  ) => {}
 }

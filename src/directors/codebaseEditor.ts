@@ -1,6 +1,6 @@
 import { chatCompletion, chatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
-import { compactMessageHistory } from '@/directors/helpers'
+import { attachmentListToString, compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
 import { fuzzyMatchingFile, fuzzyParseJSON, pluralize } from '@/utils/utils'
@@ -19,15 +19,20 @@ export class CodebaseEditor {
     const { message, history } = payload
 
     const model = message.options?.model || '3.5'
+    const attachments = attachmentListToString(message.attachments)
 
-    const prompt = `Given the plan discussed, come up with a list of files to create or modify and
-the changes to make to them in this JSON format. If you need more context, you can ask for it,
-otherwise reply in JSON:
+    const prompt = `Given the plan discussed in the chat, come up with a list of files to create or modify and
+the changes to make to them in this JSON format. Do not make up a plan if uncertain. If you need more 
+context, you can ask for it, otherwise reply in JSON:
 {
   "context": "description of overall changes to be made so AI agents have the context",
   "path/to/file": "detailed list of changes to make so an AI can understand"
   ...
-}`
+}
+
+User's request: ${message.content}
+${attachments}
+`
     const newMessage = { ...message, content: prompt }
     const messages = compactMessageHistory([...history, newMessage], model)
 

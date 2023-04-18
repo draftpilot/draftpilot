@@ -104,8 +104,8 @@ export function fuzzyParseJSON(input: string) {
 }
 
 export function generateUUID() {
-  if (window.isSecureContext && crypto.randomUUID) {
-    return crypto.randomUUID()
+  if (window.isSecureContext && window.crypto.randomUUID) {
+    return window.crypto.randomUUID()
   } else {
     let d = new Date().getTime()
     if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
@@ -117,4 +117,13 @@ export function generateUUID() {
       return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
     })
   }
+}
+
+export function smartTruncate(input: string, truncationPoint: number) {
+  const previousWordIndex = input.lastIndexOf(' ', truncationPoint)
+  const truncatedString = input.slice(0, previousWordIndex).trim()
+
+  const withoutPrepositions = truncatedString.replace(/\b(with|on|in|at|to|for|of)$/gi, '').trim()
+
+  return withoutPrepositions
 }
