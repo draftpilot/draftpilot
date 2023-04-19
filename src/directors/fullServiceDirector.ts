@@ -33,7 +33,7 @@ export class FullServiceDirector {
   onMessage = async (payload: MessagePayload, origPostMessage: PostMessage) => {
     const { id, message, history } = payload
 
-    const postMessage = (msg: ChatMessage) => {
+    const postMessage = (msg: string | ChatMessage) => {
       if (this.interrupted.has(id)) return
       origPostMessage(msg)
     }
@@ -87,7 +87,7 @@ export class FullServiceDirector {
     return systemMessage
   }
 
-  detectIntent = async (payload: MessagePayload, postMessage: (message: ChatMessage) => void) => {
+  detectIntent = async (payload: MessagePayload, postMessage: PostMessage) => {
     // determine what we're doing
     const { message, history } = payload
 

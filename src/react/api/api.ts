@@ -53,6 +53,7 @@ class APIService {
 
               try {
                 const text = new TextDecoder().decode(value)
+                console.log('got text', text)
                 const messages = parsePartialMessages(text)
                 messages.forEach((m) => onMessage(m))
               } catch (error) {

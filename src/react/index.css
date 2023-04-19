@@ -100,8 +100,7 @@ textarea {
   padding-left: 1.5em;
 }
 .message hr {
-  margin-top: 10px;
-  margin-bottom: -10px;
+  margin: 10px 0;
   border-color: #333;
 }
 .message pre.poetry {

@@ -72,6 +72,7 @@ class MessageStore {
       const message = API.unwrapError(error)
       this.error.set(message)
     }
+    console.log('we done')
     this.inProgress.set(undefined)
     this.editMessage.set(null)
     this.error.set(undefined)

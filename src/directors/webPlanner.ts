@@ -60,8 +60,13 @@ export class WebPlanner {
     ]
 
     const basePrompt = `User's request: ${message.content}. Think step by step to come up with a 
-plan of action. Then return the steps, a '---' separator followed by a list of files to modify (with full paths)
-and how they should be changed. If you need to ask the user a question to complete the plan, ask it at the end.`
+plan of action. ALWAYS return in this output format:
+
+- If you know what to do:
+  CONFIRM: return the steps in markdown, a '---' separator followed by a list of files to modify (with full paths) and how they should be changed.
+
+- If you need to ask the user a question:
+  ASK: proposed plan in markdown, a '---' separator, and the question(s) you want to ask.`
 
     let tokenBudget = 6000 - encode(basePrompt).length
     const promptParts = []
