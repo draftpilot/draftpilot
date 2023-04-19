@@ -114,7 +114,13 @@ const MessageContents = ({ message, lastMessage }: Props) => {
         >
           <MessageBody message={message} content={output} />
 
-          {message.progressBar && <ProgressBar duration={message.progressBar} className="mt-1" />}
+          {message.progressDuration && (
+            <ProgressBar
+              start={message.progressStart || Date.now()}
+              duration={message.progressDuration}
+              className="mt-1"
+            />
+          )}
 
           {message.attachments && <Attachments attachments={message.attachments} />}
         </div>

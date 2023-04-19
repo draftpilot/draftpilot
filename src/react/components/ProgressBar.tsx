@@ -1,21 +1,23 @@
 import React, { useState, useEffect, HTMLAttributes, useRef } from 'react'
 
 const ProgressBar = ({
+  start,
   duration,
   ...rest
-}: { duration: number } & HTMLAttributes<HTMLDivElement>) => {
+}: { start: number; duration: number } & HTMLAttributes<HTMLDivElement>) => {
   const [progress, setProgress] = useState(0)
-  const start = useRef(Date.now())
 
   useEffect(() => {
+    if (start + duration < Date.now()) return
+
     const interval = setInterval(() => {
-      const progress = (Date.now() - start.current) / duration
+      const progress = (Date.now() - start) / duration
       setProgress(Math.min(progress, 1))
       if (progress >= 1) clearInterval(interval)
     }, 50)
 
     return () => clearInterval(interval)
-  }, [duration])
+  }, [start, duration])
 
   const progressPercentage = progress * 100
 

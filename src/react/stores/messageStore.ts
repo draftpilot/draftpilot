@@ -86,6 +86,7 @@ class MessageStore {
     } else {
       this.partialMessage.set(undefined)
       if (message.intent) this.intent.set(message.intent)
+      if (message.progressDuration) message.progressStart = Date.now()
       this.updateMessages([...this.messages.get(), message])
     }
   }

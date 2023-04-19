@@ -35,7 +35,8 @@ export type ChatMessage = {
   attachments?: Attachment[]
   state?: any
   intent?: string
-  progressBar?: number
+  progressDuration?: number
+  progressStart?: number
   options?: { model?: Model; tools?: boolean; type?: string }
 }
 

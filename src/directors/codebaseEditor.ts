@@ -161,7 +161,7 @@ JSON array of operations to perform:`
     postMessage({
       role: 'assistant',
       content: file,
-      progressBar: estimatedDuration,
+      progressDuration: estimatedDuration,
     })
 
     const response = await chatCompletion(prompt, '4', systemMessage)
