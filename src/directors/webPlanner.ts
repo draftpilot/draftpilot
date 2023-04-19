@@ -95,6 +95,7 @@ plan of action. ALWAYS return in this output format:
     postMessage({
       role: 'assistant',
       content: result,
+      intent: Intent.PLANNER,
     })
   }
 

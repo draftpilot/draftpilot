@@ -21,7 +21,16 @@ export class CodebaseEditor {
     const model = message.options?.model || '3.5'
     const attachments = attachmentListToString(message.attachments)
 
-    const prompt = `Given the plan discussed in the chat, come up with a list of files to create or modify and
+    const prevMessage = history[history.length - 1]
+
+    const prefix =
+      prevMessage.role == 'assistant'
+        ? `Given the following plan: ${prevMessage.content}
+
+And user response: ${message.content}`
+        : 'Given the following user request: ${message.content}'
+
+    const prompt = `${prefix}, come up with a list of files to create or modify and
 the changes to make to them in this JSON format. Do not make up a plan if uncertain. If you need more 
 context, you can ask for it, otherwise reply in JSON:
 {
@@ -31,7 +40,7 @@ context, you can ask for it, otherwise reply in JSON:
 }
 
 User's request: ${message.content}
-${attachments}
+${attachments || ''}
 `
     const newMessage = { ...message, content: prompt }
     const messages = compactMessageHistory([...history, newMessage], model)
@@ -97,7 +106,7 @@ ${attachments}
       log('creating file', file)
     }
 
-    const systemMessage = `You are a codebase editor. Respond only in the JSON format requested.`
+    const systemMessage = `You are a codebase editor. Respond only in the format requested.`
     const promptPrefix = `You are a codebase editor. You are given the following plan: ${plan}
 
 Now editing: ${file}
