@@ -36,6 +36,8 @@ class MessageStore {
 
   inProgress = atom<MessagePayload | undefined>()
 
+  partialMessage = atom<string | undefined>()
+
   editMessage = atom<ChatMessage | null>(null)
 
   intent = atom<string | undefined>()
@@ -48,6 +50,7 @@ class MessageStore {
     this.messages.set([])
     this.intent.set(undefined)
     this.error.set(undefined)
+    this.partialMessage.set(undefined)
   }
 
   sendMessage = async (message: ChatMessage, skipHistory?: boolean) => {
@@ -62,6 +65,7 @@ class MessageStore {
 
   doCompletion = async (payload: MessagePayload) => {
     this.inProgress.set(payload)
+    this.partialMessage.set(undefined)
     try {
       await API.sendMessage(payload, this.handleIncoming)
     } catch (error: any) {
@@ -73,9 +77,16 @@ class MessageStore {
     this.error.set(undefined)
   }
 
-  handleIncoming = (message: ChatMessage) => {
-    if (message.intent) this.intent.set(message.intent)
-    this.updateMessages([...this.messages.get(), message])
+  handleIncoming = (message: ChatMessage | string) => {
+    console.log('incomin', message)
+    if (typeof message === 'string') {
+      const newMessage = (this.partialMessage.get() || '') + message
+      this.partialMessage.set(newMessage)
+    } else {
+      this.partialMessage.set(undefined)
+      if (message.intent) this.intent.set(message.intent)
+      this.updateMessages([...this.messages.get(), message])
+    }
   }
 
   addSystemMessage = (message: ChatMessage) => {

@@ -19,6 +19,10 @@ import path from 'path'
 // the full-service agent is an all-in-one agent used by the web
 // it is stateless and can do anything (with confirmation)
 
+const context = `The frontend uses tailwindcss and react and lives in src/react. The backend uses
+nodejs and express and lives in src/server. Database is sqlite3 and hnsw for vectors in src/db.
+AI code is built on openai and called via src/ai. Business logic lives in src/directors.`
+
 export class FullServiceDirector {
   interrupted = new Set<string>()
 
@@ -78,8 +82,8 @@ export class FullServiceDirector {
   systemMessage = () => {
     const project = path.basename(process.cwd())
     const systemMessage =
-      'You are an EngineerGPT, an assistant for software engineers running in a ' +
-      `${detectProjectLanguage()} project called ${project}`
+      'You are an EngineerGPT, an expert software engineer working in a ' +
+      `${detectProjectLanguage()} project called ${project}. ${context}`
     return systemMessage
   }
 

@@ -90,3 +90,24 @@ textarea {
     background-color: rgba(152, 128, 255, 0.2);
   }
 }
+
+.message ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+}
+.message ul {
+  list-style: disc;
+  padding-left: 1.5em;
+}
+.message hr {
+  margin-top: 10px;
+  margin-bottom: -10px;
+  border-color: #333;
+}
+.message pre.poetry {
+  white-space: normal;
+  font-family: inherit;
+}
+.message pre.poetry code {
+  font-family: inherit;
+}

@@ -5,6 +5,7 @@ import { isAxiosError } from 'axios'
 import { Configuration, OpenAIApi } from 'openai'
 import fs from 'fs'
 import { log } from '@/utils/logger'
+import { IncomingMessage } from 'http'
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -39,9 +40,7 @@ export async function chatWithHistory(
   stop?: string | string[]
 ) {
   try {
-    const tempInput = '/tmp/' + Math.random().toString(36).substring(7) + '.json'
-    fs.writeFileSync(tempInput, JSON.stringify(messages, null, 2))
-    log('wrote request to ', tempInput)
+    const tempInput = writeTempFile(messages)
 
     const completion = await openai.createChatCompletion({
       model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
@@ -50,24 +49,81 @@ export async function chatWithHistory(
       stop: stop,
     })
     const response = completion.data.choices[0].message
-    const responseContent = response?.content || ''
+    const output = response?.content || ''
 
-    fs.writeFileSync(
-      tempInput,
-      JSON.stringify(
-        {
-          output: responseContent,
-          messages,
-        },
-        null,
-        2
-      )
+    writeTempFile(
+      {
+        output,
+        messages,
+      },
+      tempInput
     )
 
-    return responseContent
+    return output
   } catch (e) {
     throw parseError(e)
   }
+}
+
+export async function streamChatWithHistory(
+  messages: ChatMessage[],
+  model: Model,
+  onChunk: (chunk: string) => void,
+  stop?: string | string[]
+) {
+  try {
+    const tempInput = writeTempFile(messages)
+
+    const response = await openai.createChatCompletion(
+      {
+        model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
+        messages,
+        temperature: config.temperature,
+        stop: stop,
+        stream: true,
+      },
+      { responseType: 'stream' }
+    )
+    const stream = response.data as unknown as IncomingMessage
+
+    const output = await new Promise<string>((resolve, reject) => {
+      const outputs: string[] = []
+
+      stream.on('data', (chunk: Buffer) => {
+        // Messages in the event stream are separated by a pair of newline characters.
+        const payloads = chunk.toString().split('\n\n')
+        for (const payload of payloads) {
+          if (payload.includes('[DONE]')) return
+          if (payload.startsWith('data:')) {
+            const data = payload.replaceAll(/(\n)?^data:\s*/g, '') // in case there's multiline data event
+            try {
+              const delta = JSON.parse(data.trim())
+              const output = delta.choices[0].delta?.content
+              outputs.push(output)
+              onChunk(output)
+            } catch (error) {
+              log(`Error with JSON.parse and ${payload}.\n${error}`)
+            }
+          }
+        }
+      })
+
+      stream.on('end', () => resolve(outputs.join('')))
+      stream.on('error', reject)
+    })
+
+    writeTempFile({ output, messages }, tempInput)
+    return output
+  } catch (e) {
+    throw parseError(e)
+  }
+}
+
+function writeTempFile(data: any, existingFile?: string) {
+  const tempInput = '/tmp/' + Math.random().toString(36).substring(7) + '.json'
+  fs.writeFileSync(tempInput, JSON.stringify(data, null, 2))
+  if (!existingFile) log('wrote rquest to', tempInput)
+  return tempInput
 }
 
 function parseError(e: any) {

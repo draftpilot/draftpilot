@@ -81,7 +81,7 @@ export type MessagePayload = {
   history: ChatMessage[]
 }
 
-export type PostMessage = (message: ChatMessage) => void
+export type PostMessage = (message: ChatMessage | string) => void
 
 export enum Intent {
   ANSWER = 'DIRECT_ANSWER',

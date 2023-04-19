@@ -10,9 +10,8 @@ import { fileURLToPath } from 'url'
 import path from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-ViteExpress.config({ assetRoot: __dirname })
+const __dirname = path.dirname(__filename) // usually dist/
+const assetRoot = path.dirname(__dirname) // usually draftpilot/
 
 const PORT = 3080
 
@@ -20,6 +19,8 @@ export default function serve(
   port: number = PORT,
   mode?: 'development' | 'production'
 ): Promise<string> {
+  ViteExpress.config({ assetRoot, mode: mode || 'production' })
+
   const app = express()
   const messenger = new Messenger()
 
@@ -66,7 +67,7 @@ export default function serve(
 
   const listen = (port: number) => {
     return new Promise<string>((resolve, reject) => {
-      const server = createServer(mode || 'production', app, port, () => {
+      const server = ViteExpress.listen(app, port, () => {
         const url = `http://localhost:${port}`
         log(`Draftpilot is listening on ${url}`)
         resolve(url)
@@ -84,30 +85,4 @@ export default function serve(
   }
 
   return listen(port)
-}
-
-function createServer(
-  mode: 'development' | 'production' | undefined,
-  app: express.Express,
-  port: number,
-  callback: () => void
-) {
-  if (mode == 'development') {
-    return ViteExpress.listen(app, port, callback)
-  } else {
-    // vite-express doesn't work when run as part of cli, so we manually configure the dist dir
-    const distPath = __dirname
-    const indexHTML = path.resolve(distPath, 'index.html')
-    if (!fs.existsSync(indexHTML)) {
-      log('Could not find index.html file in', indexHTML)
-      log('Please check if assets were built properly, or use development mode')
-      process.exit(1)
-    }
-
-    app.use(express.static(distPath))
-    app.use('*', (_, res) => {
-      res.sendFile(indexHTML)
-    })
-    return app.listen(port, callback)
-  }
 }

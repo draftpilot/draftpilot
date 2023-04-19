@@ -16,7 +16,7 @@ export class Messenger {
     }
 
     try {
-      await this.agent.onMessage(input, (incoming: ChatMessage) => {
+      await this.agent.onMessage(input, (incoming: ChatMessage | string) => {
         res.write(JSON.stringify(incoming) + ',')
       })
 

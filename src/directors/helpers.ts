@@ -30,6 +30,7 @@ export function compactMessageHistory(
   const history: ChatMessage[] = []
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i]
+    if (systemMessage && msg.role == 'system') continue
 
     tokenBudget -= encode(msg.content).length
     if (tokenBudget < 0) break

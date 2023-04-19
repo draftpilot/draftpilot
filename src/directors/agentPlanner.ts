@@ -95,12 +95,12 @@ export class AgentPlanner implements AbstractPlanner {
   }
 }
 
-export async function findRelevantDocs(query: string, files: string[]) {
-  const filteredFiles = filterFiles(files, query, 20)
+export async function findRelevantDocs(query: string, files: string[], count: number = 20) {
+  const filteredFiles = filterFiles(files, query, count)
   const fileSet = new Set(filteredFiles)
-  const similarDocs = (await indexer.vectorDB.search(query, 10)) || []
+  const similarDocs = (await indexer.vectorDB.search(query, Math.ceil(count / 2))) || []
 
-  const exactMatches = await indexer.searchDB.search(query, 10)
+  const exactMatches = await indexer.searchDB.search(query, Math.ceil(count / 2))
   similarDocs.forEach((doc) => {
     const file = splitOnce(doc.metadata.path, '#')[0]
     fileSet.add(file)

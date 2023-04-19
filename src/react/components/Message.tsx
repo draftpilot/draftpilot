@@ -7,6 +7,7 @@ import { MessageActions } from './MessageActions'
 import { MessageBody } from './MessageBody'
 import Button from '@/react/components/Button'
 import { messageStore } from '@/react/stores/messageStore'
+import { useStore } from '@nanostores/react'
 
 export type Props = {
   message?: ChatMessage
@@ -27,20 +28,25 @@ const Message = (props: Props) => {
   )
 }
 
-const MessageLoading = () => (
-  <div className="mr-8">
-    <div className={`flex-1 bg-blue-100 p-4 shadow-md rounded`}>
-      <div className="dot-flashing ml-4 my-2" />
+const MessageLoading = () => {
+  const partialMessage = useStore(messageStore.partialMessage)
+
+  return (
+    <div className="mr-8">
+      <div className={`flex-1 bg-blue-100 p-4 shadow-md rounded`}>
+        {partialMessage}
+        <div className="dot-flashing ml-4 my-2" />
+      </div>
+      <a
+        href="#"
+        className="text-gray-400 text-xs mt-4 p-2 hover:bg-gray-300 rounded"
+        onClick={() => messageStore.interruptRequest()}
+      >
+        Interrupt
+      </a>
     </div>
-    <a
-      href="#"
-      className="text-gray-400 text-xs mt-4 p-2 hover:bg-gray-300 rounded"
-      onClick={() => messageStore.interruptRequest()}
-    >
-      Interrupt
-    </a>
-  </div>
-)
+  )
+}
 
 const MessageContents = ({ message, lastMessage }: Props) => {
   const [expanded, setExpanded] = useState(false)
@@ -100,7 +106,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
 
   return (
     <div className="overflow-hidden">
-      <div className={`flex-1 ${bgColor} shadow-md rounded relative overflow-hidden`}>
+      <div className={`flex-1 ${bgColor} shadow-md rounded relative overflow-hidden message`}>
         <div
           ref={contentRef}
           className={(expanded ? '' : 'max-h-60 ') + 'p-4 overflow-hidden ease-out'}

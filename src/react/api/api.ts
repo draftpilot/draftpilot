@@ -26,7 +26,7 @@ class APIService {
 
   sendMessage = (
     payload: MessagePayload,
-    onMessage: (message: ChatMessage) => void
+    onMessage: (message: ChatMessage | string) => void
   ): Promise<void> => {
     // use fetch since this use of axios doesn't support streaming
     return new Promise<void>((resolve, reject) => {
@@ -84,7 +84,7 @@ class APIService {
   }
 }
 
-const parsePartialMessages = (text: string): ChatMessage[] => {
+const parsePartialMessages = (text: string): (ChatMessage | string)[] => {
   return JSON.parse('[' + (text.endsWith(',') ? text.slice(0, -1) : text) + ']')
 }
 
