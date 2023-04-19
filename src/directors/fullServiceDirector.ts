@@ -97,12 +97,15 @@ export class FullServiceDirector {
     const prompt = `Based on my query + previous history, determine the type of request:
 - product or business discussion that a product manager assistant is better suited for, type = PRODUCT, message = switching to product assistant
   example requests: "how should this feature work", "what should the ux be", "how do i get user feedback", "help me think through..."
-${canTakeAction && `- if the user says 'do it' or similar, type = ACTION, message = thinking...`}
+${
+  canTakeAction ? `- if the user says 'do it' or similar, type = ACTION, message = thinking...` : ''
+}
 - simple question that can be answered with only the context provided:
   ${
-    model != '4' &&
-    `if requires code generation or other complex reasoning, type = COMPLEX_ANSWER, message = thinking...
+    model != '4'
+      ? `if requires code generation or other complex reasoning, type = COMPLEX_ANSWER, message = thinking...
   else, `
+      : ''
   }type = DIRECT_ANSWER, message = answer to the question or request with code snippets if relevant
 - requires context or taking action (from the file system, user, or internet), type = PLANNER, message = let the user know planning is happening
   example requests: "add this feature", "fix this bug", "where is the code for this"
@@ -137,7 +140,7 @@ Analyze and categorize my query: `
     history.push(responseMessage)
     postMessage(responseMessage)
 
-    if (type == Intent.ANSWER) {
+    if (type == Intent.ANSWER || (type == Intent.COMPLEX && response.length > 300)) {
       // we're done
     } else {
       await this.handleDetectedIntent(type as Intent, payload, attachmentBody, postMessage)

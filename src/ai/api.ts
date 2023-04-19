@@ -120,10 +120,10 @@ export async function streamChatWithHistory(
 }
 
 function writeTempFile(data: any, existingFile?: string) {
-  const tempInput = '/tmp/' + Math.random().toString(36).substring(7) + '.json'
-  fs.writeFileSync(tempInput, JSON.stringify(data, null, 2))
-  if (!existingFile) log('wrote rquest to', tempInput)
-  return tempInput
+  const file = existingFile || '/tmp/' + Math.random().toString(36).substring(7) + '.json'
+  fs.writeFileSync(file, JSON.stringify(data, null, 2))
+  if (!existingFile) log('wrote rquest to', file)
+  return file
 }
 
 function parseError(e: any) {

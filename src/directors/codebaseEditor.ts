@@ -154,6 +154,16 @@ JSON array of operations to perform:`
 
     const prompt = promptPrefix + decoratedFuncs + promptSuffix
 
+    const estimatedOutput = outputFullFile ? encode(contents).length || 300 : 100
+    const totalTokens = encode(prompt).length + estimatedOutput
+    const estimatedDuration = totalTokens * 10 // 100ms per token
+
+    postMessage({
+      role: 'assistant',
+      content: file,
+      progressBar: estimatedDuration,
+    })
+
     const response = await chatCompletion(prompt, '4', systemMessage)
 
     let output: string = contents

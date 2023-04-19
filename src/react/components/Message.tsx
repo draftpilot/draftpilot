@@ -8,6 +8,7 @@ import { MessageBody } from './MessageBody'
 import Button from '@/react/components/Button'
 import { messageStore } from '@/react/stores/messageStore'
 import { useStore } from '@nanostores/react'
+import ProgressBar from '@/react/components/ProgressBar'
 
 export type Props = {
   message?: ChatMessage
@@ -112,6 +113,8 @@ const MessageContents = ({ message, lastMessage }: Props) => {
           className={(expanded ? '' : 'max-h-60 ') + 'p-4 overflow-hidden ease-out'}
         >
           <MessageBody message={message} content={output} />
+
+          {message.progressBar && <ProgressBar duration={message.progressBar} className="mt-1" />}
 
           {message.attachments && <Attachments attachments={message.attachments} />}
         </div>
