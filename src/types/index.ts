@@ -98,4 +98,5 @@ export enum Intent {
   TESTPILOT = 'TESTPILOT',
   CRASHPILOT = 'CRASHPILOT',
   CHAT = 'CHAT',
+  DONE = 'DONE',
 }

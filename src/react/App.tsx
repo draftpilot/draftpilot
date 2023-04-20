@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import ChatInput from '@/react/components/ChatInput'
 import Messages from '@/react/components/Messages'
 import Onboarding from '@/react/components/Onboarding'
 import Sidebar from '@/react/components/Sidebar'
 import { messageStore } from '@/react/stores/messageStore'
-import { uiStore } from '@/react/stores/uiStore'
 import { useStore } from '@nanostores/react'
 import useWindowVisible from '@/react/hooks/useWindowVisible'
 

@@ -76,6 +76,7 @@ JSON Change Plan or question to ask the user:`
         role: 'assistant',
         content: `OUTCOME: Files edited: ${files.join(', ')}`,
         options: { model },
+        intent: Intent.DONE,
       })
     } else {
       postMessage({

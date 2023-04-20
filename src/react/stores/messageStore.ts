@@ -115,6 +115,10 @@ class MessageStore {
       }
       this.updateMessages([...messages, message])
 
+      if (message.intent == Intent.DONE) {
+        fileStore.loadData()
+      }
+
       if (message.content.endsWith('confidence: high')) {
         this.automaticAction()
       }
