@@ -77,7 +77,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
     bgColor = 'bg-blue-100'
     output = `*Thought*: ${thought}`
   } else if (content.startsWith('CONFIRM:')) {
-    bgColor = 'bg-red-200'
+    bgColor = 'bg-yellow-200'
     const proposal = content.substring(9)
     output = `**Confirm Action?**\n\n${proposal}*`
     postMessageAction = <ConfirmAction />

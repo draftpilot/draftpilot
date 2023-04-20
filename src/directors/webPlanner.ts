@@ -23,12 +23,19 @@ export class WebPlanner {
   constructor(public interrupted: Set<string>) {}
 
   outputFormat = (model: Model | undefined) =>
-    `either ${PlanOutcome.CONFIRM} <proposed set of actions that user must approve>, ` +
-    (model != '4'
-      ? `${PlanOutcome.UPGRADE} to switch to super smart AI mode if request is complex, or `
-      : '') +
-    `${PlanOutcome.ANSWER} <answer to user request if absolutely no action is being requested>, or ` +
-    `${PlanOutcome.ASK} <question to ask user if you need more information>`
+    `ALWAYS return in this output format:
+
+- If you know what to do, start with "CONFIRM:"
+  then the steps in markdown
+  a '---' separator
+  the list of files to modify (with full paths) and how they should be changed
+  a '---' separator
+  confidence: how confident you are this is the right thing to do - low, medium, or high
+
+- If you need to ask the user a question, start with "ASK:"
+  then the proposed steps in markdown
+  a '---' separator
+  the question(s) you want to ask.`
 
   runInitialPlanning = async (
     payload: MessagePayload,
@@ -59,16 +66,12 @@ export class WebPlanner {
       ...similarFuncs,
     ]
 
+    const model = '4'
+
     const basePrompt = `User's request: ${message.content}. Think step by step to come up with a 
-plan of action. ALWAYS return in this output format:
+plan of action. ${this.outputFormat(model)}`
 
-- If you know what to do:
-  CONFIRM: return the steps in markdown, a '---' separator followed by a list of files to modify (with full paths) and how they should be changed.
-
-- If you need to ask the user a question:
-  ASK: proposed plan in markdown, a '---' separator, and the question(s) you want to ask.`
-
-    let tokenBudget = 6000 - encode(basePrompt).length
+    let tokenBudget = (model == '4' ? 6000 : 3500) - encode(basePrompt).length
     const promptParts = []
 
     for (const context of contexts) {
@@ -81,7 +84,6 @@ plan of action. ALWAYS return in this output format:
     }
 
     const prompt = `${promptParts.join('\n')}\n${basePrompt}`
-    const model = '4'
 
     const messages = compactMessageHistory([...history, { content: prompt, role: 'user' }], model, {
       content: systemMessage,

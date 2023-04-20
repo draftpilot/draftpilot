@@ -72,22 +72,35 @@ class MessageStore {
       const message = API.unwrapError(error)
       this.error.set(message)
     }
-    console.log('we done')
-    this.inProgress.set(undefined)
+    if (!this.partialMessage.get()) {
+      this.inProgress.set(undefined)
+    }
     this.editMessage.set(null)
     this.error.set(undefined)
   }
 
   handleIncoming = (message: ChatMessage | string) => {
-    console.log('incomin', message)
     if (typeof message === 'string') {
       const newMessage = (this.partialMessage.get() || '') + message
       this.partialMessage.set(newMessage)
     } else {
-      this.partialMessage.set(undefined)
+      if (this.partialMessage.get()) {
+        this.partialMessage.set(undefined)
+        this.inProgress.set(undefined)
+      }
+      const messages = this.messages.get()
       if (message.intent) this.intent.set(message.intent)
       if (message.progressDuration) message.progressStart = Date.now()
-      this.updateMessages([...this.messages.get(), message])
+      else if (message.progressDuration == 0) {
+        this.updateMessages(
+          messages.filter((m) => {
+            if (m.content == message.content && m.progressStart) return message
+            else return m
+          })
+        )
+        return
+      }
+      this.updateMessages([...messages, message])
     }
   }
 

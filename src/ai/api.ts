@@ -99,8 +99,10 @@ export async function streamChatWithHistory(
             try {
               const delta = JSON.parse(data.trim())
               const output = delta.choices[0].delta?.content
-              outputs.push(output)
-              onChunk(output)
+              if (output) {
+                outputs.push(output)
+                onChunk(output)
+              }
             } catch (error) {
               log(`Error with JSON.parse and ${payload}.\n${error}`)
             }

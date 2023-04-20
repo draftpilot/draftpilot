@@ -1,7 +1,7 @@
 import { chatCompletion, chatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { attachmentListToString, compactMessageHistory } from '@/directors/helpers'
-import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
+import { ChatMessage, Intent, MessagePayload, Model, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
 import { fuzzyMatchingFile, fuzzyParseJSON, pluralize } from '@/utils/utils'
 import fs from 'fs'
@@ -70,7 +70,7 @@ ${attachments || ''}
       await Promise.all(
         files.map(async (file) => {
           const changes = parsed[file]
-          await this.editFile(context, file, changes, postMessage)
+          await this.editFile(model, context, file, changes, postMessage)
         })
       )
       postMessage({
@@ -87,7 +87,13 @@ ${attachments || ''}
     }
   }
 
-  editFile = async (plan: string, file: string, changes: any, postMessage: PostMessage) => {
+  editFile = async (
+    model: Model,
+    plan: string,
+    file: string,
+    changes: any,
+    postMessage: PostMessage
+  ) => {
     let contents = ''
     let decoratedContents = '<empty file>'
     let outputFullFile = true
@@ -97,7 +103,7 @@ ${attachments || ''}
       contents = fs.readFileSync(file, 'utf8')
       const fileLines = contents.split('\n')
 
-      outputFullFile = fileLines.length < FULL_OUTPUT_THRESHOLD
+      outputFullFile = false // fileLines.length < FULL_OUTPUT_THRESHOLD
 
       decoratedContents = outputFullFile
         ? contents
@@ -138,7 +144,7 @@ JSON array of operations to perform:`
       })
       .map((s) => s[0])
 
-    let tokenBudget = 7000 - encode(promptPrefix + promptSuffix).length
+    let tokenBudget = (model == '3.5' ? 3500 : 7000) - encode(promptPrefix + promptSuffix).length
     const funcsToShow = (similarFuncs || []).filter((doc) => {
       const encoded = encode(doc.pageContent).length
       if (tokenBudget > encoded) {
@@ -156,7 +162,7 @@ JSON array of operations to perform:`
 
     const estimatedOutput = outputFullFile ? encode(contents).length || 300 : 100
     const totalTokens = encode(prompt).length + estimatedOutput
-    const estimatedDuration = totalTokens * 10 // 100ms per token
+    const estimatedDuration = totalTokens * (model == '3.5' ? 1 : 10)
 
     postMessage({
       role: 'assistant',
@@ -164,7 +170,7 @@ JSON array of operations to perform:`
       progressDuration: estimatedDuration,
     })
 
-    const response = await chatCompletion(prompt, '4', systemMessage)
+    const response = await chatCompletion(prompt, model, systemMessage)
 
     let output: string = contents
     if (outputFullFile) {
@@ -178,6 +184,12 @@ JSON array of operations to perform:`
 
     if (!contents) fs.mkdirSync(path.dirname(file), { recursive: true })
     fs.writeFileSync(file, output, 'utf8')
+
+    postMessage({
+      role: 'assistant',
+      content: file,
+      progressDuration: 0,
+    })
   }
 
   applyOps = (contents: string, ops: Op[]) => {
