@@ -51,13 +51,7 @@ export async function chatWithHistory(
     const response = completion.data.choices[0].message
     const output = response?.content || ''
 
-    writeTempFile(
-      {
-        output,
-        messages,
-      },
-      tempInput
-    )
+    writeTempFile(messages.concat({ content: output, role: 'assistant' }), tempInput)
 
     return output
   } catch (e) {
@@ -114,17 +108,18 @@ export async function streamChatWithHistory(
       stream.on('error', reject)
     })
 
-    writeTempFile({ output, messages }, tempInput)
+    writeTempFile(messages.concat({ content: output, role: 'assistant' }), tempInput)
     return output
   } catch (e) {
     throw parseError(e)
   }
 }
 
-function writeTempFile(data: any, existingFile?: string) {
+function writeTempFile(data: ChatMessage[], existingFile?: string) {
   const file = existingFile || '/tmp/' + Math.random().toString(36).substring(7) + '.json'
-  fs.writeFileSync(file, JSON.stringify(data, null, 2))
-  if (!existingFile) log('wrote rquest to', file)
+  const output = data.map((d) => d.role + ':\n' + d.content).join('\n---\n')
+  fs.writeFileSync(file, output)
+  if (!existingFile) log('wrote request to', file)
   return file
 }
 

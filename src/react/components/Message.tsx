@@ -114,7 +114,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
         >
           <MessageBody message={message} content={output} />
 
-          {message.progressDuration && (
+          {message.progressDuration !== undefined && (
             <ProgressBar
               start={message.progressStart || Date.now()}
               duration={message.progressDuration}

@@ -22,8 +22,10 @@ export class Messenger {
 
       res.end()
     } catch (e: any) {
+      console.error(e)
       const message = e.message || e.toString()
-      res.sendStatus(400).json({ error: message }).end()
+      res.write(JSON.stringify({ error: message }) + ',')
+      res.end()
     }
   }
 

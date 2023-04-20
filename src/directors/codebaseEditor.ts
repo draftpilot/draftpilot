@@ -21,27 +21,32 @@ export class CodebaseEditor {
     const model = message.options?.model || '3.5'
     const attachments = attachmentListToString(message.attachments)
 
-    const prevMessage = history[history.length - 1]
+    const prevMessage = history
+      .slice()
+      .reverse()
+      .find((h) => h.role == 'assistant')
 
     const prefix =
-      prevMessage.role == 'assistant'
+      prevMessage?.role == 'assistant'
         ? `Given the following plan: ${prevMessage.content}
 
 And user response: ${message.content}`
-        : 'Given the following user request: ${message.content}'
+        : `Given the following user request: ${message.content}`
 
-    const prompt = `${prefix}, come up with a list of files to create or modify and
-the changes to make to them in this JSON format. Do not make up a plan if uncertain. If you need more 
-context, you can ask for it, otherwise reply in JSON:
+    const prompt = `${prefix}
+    
+Come up with a list of files to create or modify and the changes to make to them. Do not make up
+a plan if uncertain. If you need more context, you can ask for it, otherwise reply in this exact
+JSON format:
 {
   "context": "description of overall changes to be made so AI agents have the context",
   "path/to/file": "detailed list of changes to make so an AI can understand"
   ...
 }
 
-User's request: ${message.content}
-${attachments || ''}
-`
+The JSON output should ONLY contain string values.
+
+JSON Change Plan or question to ask the user:`
     const newMessage = { ...message, content: prompt }
     const messages = compactMessageHistory([...history, newMessage], model)
 
@@ -99,11 +104,11 @@ ${attachments || ''}
     let outputFullFile = true
 
     if (fs.existsSync(file)) {
-      log('editing file', file)
       contents = fs.readFileSync(file, 'utf8')
       const fileLines = contents.split('\n')
+      log('editing file', file, fileLines.length)
 
-      outputFullFile = false // fileLines.length < FULL_OUTPUT_THRESHOLD
+      outputFullFile = fileLines.length < FULL_OUTPUT_THRESHOLD
 
       decoratedContents = outputFullFile
         ? contents
@@ -112,8 +117,9 @@ ${attachments || ''}
       log('creating file', file)
     }
 
-    const systemMessage = `You are a codebase editor. Respond only in the format requested.`
-    const promptPrefix = `You are a codebase editor. You are given the following plan: ${plan}
+    const systemMessage = `You are a codebase editor. Respond only in the format requested and do 
+not change anything unnecessarily, as your output is written directly to the codebase.`
+    const promptPrefix = `You are given the following plan: ${plan}
 
 Now editing: ${file}
 Changes to make: ${JSON.stringify(changes)}
@@ -126,7 +132,7 @@ ${contents}
     const promptSuffix = outputFullFile
       ? `---
 
-Output the full file that I will write to disk:`
+Output the entire file that I will write to disk, only changing the requested lines, and no markdown:`
       : `---
 
 You return a sequence of operations in JSON. This example shows all possible operations & thier
@@ -162,7 +168,7 @@ JSON array of operations to perform:`
 
     const estimatedOutput = outputFullFile ? encode(contents).length || 300 : 100
     const totalTokens = encode(prompt).length + estimatedOutput
-    const estimatedDuration = totalTokens * (model == '3.5' ? 1 : 10)
+    const estimatedDuration = totalTokens * (model == '3.5' ? 3 : 10)
 
     postMessage({
       role: 'assistant',
@@ -172,14 +178,16 @@ JSON array of operations to perform:`
 
     const response = await chatCompletion(prompt, model, systemMessage)
 
-    let output: string = contents
-    if (outputFullFile) {
-      output = response
-    } else {
+    let output: string = response
+    if (!outputFullFile) {
       const parsed: Op[] = fuzzyParseJSON(response)
       if (!parsed) throw new Error(`Could not parse response`)
 
       output = this.applyOps(contents, parsed)
+    } else if (output.endsWith('```')) {
+      // remove markdown
+      const start = output.indexOf('```')
+      output = output.substring(start + 3, output.length - 3)
     }
 
     if (!contents) fs.mkdirSync(path.dirname(file), { recursive: true })

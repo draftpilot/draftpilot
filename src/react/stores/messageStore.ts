@@ -1,5 +1,5 @@
 import { API, isAxiosError } from '@/react/api/api'
-import { ChatMessage, MessagePayload } from '@/types'
+import { ChatMessage, Intent, MessagePayload } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
@@ -92,8 +92,10 @@ class MessageStore {
       if (message.intent) this.intent.set(message.intent)
       if (message.progressDuration) message.progressStart = Date.now()
       else if (message.progressDuration == 0) {
+        console.log('filterin')
         this.updateMessages(
-          messages.filter((m) => {
+          messages.map((m) => {
+            console.log('m', m.content, message.content, m.progressStart)
             if (m.content == message.content && m.progressStart) return message
             else return m
           })
@@ -101,6 +103,14 @@ class MessageStore {
         return
       }
       this.updateMessages([...messages, message])
+
+      if (message.content.endsWith('confidence: high')) {
+        this.intent.set(Intent.ACTION)
+        this.sendMessage({
+          content: 'Automatically proceed since confidence is high',
+          role: 'user',
+        })
+      }
     }
   }
 

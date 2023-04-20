@@ -19,7 +19,7 @@ const ProgressBar = ({
     return () => clearInterval(interval)
   }, [start, duration])
 
-  const progressPercentage = progress * 100
+  const progressPercentage = duration == 0 ? 100 : progress * 100
 
   return (
     <div {...rest} className={'relative h-2 rounded-full bg-gray-200 w-full ' + rest.className}>

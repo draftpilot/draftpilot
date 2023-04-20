@@ -125,6 +125,12 @@ export default () => {
             ? 'Planning'
             : intent == Intent.PRODUCT
             ? 'Product Manager'
+            : intent == Intent.DRAFTPILOT
+            ? 'Draftpilot'
+            : intent == Intent.TESTPILOT
+            ? 'Testpilot'
+            : intent == Intent.CRASHPILOT
+            ? 'Crashpilot'
             : 'Chat'}
         </span>
         {intent == Intent.PLANNER && (

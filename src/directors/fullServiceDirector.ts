@@ -158,7 +158,7 @@ Analyze and categorize my query: `
       if (!message.options) message.options = {}
       message.options.model = '4'
       await this.detectIntent(payload, postMessage)
-    } else if (intent == Intent.PLANNER) {
+    } else if (intent == Intent.PLANNER || intent == Intent.DRAFTPILOT) {
       if (!attachmentBody) attachmentBody = attachmentListToString(message.attachments)
       await this.usePlanningAgent(payload, attachmentBody, postMessage)
     } else if (intent == Intent.ACTION) {

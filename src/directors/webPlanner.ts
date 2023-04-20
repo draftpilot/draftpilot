@@ -28,7 +28,9 @@ export class WebPlanner {
 - If you know what to do, start with "CONFIRM:"
   then the steps in markdown
   a '---' separator
-  the list of files to modify (with full paths) and how they should be changed
+  the list of files to modify (with full paths) and how they should be changed in this format:
+  - path/to/file.tsx - add a row of buttons under the main <div>
+  - other/path/style.css - add a new class called .my-class
   a '---' separator
   confidence: how confident you are this is the right thing to do - low, medium, or high
 
@@ -84,6 +86,9 @@ plan of action. ${this.outputFormat(model)}`
     }
 
     const prompt = `${promptParts.join('\n')}\n${basePrompt}`
+    systemMessage =
+      systemMessage +
+      '. Always follow the required output format, it is parsed by a machine and will break if improper.'
 
     const messages = compactMessageHistory([...history, { content: prompt, role: 'user' }], model, {
       content: systemMessage,
