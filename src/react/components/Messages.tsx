@@ -29,8 +29,6 @@ export default () => {
       {inProgress && <Message />}
       {error && <div className="my-2 text-red-600">{error}</div>}
       {mergeInfo && <MergeTool />}
-
-      {!messages.length && <Onboarding />}
     </div>
   )
 }

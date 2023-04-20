@@ -1,4 +1,4 @@
-import { chatWithHistory } from '@/ai/api'
+import { streamChatWithHistory } from '@/ai/api'
 import { compactMessageHistory } from '@/directors/helpers'
 import { Intent, MessagePayload, PostMessage } from '@/types'
 
@@ -14,9 +14,14 @@ export class ProductAssistant {
 
     const model = message.options?.model || '3.5'
 
-    const messages = compactMessageHistory([...history, message], model)
+    const messages = compactMessageHistory([...history, message], model, {
+      content: systemMessage,
+      role: 'system',
+    })
 
-    const response = await chatWithHistory(messages, model)
+    const response = await streamChatWithHistory(messages, model, (response) => {
+      postMessage(response)
+    })
 
     postMessage({
       role: 'assistant',

@@ -49,7 +49,7 @@ class MessageStore {
 
   clearData = () => {
     this.messages.set([])
-    this.intent.set(undefined)
+    this.intent.set(Intent.DRAFTPILOT)
     this.error.set(undefined)
     this.partialMessage.set(undefined)
   }

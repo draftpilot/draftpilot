@@ -11,7 +11,7 @@ import path from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // usually dist/
-const assetRoot = undefined // path.dirname(__dirname) // usually draftpilot/
+const assetRoot = path.dirname(__dirname) // usually draftpilot/
 log('my asset root', assetRoot)
 
 const PORT = 3080
