@@ -38,6 +38,7 @@ export type ChatMessage = {
   progressDuration?: number
   progressStart?: number
   options?: { model?: Model; tools?: boolean; type?: string }
+  buttons?: { label: string; onClick: () => void }[]
 }
 
 export type Plan = {

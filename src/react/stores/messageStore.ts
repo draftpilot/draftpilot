@@ -5,6 +5,7 @@ import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
 import { generateUUID, smartTruncate } from '@/utils/utils'
 import { log } from '@/utils/logger'
+import uiStore from '@/react/stores/uiStore'
 
 type Session = {
   id: string
@@ -59,6 +60,7 @@ class MessageStore {
     const payload: MessagePayload = { id, message, history: this.messages.get() }
     log(payload)
     if (!message.intent && this.intent.get()) message.intent = this.intent.get()
+    this.shouldDing = true
 
     if (!this.session.get().name) this.updateSessionName(message)
     this.doCompletion(payload)
@@ -86,6 +88,7 @@ class MessageStore {
       const newMessage = (this.partialMessage.get() || '') + message
       this.partialMessage.set(newMessage)
     } else {
+      this.maybePlayDingSound()
       if (this.partialMessage.get()) {
         this.partialMessage.set(undefined)
         this.inProgress.set(undefined)
@@ -94,7 +97,6 @@ class MessageStore {
       if (message.intent) this.intent.set(message.intent)
       if (message.progressDuration) message.progressStart = Date.now()
       else if (message.progressDuration == 0) {
-        console.log('filterin')
         this.updateMessages(
           messages.map((m) => {
             console.log('m', m.content, message.content, m.progressStart)
@@ -108,9 +110,26 @@ class MessageStore {
 
       if (message.content.endsWith('confidence: high')) {
         this.intent.set(Intent.ACTION)
-        this.sendMessage({
-          content: 'Automatically proceeding since confidence is high',
-          role: 'user',
+
+        const content = 'Proceeding in 5 seconds since confidence is high...'
+        const timeout = setTimeout(() => {
+          this.handleIncoming({
+            content,
+            role: 'system',
+            progressDuration: 0,
+          })
+        }, 5000)
+
+        this.handleIncoming({
+          content,
+          role: 'system',
+          progressDuration: 5000,
+          buttons: [
+            {
+              label: 'Cancel',
+              onClick: () => clearTimeout(timeout),
+            },
+          ],
         })
       }
     }
@@ -197,6 +216,15 @@ class MessageStore {
     session.name = name
     await this.sessionDb.sessions.put(session)
     this.sessions.set(this.sessions.get().map((s) => (s.id === id ? session : s)))
+  }
+
+  shouldDing = true
+  dingSound = new Audio('/ding.mp3')
+  maybePlayDingSound = () => {
+    if (!this.shouldDing) return
+    if (uiStore.windowVisible.get()) return
+    this.dingSound.play().catch(console.warn)
+    this.shouldDing = false
   }
 }
 

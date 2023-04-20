@@ -32,19 +32,30 @@ const Message = (props: Props) => {
 const MessageLoading = () => {
   const partialMessage = useStore(messageStore.partialMessage)
 
+  let bg = 'bg-blue-100'
+  let partialContent = partialMessage
+
+  if (partialMessage && partialMessage.startsWith('PLAN:')) {
+    bg = 'bg-yellow-100'
+    partialContent = 'Action Plan' + partialMessage.substring(5)
+  }
+
   return (
     <div className="mr-8">
-      <div className={`flex-1 bg-blue-100 p-4 shadow-md rounded whitespace-pre-wrap`}>
-        {partialMessage}
+      <div className={`flex-1 ${bg} p-4 shadow-md rounded whitespace-pre-wrap`}>
+        {partialContent}
         <div className="dot-flashing ml-4 my-2" />
       </div>
-      <a
-        href="#"
-        className="text-gray-400 text-xs mt-4 p-2 hover:bg-gray-300 rounded"
-        onClick={() => messageStore.interruptRequest()}
-      >
-        Interrupt
-      </a>
+      <div className="flex gap-4 text-sm">
+        <div>Feel free to switch tabs, we'll play a ding when a new message arrives.</div>
+        <a
+          href="#"
+          className="text-gray-400 mt-4 p-2 hover:bg-gray-300 rounded"
+          onClick={() => messageStore.interruptRequest()}
+        >
+          Interrupt
+        </a>
+      </div>
     </div>
   )
 }
@@ -97,9 +108,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
     bgColor = 'bg-yellow-200'
   } else if (message.intent == Intent.ANSWER) {
     // if this is an answer, but it has a code block, then it's a possible action
-    console.log('ANSWER GOT')
     if (content.includes('```') && messageStore.messages.get().find((m) => m.attachments?.length)) {
-      console.log('po ten tial action')
       postMessageAction = <PossibleAction />
     }
     bgColor = 'bg-blue-200'
