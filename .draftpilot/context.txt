@@ -1,3 +1,5 @@
 The frontend uses tailwindcss and react and lives in src/react. The backend uses
 nodejs and express and lives in src/server. Database is sqlite3 and hnsw for vectors in src/db.
 AI code is built on openai and called via src/ai. Business logic lives in src/directors.
+
+Frontend store logic is using a library called nanostores, which exposes an `atom<type>` helper with .set and .get methods. In the ui components. `useStore(atomVariable)` is used to get access to the variable.

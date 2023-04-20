@@ -44,7 +44,7 @@ const MessageLoading = () => {
   return (
     <div className="mr-8">
       <div className={`flex-1 ${bg} p-4 shadow-md rounded whitespace-pre-wrap`}>
-        {partialContent && <MarkdownParser inputString={partialContent} />}
+        {partialContent}
         <div className="dot-flashing ml-4 my-2" />
       </div>
       <div className="flex gap-4 text-sm items-center mt-4 text-gray-700">

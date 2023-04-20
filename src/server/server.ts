@@ -8,6 +8,7 @@ import fs from 'fs'
 
 import { fileURLToPath } from 'url'
 import path from 'path'
+import { readProjectContext, writeProjectContext } from '@/context/projectContext'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // usually dist/
@@ -67,14 +68,15 @@ export default async function serve(
     res.json({ success: true })
   })
 
-  // Add stubs for GET and PUT routes for reading and writing the context file
   app.get('/api/context', async (_, res) => {
-    // TODO: Implement reading the context file
-    res.json({ success: true })
+    const context = readProjectContext()
+    res.json({ context })
   })
 
   app.put('/api/context', async (req, res) => {
-    // TODO: Implement writing the context file
+    const context = req.body
+    writeProjectContext(context)
+    messenger.agent.context = context
     res.json({ success: true })
   })
 

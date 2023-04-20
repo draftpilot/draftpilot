@@ -1,6 +1,7 @@
 import { ChatMessage, MessagePayload } from '@/types'
 import { log, warn } from '@/utils/logger'
 import axios, { AxiosError } from 'axios'
+
 class APIService {
   endpoint = '/api'
 
@@ -71,6 +72,17 @@ class APIService {
         .catch((error) => {
           reject(error)
         })
+    })
+  }
+
+  getContext = async (): Promise<string> => {
+    const response = await axios.get(`${this.endpoint}/context`)
+    return response.data.context
+  }
+
+  putContext = async (context: string): Promise<void> => {
+    await axios.put(`${this.endpoint}/context`, context, {
+      headers: { 'Content-Type': 'text/plain' },
     })
   }
 

@@ -1,5 +1,3 @@
-import { getReadOnlyTools } from '@/agent'
-import { Agent } from '@/agent/agent'
 import { chatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
@@ -8,18 +6,13 @@ import {
   compactMessageHistory,
   detectProjectLanguage,
   detectTypeFromResponse,
-  pastMessages,
 } from '@/directors/helpers'
 import { ProductAssistant } from '@/directors/productAssistant'
 import { WebPlanner } from '@/directors/webPlanner'
 import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
 import path from 'path'
-import fs from 'fs'
-import { findRoot } from '@/utils/utils'
-import inquirer from 'inquirer'
-import chalk from 'chalk'
-import config from '@/config'
+import { readProjectContext } from '@/context/projectContext'
 
 export class FullServiceDirector {
   interrupted = new Set<string>()
@@ -27,25 +20,7 @@ export class FullServiceDirector {
 
   init = async () => {
     indexer.loadFilesIntoVectors()
-
-    const contextFile = path.join(findRoot(), config.configFolder, 'context.txt')
-    if (!fs.existsSync(contextFile)) {
-      log(chalk.bold('Welcome to draftpilot!'))
-      log(
-        'Since this is your first time using draftpilot, please write a few sentences about your project to help your completions be more relevant.'
-      )
-      log(
-        'For example: the frontend uses react and tailwindcss and lives in src/react. The backend uses express and postgres.'
-      )
-      const answers = await inquirer.prompt([
-        { type: 'editor', name: 'context', message: 'Context:' },
-      ])
-
-      fs.writeFileSync(contextFile, answers.context)
-      this.context = answers.context
-    } else {
-      this.context = fs.readFileSync(contextFile, 'utf-8')
-    }
+    this.context = readProjectContext() || ''
   }
 
   onMessage = async (payload: MessagePayload, origPostMessage: PostMessage) => {

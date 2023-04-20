@@ -1,6 +1,6 @@
 import MergeTool from '@/react/components/MergeTool'
 import Message from '@/react/components/Message'
-import Onboarding from '@/react/components/Onboarding'
+import Onboarding from '@/react/components/NoMessages'
 import ProgressBar from '@/react/components/ProgressBar'
 import { fileStore } from '@/react/stores/fileStore'
 import { messageStore } from '@/react/stores/messageStore'

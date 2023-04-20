@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ChatInput from '@/react/components/ChatInput'
 import Messages from '@/react/components/Messages'
-import Onboarding from '@/react/components/Onboarding'
+import NoMessages from '@/react/components/NoMessages'
 import Sidebar from '@/react/components/Sidebar'
 import { messageStore } from '@/react/stores/messageStore'
 import { useStore } from '@nanostores/react'
@@ -12,9 +12,12 @@ import ContextEditor from '@/react/components/ContextEditor'
 function App() {
   const messages = useStore(messageStore.messages)
   const projectContext = useStore(uiStore.editingProjectContext)
-  const isOnboarding = messages.length === 0
+  const noMessages = messages.length === 0
 
   useWindowVisible()
+  useEffect(() => {
+    uiStore.init()
+  }, [])
 
   return (
     <div className="flex h-full relative">
@@ -28,10 +31,10 @@ function App() {
             <ContextEditor />
           </div>
         </div>
-      ) : isOnboarding ? (
+      ) : noMessages ? (
         <div className="flex-1 overflow-y-auto pt-8 pb-40">
           <div className="mx-auto w-[768px] max-w-full gap-4 flex flex-col">
-            <Onboarding />
+            <NoMessages />
             <ChatInput />
           </div>
         </div>
