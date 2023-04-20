@@ -6,9 +6,12 @@ import Sidebar from '@/react/components/Sidebar'
 import { messageStore } from '@/react/stores/messageStore'
 import { useStore } from '@nanostores/react'
 import useWindowVisible from '@/react/hooks/useWindowVisible'
+import uiStore from '@/react/stores/uiStore'
+import ContextEditor from '@/react/components/ContextEditor'
 
 function App() {
   const messages = useStore(messageStore.messages)
+  const projectContext = useStore(uiStore.editingProjectContext)
   const isOnboarding = messages.length === 0
 
   useWindowVisible()
@@ -19,7 +22,13 @@ function App() {
         <Sidebar />
       </div>
 
-      {isOnboarding ? (
+      {projectContext ? (
+        <div className="flex-1 overflow-y-auto pt-8 pb-40">
+          <div className="mx-auto w-[768px] max-w-full gap-4 flex flex-col">
+            <ContextEditor />
+          </div>
+        </div>
+      ) : isOnboarding ? (
         <div className="flex-1 overflow-y-auto pt-8 pb-40">
           <div className="mx-auto w-[768px] max-w-full gap-4 flex flex-col">
             <Onboarding />

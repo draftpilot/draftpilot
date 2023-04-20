@@ -67,6 +67,17 @@ export default async function serve(
     res.json({ success: true })
   })
 
+  // Add stubs for GET and PUT routes for reading and writing the context file
+  app.get('/api/context', async (_, res) => {
+    // TODO: Implement reading the context file
+    res.json({ success: true })
+  })
+
+  app.put('/api/context', async (req, res) => {
+    // TODO: Implement writing the context file
+    res.json({ success: true })
+  })
+
   const listen = (port: number) => {
     return new Promise<string>((resolve, reject) => {
       const server = ViteExpress.listen(app, port, () => {

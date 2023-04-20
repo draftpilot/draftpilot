@@ -1,5 +1,6 @@
 import { fileStore } from '@/react/stores/fileStore'
 import { messageStore } from '@/react/stores/messageStore'
+import uiStore from '@/react/stores/uiStore'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { useStore } from '@nanostores/react'
 import { useEffect } from 'react'
@@ -7,12 +8,14 @@ import { useEffect } from 'react'
 export default () => {
   const activeSession = useStore(messageStore.session)
   const sessions = useStore(messageStore.sessions)
+  const projectContext = useStore(uiStore.editingProjectContext)
 
   useEffect(() => {
     messageStore.loadSessions()
   }, [])
 
   const loadSession = (id: string) => {
+    if (projectContext) uiStore.toggleProjectContext()
     messageStore.loadSession(id)
     fileStore.newSession()
   }
@@ -40,8 +43,16 @@ export default () => {
   return (
     <div className="p-4 flex flex-col gap-2 overflow-y-auto h-full">
       <button
+        onClick={() => uiStore.toggleProjectContext()}
+        className={`p-2 rounded border-2 border-gray-600 cursor-pointer hover:bg-gray-400 
+          ${projectContext ? 'bg-gray-400' : ''} text-gray-700`}
+      >
+        Project Context
+      </button>
+
+      <button
         onClick={() => newSession()}
-        className="p-2 rounded border-2 border-gray-600 cursor-pointer hover:bg-gray-400 text-gray-700"
+        className="p-2 rounded border-2 border-blue-700 text-blue-700 cursor-pointer hover:bg-gray-400 "
       >
         New Session
       </button>
