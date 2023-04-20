@@ -55,9 +55,13 @@ export class Indexer {
   getFiles = async (glob?: string | string[]) => {
     const globs: string[] = !glob ? GLOB_WITHOUT_TESTS : Array.isArray(glob) ? glob : [glob || '']
 
-    const customExclude = (readConfig() || ({} as ProjectConfig)).excludeDir
+    const config = readConfig() || ({} as ProjectConfig)
+    const customExclude = config.excludeDir
     if (customExclude) {
       customExclude.split(',').forEach((dir) => globs.push(`!${dir}`))
+    }
+    if (config.glob) {
+      globs.push(...config.glob.split(','))
     }
     const files = await FastGlob(globs)
     this.files = files

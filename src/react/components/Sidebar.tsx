@@ -80,7 +80,6 @@ export default () => {
           </div>
         </div>
       ))}
-      <button className="red-button">Click me</button>
     </div>
   )
 }

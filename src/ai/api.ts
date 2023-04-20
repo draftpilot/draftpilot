@@ -40,7 +40,7 @@ export async function chatWithHistory(
   stop?: string | string[]
 ) {
   try {
-    const tempInput = writeTempFile(messages)
+    const tempInput = writeTempFile(messages, model)
 
     const completion = await openai.createChatCompletion({
       model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
@@ -51,7 +51,7 @@ export async function chatWithHistory(
     const response = completion.data.choices[0].message
     const output = response?.content || ''
 
-    writeTempFile(messages.concat({ content: output, role: 'assistant' }), tempInput)
+    writeTempFile(messages.concat({ content: output, role: 'assistant' }), model, tempInput)
 
     return output
   } catch (e) {
@@ -66,7 +66,7 @@ export async function streamChatWithHistory(
   stop?: string | string[]
 ) {
   try {
-    const tempInput = writeTempFile(messages)
+    const tempInput = writeTempFile(messages, model)
 
     const response = await openai.createChatCompletion(
       {
@@ -108,18 +108,18 @@ export async function streamChatWithHistory(
       stream.on('error', reject)
     })
 
-    writeTempFile(messages.concat({ content: output, role: 'assistant' }), tempInput)
+    writeTempFile(messages.concat({ content: output, role: 'assistant' }), model, tempInput)
     return output
   } catch (e) {
     throw parseError(e)
   }
 }
 
-function writeTempFile(data: ChatMessage[], existingFile?: string) {
-  const file = existingFile || '/tmp/' + Math.random().toString(36).substring(7) + '.json'
+function writeTempFile(data: ChatMessage[], requestNote: string, existingFile?: string) {
+  const file = existingFile || '/tmp/' + Math.random().toString(36).substring(7) + '.txt'
   const output = data.map((d) => d.role + ':\n' + d.content).join('\n---\n')
   fs.writeFileSync(file, output)
-  if (!existingFile) log('wrote request to', file)
+  if (!existingFile) log('wrote', requestNote, 'request to', file)
   return file
 }
 

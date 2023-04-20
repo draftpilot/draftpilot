@@ -36,7 +36,8 @@ async function serveStatic(app: core.Express) {
   info(`Running in ${pc.yellow(Config.mode)} mode`)
   if (Config.mode === 'production') {
     const config = await Vite.resolveConfig({}, 'build')
-    const distPath = path.resolve(config.root, config.build.outDir)
+    const root = Config.assetRoot || config.root
+    const distPath = path.resolve(root, config.build.outDir)
     app.use(express.static(distPath))
 
     if (!fs.existsSync(distPath)) {

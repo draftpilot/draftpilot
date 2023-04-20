@@ -17,13 +17,35 @@ import { log } from '@/utils/logger'
 import path from 'path'
 import fs from 'fs'
 import { findRoot } from '@/utils/utils'
+import inquirer from 'inquirer'
+import chalk from 'chalk'
+import config from '@/config'
 
 export class FullServiceDirector {
   interrupted = new Set<string>()
-  context: string = fs.readFileSync(findRoot() + '/context.txt', 'utf-8')
+  context: string = ''
 
-  init = () => {
+  init = async () => {
     indexer.loadFilesIntoVectors()
+
+    const contextFile = path.join(findRoot(), config.configFolder, 'context.txt')
+    if (!fs.existsSync(contextFile)) {
+      log(chalk.bold('Welcome to draftpilot!'))
+      log(
+        'Since this is your first time using draftpilot, please write a few sentences about your project to help your completions be more relevant.'
+      )
+      log(
+        'For example: the frontend uses react and tailwindcss and lives in src/react. The backend uses express and postgres.'
+      )
+      const answers = await inquirer.prompt([
+        { type: 'editor', name: 'context', message: 'Context:' },
+      ])
+
+      fs.writeFileSync(contextFile, answers.context)
+      this.context = answers.context
+    } else {
+      this.context = fs.readFileSync(contextFile, 'utf-8')
+    }
   }
 
   onMessage = async (payload: MessagePayload, origPostMessage: PostMessage) => {

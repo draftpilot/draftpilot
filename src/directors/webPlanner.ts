@@ -1,15 +1,9 @@
-import { getReadOnlyTools } from '@/agent'
-import { Agent } from '@/agent/agent'
-import { chatCompletion, chatWithHistory, streamChatWithHistory } from '@/ai/api'
+import { chatWithHistory, streamChatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { findRelevantDocs } from '@/directors/agentPlanner'
-import { CodebaseEditor } from '@/directors/codebaseEditor'
-import { compactMessageHistory, pastMessages } from '@/directors/helpers'
+import { compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, Intent, MessagePayload, Model, PostMessage } from '@/types'
-import { log } from '@/utils/logger'
 import { encode } from 'gpt-3-encoder'
-
-const MAX_PLAN_ITERATIONS = 3
 
 enum PlanOutcome {
   CONFIRM = 'CONFIRM:',
@@ -25,14 +19,16 @@ export class WebPlanner {
   outputFormat = (model: Model | undefined) =>
     `ALWAYS return in this output format:
 
-- If you know what to do, start with "CONFIRM:"
+- If you know what to do, start with "PLAN:"
   then the steps in markdown
   a '---' separator
   the list of files to modify (with full paths) and how they should be changed in this format:
   - path/to/file.tsx - add a row of buttons under the main <div>
   - other/path/style.css - add a new class called .my-class
+  (do not output actual code but include any context needed for an agent to make the change like 
+   paths to other files, actual urls, etc. do not make reference to previous chat messages):
   a '---' separator
-  confidence: how confident you are this is the right thing to do - low, medium, or high
+  confidence: how confident you are this is 100% correct, no need for confirmation - low, medium, or high
 
 - If you need to ask the user a question, start with "ASK:"
   then the proposed steps in markdown
@@ -56,7 +52,7 @@ export class WebPlanner {
         if (score < 0.15) return false
         return true
       })
-      .map((s) => s[0].pageContent.split('\n').slice(0, 50).join('\n'))
+      .map((s) => s[0].pageContent)
 
     // TODO: git history, past learnings
 
@@ -82,7 +78,7 @@ plan of action. ${this.outputFormat(model)}`
         break
       }
       tokenBudget -= encoded
-      promptParts.push(context)
+      promptParts.push(context, '\n')
     }
 
     const prompt = `${promptParts.join('\n')}\n${basePrompt}`

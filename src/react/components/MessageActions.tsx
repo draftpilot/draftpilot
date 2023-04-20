@@ -9,6 +9,7 @@ export function MessageActions({ message }: Props) {
   const edit = () => {
     messageStore.popMessages(message)
     messageStore.editMessage.set(message)
+    messageStore.intent.set(message.intent)
   }
 
   const regenerate = () => {

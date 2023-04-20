@@ -76,10 +76,10 @@ const MessageContents = ({ message, lastMessage }: Props) => {
     const thought = content.substring(9)
     bgColor = 'bg-blue-100'
     output = `*Thought*: ${thought}`
-  } else if (content.startsWith('CONFIRM:')) {
+  } else if (content.startsWith('PLAN:')) {
     bgColor = 'bg-yellow-200'
     const proposal = content.substring(9)
-    output = `**Confirm Action?**\n\n${proposal}*`
+    output = `**Action Plan**\n\n${proposal}*`
     postMessageAction = <ConfirmAction />
   } else if (content.startsWith('ASK:')) {
     bgColor = 'bg-yellow-200'

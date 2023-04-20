@@ -11,7 +11,7 @@ import { encode } from 'gpt-3-encoder'
 type EditPlan = { context: string; [path: string]: string }
 
 // for files below this length, have the AI output the entire file
-const FULL_OUTPUT_THRESHOLD = 500
+const FULL_OUTPUT_THRESHOLD = 250
 
 // actor which can take actions on a codebase
 export class CodebaseEditor {
@@ -26,21 +26,14 @@ export class CodebaseEditor {
       .reverse()
       .find((h) => h.role == 'assistant')
 
-    const prefix =
-      prevMessage?.role == 'assistant'
-        ? `Given the following plan: ${prevMessage.content}
+    const prefix = `Given the request in the prior messages,`
 
-And user response: ${message.content}`
-        : `Given the following user request: ${message.content}`
-
-    const prompt = `${prefix}
-    
-Come up with a list of files to create or modify and the changes to make to them. Do not make up
+    const prompt = `${prefix} come up with a list of files to create or modify and the changes to make to them. Do not make up
 a plan if uncertain. If you need more context, you can ask for it, otherwise reply in this exact
 JSON format:
 {
-  "context": "description of overall changes to be made so AI agents have the context",
-  "path/to/file": "detailed list of changes to make so an AI can understand"
+  "path/to/file": "detailed list of changes to make so an AI can understand",
+  "path/to/bigchange": "! if the changes are large/complex (e.g. 10+ lines of code), add ! at the beginning"
   ...
 }
 
@@ -54,7 +47,7 @@ JSON Change Plan or question to ask the user:`
 
     const parsed: EditPlan = fuzzyParseJSON(response)
     if (parsed) {
-      const context = parsed.context || history[history.length - 1].content
+      const context = prevMessage ? prevMessage.content : message.content
       const files = Object.keys(parsed)
         .filter((f) => f != 'context')
         .map((f) => {
@@ -75,7 +68,8 @@ JSON Change Plan or question to ask the user:`
       await Promise.all(
         files.map(async (file) => {
           const changes = parsed[file]
-          await this.editFile(model, context, file, changes, postMessage)
+          const fileModel = '4' // changes.startsWith('!') ? '4' : model
+          await this.editFile(fileModel, context, file, changes, postMessage)
         })
       )
       postMessage({
@@ -125,14 +119,14 @@ Now editing: ${file}
 Changes to make: ${JSON.stringify(changes)}
 
 ---
-${contents}
+${decoratedContents}
 ---
 `
 
     const promptSuffix = outputFullFile
       ? `---
 
-Output the entire file that I will write to disk, only changing the requested lines, and no markdown:`
+Output the entire file that I will write to disk, only changing the requested lines, and no markdown like \`\`\`:`
       : `---
 
 You return a sequence of operations in JSON. This example shows all possible operations & thier
@@ -150,7 +144,8 @@ JSON array of operations to perform:`
       })
       .map((s) => s[0])
 
-    let tokenBudget = (model == '3.5' ? 3500 : 7000) - encode(promptPrefix + promptSuffix).length
+    const estimatedOutput = outputFullFile ? encode(contents).length || 300 : 100
+    let tokenBudget = (model == '3.5' ? 3900 : 7000) - encode(promptPrefix + promptSuffix).length
     const funcsToShow = (similarFuncs || []).filter((doc) => {
       const encoded = encode(doc.pageContent).length
       if (tokenBudget > encoded) {
@@ -166,7 +161,6 @@ JSON array of operations to perform:`
 
     const prompt = promptPrefix + decoratedFuncs + promptSuffix
 
-    const estimatedOutput = outputFullFile ? encode(contents).length || 300 : 100
     const totalTokens = encode(prompt).length + estimatedOutput
     const estimatedDuration = totalTokens * (model == '3.5' ? 7 : 10)
 
@@ -184,10 +178,14 @@ JSON array of operations to perform:`
       if (!parsed) throw new Error(`Could not parse response`)
 
       output = this.applyOps(contents, parsed)
-    } else if (output.endsWith('```')) {
-      // remove markdown
+    } else if (output.startsWith('```') || output.endsWith('```')) {
       const start = output.indexOf('```')
-      output = output.substring(start + 3, output.length - 3)
+      const end = output.lastIndexOf('```')
+      if (end > start + 100) output = output.substring(start + 3, end)
+    } else if (output.startsWith('---') || output.endsWith('---')) {
+      const start = output.indexOf('---')
+      const end = output.lastIndexOf('---')
+      if (end > start + 100) output = output.substring(start + 3, end)
     }
 
     if (!contents) fs.mkdirSync(path.dirname(file), { recursive: true })
@@ -289,11 +287,14 @@ const findLineIndex = (lines: string[], op: OpWithLine) => {
   if (!line) return -1
   if (!startLine) return line
   const trimmed = startLine.trim()
-  for (let i = 0; i < 10; i++) {
-    if (lines[line + i]?.trim() == trimmed) return line + i
-    if (lines[line - i]?.trim() == trimmed) return line - i
+  // do a search starting from the provided line number
+  // GPT is real bad with line numbers so it could be anywhere though
+  const maxSearch = Math.max(line, lines.length - line)
+  for (let i = 0; i < maxSearch; i++) {
+    if (i < lines.length && lines[line + i]?.trim() == trimmed) return line + i
+    if (i >= 0 && lines[line - i]?.trim() == trimmed) return line - i
   }
-  log('could not find starting line for op', op)
+  log('could not find starting line for op, searched', maxSearch, op)
   if (line > lines.length - 0) return lines.length - 1
   return line
 }
@@ -356,7 +357,6 @@ type PasteOp = {
 }
 
 type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp
-const ops: Op['op'][] = ['replace', 'insert', 'delete', 'edit', 'copy', 'cut', 'paste']
 
 const EXAMPLE: Op[] = [
   { op: 'replace', search: 'text to search', replace: 'replace with text' },

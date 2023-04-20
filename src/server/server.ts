@@ -11,11 +11,12 @@ import path from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // usually dist/
-const assetRoot = path.dirname(__dirname) // usually draftpilot/
+const assetRoot = undefined // path.dirname(__dirname) // usually draftpilot/
+log('my asset root', assetRoot)
 
 const PORT = 3080
 
-export default function serve(
+export default async function serve(
   port: number = PORT,
   mode?: 'development' | 'production'
 ): Promise<string> {
@@ -23,6 +24,7 @@ export default function serve(
 
   const app = express()
   const messenger = new Messenger()
+  await messenger.init()
 
   app.use(bodyParser.json())
   app.use(bodyParser.text())

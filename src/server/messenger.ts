@@ -5,8 +5,8 @@ import { Response } from 'express'
 export class Messenger {
   agent = new FullServiceDirector()
 
-  constructor() {
-    this.agent.init()
+  async init() {
+    await this.agent.init()
   }
 
   respondToMessages = async (input: MessagePayload, res: Response) => {
