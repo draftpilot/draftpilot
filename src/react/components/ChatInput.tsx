@@ -85,6 +85,10 @@ export default () => {
 
   const intent = useStore(messageStore.intent)
 
+  if (intent == Intent.TESTPILOT || intent == Intent.CRASHPILOT) {
+    return <div className="text-center text-gray-500">This feature is coming soon.</div>
+  }
+
   return (
     <div className="pb-4 bg-gray-200">
       <div className="bg-white shadow-md rounded flex relative">
