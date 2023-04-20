@@ -4,7 +4,7 @@ import { splitOnce } from '@/utils/utils'
 import { ClipboardIcon } from '@heroicons/react/24/outline'
 import hljs from 'highlight.js/lib/common'
 import { Fragment, useEffect, useRef, useState } from 'react'
-import snarkdown from 'snarkdown'
+import MarkdownParser from './MarkdownParser'
 
 export function MessageBody({ message, content }: { message: ChatMessage; content: string }) {
   const contentBlocks = splitCodeBlocks(content)
@@ -13,7 +13,7 @@ export function MessageBody({ message, content }: { message: ChatMessage; conten
     <>
       {contentBlocks.map((block, i) => {
         if (block.type === 'text') {
-          return <Text key={i} children={block.content} />
+          return <MarkdownParser key={i} inputString={block.content} />
         } else {
           return (
             <Fragment key={i}>
@@ -24,14 +24,6 @@ export function MessageBody({ message, content }: { message: ChatMessage; conten
         }
       })}
     </>
-  )
-}
-function Text({ children }: { children: string }) {
-  return (
-    <div
-      className="whitespace-pre-wrap"
-      dangerouslySetInnerHTML={{ __html: snarkdown(children) }}
-    />
   )
 }
 function Code({ language, children }: { language: string | undefined; children: string }) {

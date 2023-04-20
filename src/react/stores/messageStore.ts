@@ -87,6 +87,14 @@ class MessageStore {
     if (typeof message === 'string') {
       const newMessage = (this.partialMessage.get() || '') + message
       this.partialMessage.set(newMessage)
+    } else if (message.error) {
+      if (typeof message.error == 'string') {
+        this.error.set(message.error)
+      } else if (message.error.message) {
+        this.error.set(message.error.message)
+      } else {
+        this.error.set(JSON.stringify(message.error))
+      }
     } else {
       this.maybePlayDingSound()
       if (this.partialMessage.get()) {

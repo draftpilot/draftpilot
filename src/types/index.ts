@@ -37,6 +37,7 @@ export type ChatMessage = {
   intent?: string
   progressDuration?: number
   progressStart?: number
+  error?: { message: string } | string
   options?: { model?: Model; tools?: boolean; type?: string }
   buttons?: { label: string; onClick: () => void }[]
 }

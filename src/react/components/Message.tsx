@@ -46,14 +46,14 @@ const MessageLoading = () => {
         {partialContent}
         <div className="dot-flashing ml-4 my-2" />
       </div>
-      <div className="flex gap-4 text-sm">
+      <div className="flex gap-4 text-sm items-center mt-4 text-gray-700">
         <div>Feel free to switch tabs, we'll play a ding when a new message arrives.</div>
         <a
           href="#"
-          className="text-gray-400 mt-4 p-2 hover:bg-gray-300 rounded"
+          className="text-red-400 p-2 hover:bg-gray-300 rounded"
           onClick={() => messageStore.interruptRequest()}
         >
-          Interrupt
+          Interrupt request?
         </a>
       </div>
     </div>
@@ -74,7 +74,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
 
   if (!message) return null
 
-  const content = message.content
+  const content = message.content || ''
   let output = content
   let bgColor = 'bg-blue-300'
   let postMessageAction: JSX.Element | undefined
@@ -89,8 +89,8 @@ const MessageContents = ({ message, lastMessage }: Props) => {
     output = `*Thought*: ${thought}`
   } else if (content.startsWith('PLAN:')) {
     bgColor = 'bg-yellow-200'
-    const proposal = content.substring(9)
-    output = `**Action Plan**\n\n${proposal}*`
+    const proposal = content.substring(5)
+    output = `**Action Plan**${proposal}*`
     postMessageAction = <ConfirmAction />
   } else if (content.startsWith('ASK:')) {
     bgColor = 'bg-yellow-200'
