@@ -1,4 +1,5 @@
 import ChatInput from '@/react/components/ChatInput'
+import GraphSidebar from '@/react/components/GraphSidebar'
 import Messages from '@/react/components/Messages'
 import Sidebar from '@/react/components/Sidebar'
 
@@ -13,7 +14,9 @@ function App() {
           <Messages />
         </div>
       </div>
-
+      <div className="hidden sm:block w-56 bg-gray-300">
+        <GraphSidebar />
+      </div>
       <div className="fixed bottom-0 left-0 sm:left-56 right-0">
         <div className="mx-auto w-[768px] max-w-full">
           <div className="bg-gradient-to-b from-transparent to-gray-200 h-10" />
