@@ -122,6 +122,10 @@ class MessageStore {
       if (message.content.endsWith('confidence: high')) {
         this.automaticAction()
       }
+
+      if (message.content.startsWith('PLAN: ')) {
+        this.maybeUpdateSessionName(message.content)
+      }
     }
   }
 
@@ -135,7 +139,11 @@ class MessageStore {
       })
     const timeout = setTimeout(() => {
       clearMessage()
-      const proceed: ChatMessage = { role: 'user', content: 'Automatically proceeding' }
+      const proceed: ChatMessage = {
+        role: 'user',
+        content: 'Automatically proceeding',
+        intent: Intent.ACTION,
+      }
       this.sendMessage(proceed)
     }, 5000)
 
@@ -199,6 +207,13 @@ class MessageStore {
     this.sessions.set([session, ...this.sessions.get()])
   }
 
+  maybeUpdateSessionName = (content: string) => {
+    const name = content.substring(0, content.indexOf('\n')).replace('PLAN: ', '')
+    if (name.length > 3) {
+      this.renameSession(this.session.get().id, name)
+    }
+  }
+
   loadSessions = async () => {
     const sessions = await this.sessionDb.sessions.orderBy('id').reverse().toArray()
     this.sessions.set(sessions)
@@ -236,6 +251,7 @@ class MessageStore {
     session.name = name
     await this.sessionDb.sessions.put(session)
     this.sessions.set(this.sessions.get().map((s) => (s.id === id ? session : s)))
+    if (this.session.get().id == id) this.session.set(session)
   }
 
   shouldDing = true

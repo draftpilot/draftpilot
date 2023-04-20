@@ -9,6 +9,7 @@ import Button from '@/react/components/Button'
 import { messageStore } from '@/react/stores/messageStore'
 import { useStore } from '@nanostores/react'
 import ProgressBar from '@/react/components/ProgressBar'
+import MarkdownParser from '@/react/components/MarkdownParser'
 
 export type Props = {
   message?: ChatMessage
@@ -43,7 +44,7 @@ const MessageLoading = () => {
   return (
     <div className="mr-8">
       <div className={`flex-1 ${bg} p-4 shadow-md rounded whitespace-pre-wrap`}>
-        {partialContent}
+        {partialContent && <MarkdownParser inputString={partialContent} />}
         <div className="dot-flashing ml-4 my-2" />
       </div>
       <div className="flex gap-4 text-sm items-center mt-4 text-gray-700">

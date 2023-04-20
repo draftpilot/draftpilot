@@ -19,7 +19,7 @@ export class WebPlanner {
   outputFormat = (model: Model | undefined) =>
     `ALWAYS return in this output format:
 
-- If you know what to do, start with "PLAN:"
+- If you know what to do, start with "PLAN: <3-6 word summary of the task>"
   then the steps in markdown
   a '---' separator
   the list of files to modify (with full paths) and how they should be changed in this format:
