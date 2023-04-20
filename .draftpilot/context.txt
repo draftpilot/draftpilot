@@ -1,0 +1,3 @@
+The frontend uses tailwindcss and react and lives in src/react. The backend uses
+nodejs and express and lives in src/server. Database is sqlite3 and hnsw for vectors in src/db.
+AI code is built on openai and called via src/ai. Business logic lives in src/directors.

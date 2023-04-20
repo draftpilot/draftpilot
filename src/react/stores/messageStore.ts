@@ -4,6 +4,7 @@ import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
 import { generateUUID, smartTruncate } from '@/utils/utils'
+import { log } from '@/utils/logger'
 
 type Session = {
   id: string
@@ -40,7 +41,7 @@ class MessageStore {
 
   editMessage = atom<ChatMessage | null>(null)
 
-  intent = atom<string | undefined>()
+  intent = atom<string | undefined>(Intent.DRAFTPILOT)
 
   error = atom<string | undefined>()
 
@@ -56,6 +57,7 @@ class MessageStore {
   sendMessage = async (message: ChatMessage, skipHistory?: boolean) => {
     const id = generateUUID()
     const payload: MessagePayload = { id, message, history: this.messages.get() }
+    log(payload)
     if (!message.intent && this.intent.get()) message.intent = this.intent.get()
 
     if (!this.session.get().name) this.updateSessionName(message)
@@ -107,7 +109,7 @@ class MessageStore {
       if (message.content.endsWith('confidence: high')) {
         this.intent.set(Intent.ACTION)
         this.sendMessage({
-          content: 'Automatically proceed since confidence is high',
+          content: 'Automatically proceeding since confidence is high',
           role: 'user',
         })
       }

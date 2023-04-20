@@ -168,7 +168,7 @@ JSON array of operations to perform:`
 
     const estimatedOutput = outputFullFile ? encode(contents).length || 300 : 100
     const totalTokens = encode(prompt).length + estimatedOutput
-    const estimatedDuration = totalTokens * (model == '3.5' ? 3 : 10)
+    const estimatedDuration = totalTokens * (model == '3.5' ? 7 : 10)
 
     postMessage({
       role: 'assistant',

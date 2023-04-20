@@ -126,7 +126,7 @@ export function smartTruncate(input: string, truncationPoint: number) {
   const withoutPrepositions = truncatedString.replace(/\b(with|on|in|at|to|for|of)$/gi, '').trim()
 
   const filesShortened = withoutPrepositions.split(' ').map((word) => {
-    if (word.includes(path.sep)) return path.basename(word)
+    if (word.includes('/')) return word.substring(word.lastIndexOf('/') + 1)
     else return word
   })
 
