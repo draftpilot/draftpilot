@@ -132,6 +132,8 @@ const MessageContents = ({ message, lastMessage }: Props) => {
           )}
 
           {message.attachments && <Attachments attachments={message.attachments} />}
+
+          {message.buttons && <MessageButtons message={message} />}
         </div>
 
         {hasMore && !expanded && (
@@ -162,6 +164,19 @@ function PossibleAction() {
         Take action?
       </Button>
       <div>or, type below to continue conversation</div>
+    </div>
+  )
+}
+
+function MessageButtons({ message }: { message: ChatMessage }) {
+  const buttons = message.buttons || []
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {buttons.map((button, i) => (
+        <Button key={i} className="bg-blue-500 hover:bg-blue-600" onClick={button.onClick}>
+          {button.label}
+        </Button>
+      ))}
     </div>
   )
 }

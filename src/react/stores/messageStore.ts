@@ -98,10 +98,9 @@ class MessageStore {
       if (message.progressDuration) message.progressStart = Date.now()
       else if (message.progressDuration == 0) {
         this.updateMessages(
-          messages.map((m) => {
-            console.log('m', m.content, message.content, m.progressStart)
-            if (m.content == message.content && m.progressStart) return message
-            else return m
+          messages.filter((m) => {
+            if (m.content == message.content && m.progressStart) return false
+            return true
           })
         )
         return
@@ -109,30 +108,39 @@ class MessageStore {
       this.updateMessages([...messages, message])
 
       if (message.content.endsWith('confidence: high')) {
-        this.intent.set(Intent.ACTION)
-
-        const content = 'Proceeding in 5 seconds since confidence is high...'
-        const timeout = setTimeout(() => {
-          this.handleIncoming({
-            content,
-            role: 'system',
-            progressDuration: 0,
-          })
-        }, 5000)
-
-        this.handleIncoming({
-          content,
-          role: 'system',
-          progressDuration: 5000,
-          buttons: [
-            {
-              label: 'Cancel',
-              onClick: () => clearTimeout(timeout),
-            },
-          ],
-        })
+        this.automaticAction()
       }
     }
+  }
+
+  automaticAction = () => {
+    const content = 'Proceeding in 5 seconds since confidence is high...'
+    const clearMessage = () =>
+      this.handleIncoming({
+        content,
+        role: 'system',
+        progressDuration: 0,
+      })
+    const timeout = setTimeout(() => {
+      clearMessage()
+      const proceed: ChatMessage = { role: 'user', content: 'Automatically proceeding' }
+      this.sendMessage(proceed)
+    }, 5000)
+
+    this.handleIncoming({
+      content,
+      role: 'system',
+      progressDuration: 5000,
+      buttons: [
+        {
+          label: 'Cancel',
+          onClick: () => {
+            clearTimeout(timeout)
+            clearMessage()
+          },
+        },
+      ],
+    })
   }
 
   addSystemMessage = (message: ChatMessage) => {
