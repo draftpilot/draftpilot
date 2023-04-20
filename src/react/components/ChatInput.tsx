@@ -139,16 +139,16 @@ export default () => {
             className="text-red-600 cursor-pointer"
             onClick={() => messageStore.intent.set(Intent.ACTION)}
           >
-            Switch to Execution Mode
+            Execution Mode
           </a>
         )}
-        {intent == Intent.ACTION && (
+        {intent != Intent.PLANNER && (
           <a
             href="#"
             className="text-blue-600 cursor-pointer"
-            onClick={() => messageStore.intent.set(Intent.ACTION)}
+            onClick={() => messageStore.intent.set(Intent.DRAFTPILOT)}
           >
-            Switch to Planning Mode
+            Planning Mode
           </a>
         )}
         {intent != Intent.PRODUCT && (
@@ -160,7 +160,7 @@ export default () => {
             Product Manager Mode
           </a>
         )}
-        {intent && intent != Intent.ANSWER && (
+        {intent && intent != Intent.CHAT && (
           <a href="#" onClick={() => messageStore.intent.set(Intent.ANSWER)}>
             Chat Mode
           </a>
