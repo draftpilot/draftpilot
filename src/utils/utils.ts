@@ -125,5 +125,10 @@ export function smartTruncate(input: string, truncationPoint: number) {
 
   const withoutPrepositions = truncatedString.replace(/\b(with|on|in|at|to|for|of)$/gi, '').trim()
 
-  return withoutPrepositions
+  const filesShortened = withoutPrepositions.split(' ').map((word) => {
+    if (word.includes(path.sep)) return path.basename(word)
+    else return word
+  })
+
+  return filesShortened.join(' ')
 }

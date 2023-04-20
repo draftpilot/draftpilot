@@ -34,7 +34,7 @@ const MessageLoading = () => {
 
   return (
     <div className="mr-8">
-      <div className={`flex-1 bg-blue-100 p-4 shadow-md rounded`}>
+      <div className={`flex-1 bg-blue-100 p-4 shadow-md rounded whitespace-pre-wrap`}>
         {partialMessage}
         <div className="dot-flashing ml-4 my-2" />
       </div>
