@@ -1,30 +1,47 @@
-import React from 'react';
-import { Graph } from 'react-d3-graph';
+import React from 'react'
+import { Graph, GraphConfiguration } from 'react-d3-graph'
 
 interface GraphSidebarProps {
-  graphData: any;
+  graphData: GraphData
+}
+interface Node {
+  id: string
+  label: string
+  type: string
+  // add any other properties specific to your use case
+}
+
+interface Link {
+  source: string
+  target: string
+  // add any other properties specific to your use case
+}
+
+interface GraphData {
+  nodes: Node[]
+  links: Link[]
 }
 
 const GraphSidebar: React.FC<GraphSidebarProps> = ({ graphData }) => {
-  const config = {
+  const config: Partial<GraphConfiguration<Node, Link>> = {
     nodeHighlightBehavior: true,
     node: {
       color: 'lightgreen',
-      size: 120,
+      size: 400,
       highlightStrokeColor: 'blue',
     },
     link: {
       highlightColor: 'lightblue',
     },
-  };
+  }
 
-  const onClickNode = function(nodeId: any) {
-    window.alert(`Clicked node ${nodeId}`);
-  };
+  const onClickNode = function (nodeId: any) {
+    window.alert(`Clicked node ${nodeId}`)
+  }
 
-  const onClickLink = function(source: any, target: any) {
-    window.alert(`Clicked link between ${source} and ${target}`);
-  };
+  const onClickLink = function (source: any, target: any) {
+    window.alert(`Clicked link between ${source} and ${target}`)
+  }
 
   return (
     <div>
@@ -36,7 +53,7 @@ const GraphSidebar: React.FC<GraphSidebarProps> = ({ graphData }) => {
         onClickLink={onClickLink}
       />
     </div>
-  );
-};
+  )
+}
 
-export default GraphSidebar;
+export default GraphSidebar
