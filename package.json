@@ -59,8 +59,7 @@
     "react-markdown": "^8.0.7",
     "snarkdown": "^2.0.0",
     "sqlite3": "^5.1.6",
-    "typescript": "^5.0.4",
-    "vite": "^4.2.0"
+    "typescript": "^5.0.4"
   },
   "devDependencies": {
     "@types/diff": "^5.0.3",
@@ -87,6 +86,7 @@
     "prettier": "^2.7.1",
     "tailwindcss": "^3.3.1",
     "tsc-alias": "^1.8.2",
+    "vite": "^4.2.0",
     "vite-plugin-external": "^1.2.8"
   },
   "prettier": {
