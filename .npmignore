@@ -1,0 +1,12 @@
+node_modules
+.DS_Store
+.yarn/*
+plan.json
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.draftpilot/history.json
+.draftpilot/docs.sqlite
+.draftpilot/cache.json
