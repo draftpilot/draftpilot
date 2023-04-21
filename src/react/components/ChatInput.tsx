@@ -107,7 +107,7 @@ export default () => {
           loadingComponent={loadingComponent}
           innerRef={(textarea: HTMLTextAreaElement) => (ref.current = textarea)}
           className="p-4 h-14 w-full focus:ring-0 focus-visible:ring-0"
-          dropdownClassName="bg-white shadow-md rounded absolute w-full"
+          dropdownClassName="bg-white shadow-md rounded absolute z-10"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()

@@ -15,7 +15,11 @@ export function MessageBody({ message, content }: { message: ChatMessage; conten
         if (block.type === 'text') {
           if (message.role === 'user') {
             // user isn't writing markdown
-            return <div className="whitespace-pre-wrap">{block.content}</div>
+            return (
+              <div key={i} className="whitespace-pre-wrap">
+                {block.content}
+              </div>
+            )
           } else {
             return <MarkdownParser key={i} inputString={block.content} />
           }
