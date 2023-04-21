@@ -10,6 +10,7 @@ import uiStore from '@/react/stores/uiStore'
 type Session = {
   id: string
   name: string
+  cwd: string
 }
 
 class SessionDatabase extends Dexie {
@@ -20,7 +21,12 @@ class SessionDatabase extends Dexie {
     super('sessionDb')
     this.version(1).stores({
       sessions: 'id,name',
-      messages: 'id,messages',
+      messages: 'id',
+    })
+
+    this.version(2).stores({
+      sessions: '&id,name,cwd',
+      messages: '&id',
     })
   }
 }
@@ -30,7 +36,7 @@ class MessageStore {
 
   // --- fields
 
-  session = atom<Session>({ id: new Date().toISOString(), name: '' })
+  session = atom<Session>({ id: new Date().toISOString(), name: '', cwd: '' })
 
   sessions = atom<Session[]>([])
 
@@ -197,6 +203,13 @@ class MessageStore {
 
   // --- session management
 
+  cwd: string = ''
+  setCwd = (cwd: string) => {
+    this.cwd = cwd
+    this.loadSessions()
+    this.session.set({ ...this.session.get(), cwd })
+  }
+
   updateSessionName = (message: ChatMessage) => {
     const input = message.content
     const name = smartTruncate(input, 50)
@@ -215,7 +228,7 @@ class MessageStore {
   }
 
   loadSessions = async () => {
-    const sessions = await this.sessionDb.sessions.orderBy('id').reverse().toArray()
+    const sessions = await this.sessionDb.sessions.where('cwd').equals(this.cwd).reverse().toArray()
     this.sessions.set(sessions)
   }
 
@@ -235,7 +248,8 @@ class MessageStore {
   }
 
   newSession = () => {
-    this.session.set({ id: new Date().toISOString(), name: '' })
+    const cwd = this.cwd
+    this.session.set({ id: new Date().toISOString(), name: '', cwd })
     this.clearData()
   }
 

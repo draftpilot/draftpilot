@@ -23,6 +23,10 @@ class FileStore {
     const response = await API.loadFiles()
     this.files.set(response.files || [])
     this.cwd.set(response.cwd || '')
+
+    if (response.cwd) {
+      messageStore.setCwd(response.cwd)
+    }
   }
 
   search = (query: string) => {
