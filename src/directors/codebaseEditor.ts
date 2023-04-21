@@ -88,6 +88,7 @@ JSON Change Plan or question to ask the user:`
         role: 'assistant',
         content: response,
         options: { model },
+        intent: Intent.ACTION,
       })
     }
   }
