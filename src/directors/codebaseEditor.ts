@@ -28,9 +28,8 @@ export class CodebaseEditor {
 
     const prefix = `Given the request in the prior messages,`
 
-    const prompt = `${prefix} come up with a list of files to create or modify and the changes to make to them. Do not make up
-a plan if uncertain, and do not make up files or paths to edit other than what was mentioned. If you need more context, 
-you can ask for it, otherwise reply in this exact JSON format:
+    const prompt = `${prefix} come up with a list of files to create or modify and the changes to make to them.
+If you need more context, you can ask for it, otherwise reply in this exact JSON format:
 {
   "path/to/file": "detailed list of changes to make so an AI can understand",
   "path/to/bigchange": "! if the changes are large/complex (e.g. 10+ lines of code), add ! at the beginning"
@@ -41,7 +40,13 @@ The JSON output should ONLY contain string values.
 
 JSON Change Plan or question to ask the user:`
     const newMessage = { ...message, content: prompt }
-    const messages = compactMessageHistory([...history, newMessage], model)
+    const messages = compactMessageHistory([...history, newMessage], model, {
+      role: 'system',
+      content: `You are part of a larger machine-run system. 
+1. Do not make up a plan if uncertain.
+2. Do not make up or reference files/paths to edit other than what was mentioned
+3. Only output in the JSON format specified, with file paths as keys & changes as values.`,
+    })
 
     const response = await chatWithHistory(messages, model)
 
