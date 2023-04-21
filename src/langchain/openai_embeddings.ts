@@ -1,6 +1,7 @@
 import { Configuration, OpenAIApi, CreateEmbeddingRequest, ConfigurationParameters } from 'openai'
 import { chunkArray } from './util.js'
 import { Embeddings, EmbeddingsParams } from './embeddings.js'
+import { ServerAPI } from '../api.js'
 
 interface ModelParams {
   /** Model name to use */
@@ -73,13 +74,17 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
     const embeddings: number[][] = []
 
     for (let i = 0; i < subPrompts.length; i += 1) {
-      const input = subPrompts[i]
-      const { data } = await this.embeddingWithRetry({
-        model: this.modelName,
-        input,
-      })
-      for (let j = 0; j < input.length; j += 1) {
-        embeddings.push(data.data[j].embedding)
+      try {
+        const input = subPrompts[i]
+        const { data } = await this.embeddingWithRetry({
+          model: this.modelName,
+          input,
+        })
+        for (let j = 0; j < input.length; j += 1) {
+          embeddings.push(data.data[j].embedding)
+        }
+      } catch (e: any) {
+        console.error('Error in embedDocuments:', ServerAPI.unwrapError(e))
       }
     }
 
@@ -87,11 +92,16 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
   }
 
   async embedQuery(text: string): Promise<number[]> {
-    const { data } = await this.embeddingWithRetry({
-      model: this.modelName,
-      input: this.stripNewLines ? text.replaceAll('\n', ' ') : text,
-    })
-    return data.data[0].embedding
+    try {
+      const { data } = await this.embeddingWithRetry({
+        model: this.modelName,
+        input: this.stripNewLines ? text.replaceAll('\n', ' ') : text,
+      })
+      return data.data[0].embedding
+    } catch (e: any) {
+      console.error('Error in embedQuery:', ServerAPI.unwrapError(e))
+      return []
+    }
   }
 
   private async embeddingWithRetry(request: CreateEmbeddingRequest) {

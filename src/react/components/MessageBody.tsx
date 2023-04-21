@@ -13,7 +13,12 @@ export function MessageBody({ message, content }: { message: ChatMessage; conten
     <>
       {contentBlocks.map((block, i) => {
         if (block.type === 'text') {
-          return <MarkdownParser key={i} inputString={block.content} />
+          if (message.role === 'user') {
+            // user isn't writing markdown
+            return <div className="whitespace-pre-wrap">{block.content}</div>
+          } else {
+            return <MarkdownParser key={i} inputString={block.content} />
+          }
         } else {
           return (
             <Fragment key={i}>

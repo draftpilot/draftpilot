@@ -79,13 +79,17 @@ export default () => {
 
   const loadingComponent = useCallback(() => <div>Loading...</div>, [])
 
-  const placeholder = inProgress ? 'Sending...' : 'Type "@" to reference a file'
-
   useAutosizeTextArea(ref.current, value)
 
   const intent = useStore(messageStore.intent)
 
-  if (intent == Intent.TESTPILOT || intent == Intent.CRASHPILOT) {
+  const placeholder = inProgress
+    ? 'Sending...'
+    : (intent == Intent.CRASHPILOT
+        ? 'Paste a bug report or crash log.'
+        : 'What would you like to do?') + ' Type "@" to reference a file'
+
+  if (intent == Intent.TESTPILOT) {
     return <div className="text-center text-gray-500">This feature is coming soon.</div>
   }
 
