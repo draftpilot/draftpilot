@@ -21,16 +21,16 @@ export class CodebaseEditor {
     const model = message.options?.model || '3.5'
     const attachments = attachmentListToString(message.attachments)
 
-    const prevMessage = history
-      .slice()
-      .reverse()
-      .find((h) => h.role == 'assistant')
+    const planMessageIndex = history.findLastIndex((h) => h.intent == Intent.PLANNER)
+
+    // only accept history after plan message. could be undefined though.
+    const planMessage = history[planMessageIndex]
+    const recentHistory = planMessage ? history.slice(planMessageIndex) : history
 
     const prefix = `Given the request in the prior messages,`
 
-    const prompt = `${prefix} come up with a list of files to create or modify and the changes to make to them. Do not make up
-a plan if uncertain. If you need more context, you can ask for it, otherwise reply in this exact
-JSON format:
+    const prompt = `${prefix} come up with a list of files to create or modify and the changes to make to them.
+If you need more context, you can ask for it, otherwise reply in this exact JSON format:
 {
   "path/to/file": "detailed list of changes to make so an AI can understand",
   "path/to/bigchange": "! if the changes are large/complex (e.g. 10+ lines of code), add ! at the beginning"
@@ -41,13 +41,19 @@ The JSON output should ONLY contain string values.
 
 JSON Change Plan or question to ask the user:`
     const newMessage = { ...message, content: prompt }
-    const messages = compactMessageHistory([...history, newMessage], model)
+    const messages = compactMessageHistory([...recentHistory, newMessage], model, {
+      role: 'system',
+      content: `You are part of a larger machine-run system. 
+1. Do not make up a plan if uncertain.
+2. Do not make up or reference files/paths to edit other than what was mentioned
+3. Only output in the JSON format specified, with file paths as keys & changes as values.`,
+    })
 
     const response = await chatWithHistory(messages, model)
 
     const parsed: EditPlan = fuzzyParseJSON(response)
     if (parsed) {
-      const context = prevMessage ? prevMessage.content : message.content
+      const context = planMessage ? planMessage.content : message.content
       const files = Object.keys(parsed)
         .filter((f) => f != 'context')
         .map((f) => {
@@ -83,6 +89,7 @@ JSON Change Plan or question to ask the user:`
         role: 'assistant',
         content: response,
         options: { model },
+        intent: Intent.ACTION,
       })
     }
   }

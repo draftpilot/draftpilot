@@ -11,8 +11,8 @@ type FuncChunk = {
   line: number
 }
 
-// chunk every 100 lines for long functions
-const CHUNK_SIZE = 100
+// chunk every 10 lines
+const CHUNK_SIZE = 50
 
 // parses a javascript / typescript file and returns functions
 export class TSExtractor implements Extractor {

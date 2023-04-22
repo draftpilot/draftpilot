@@ -1,4 +1,4 @@
-import { chatWithHistory } from '@/ai/api'
+import { chatWithHistory, streamChatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
 import {
@@ -13,6 +13,7 @@ import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
 import path from 'path'
 import { readProjectContext } from '@/context/projectContext'
+import { CrashPilot } from '@/directors/crashPilot'
 
 export class FullServiceDirector {
   interrupted = new Set<string>()
@@ -154,6 +155,8 @@ Analyze and categorize my query: `
     } else if (intent == Intent.PLANNER || intent == Intent.DRAFTPILOT) {
       if (!attachmentBody) attachmentBody = attachmentListToString(message.attachments)
       await this.usePlanningAgent(payload, attachmentBody, postMessage)
+    } else if (intent == Intent.CRASHPILOT) {
+      await this.useCrashPilot(payload, postMessage)
     } else if (intent == Intent.ACTION) {
       await this.useActingAgent(payload, postMessage)
     } else if (intent == Intent.PRODUCT) {
@@ -195,5 +198,15 @@ Analyze and categorize my query: `
   productAssistant = new ProductAssistant()
   useProductAssistant = async (payload: MessagePayload, postMessage: PostMessage) => {
     await this.productAssistant.runAgent(payload, postMessage)
+  }
+
+  crashPilot = new CrashPilot(this.interrupted)
+  useCrashPilot = async (payload: MessagePayload, postMessage: PostMessage) => {
+    if (payload.history.find((h) => h.intent == Intent.CRASHPILOT)) {
+      // user has already started a conversation with the crash pilot
+      this.handleDetectedIntent(Intent.COMPLEX, payload, undefined, postMessage)
+    } else {
+      this.crashPilot.useCrashPilot(payload, this.systemMessage(), postMessage)
+    }
   }
 }

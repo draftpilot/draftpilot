@@ -62,7 +62,7 @@ const MessageLoading = () => {
 }
 
 const MessageContents = ({ message, lastMessage }: Props) => {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(lastMessage)
   const contentRef = useRef<HTMLDivElement>(null)
   const [hasMore, setHasMore] = useState(false)
 

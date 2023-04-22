@@ -6,7 +6,6 @@ import https from 'https'
 import fetch from 'node-fetch'
 import path from 'path'
 import pc from 'chalk'
-import * as Vite from 'vite'
 
 const { NODE_ENV } = process.env
 
@@ -35,9 +34,8 @@ function isStaticFilePath(path: string) {
 async function serveStatic(app: core.Express) {
   info(`Running in ${pc.yellow(Config.mode)} mode`)
   if (Config.mode === 'production') {
-    const config = await Vite.resolveConfig({}, 'build')
-    const root = Config.assetRoot || config.root
-    const distPath = path.resolve(root, config.build.outDir)
+    const root = Config.assetRoot || process.cwd()
+    const distPath = path.resolve(root, 'dist')
     app.use(express.static(distPath))
 
     if (!fs.existsSync(distPath)) {
@@ -62,6 +60,7 @@ async function serveStatic(app: core.Express) {
 }
 
 async function startDevServer() {
+  const Vite = await import('vite')
   const server = await Vite.createServer({
     root: Config.assetRoot,
     clearScreen: false,
@@ -80,9 +79,8 @@ async function startDevServer() {
 
 async function serveHTML(app: core.Express) {
   if (Config.mode === 'production') {
-    const config = await Vite.resolveConfig({}, 'build')
-    const root = Config.assetRoot || config.root
-    const distPath = path.resolve(root, config.build.outDir)
+    const root = Config.assetRoot || process.cwd()
+    const distPath = path.resolve(root, 'dist')
 
     app.use('*', (_, res) => {
       res.sendFile(path.resolve(distPath, 'index.html'))
@@ -126,6 +124,7 @@ function listen(app: core.Express, port: number, callback?: () => void) {
 
 async function build() {
   info('Build starting...')
+  const Vite = await import('vite')
   await Vite.build()
   info('Build completed!')
 }

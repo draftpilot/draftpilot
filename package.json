@@ -1,6 +1,6 @@
 {
   "name": "draftpilot",
-  "version": "0.0.9",
+  "version": "0.0.13",
   "description": "AI-assisted codebase helper",
   "main": "dist/index.js",
   "type": "module",
@@ -14,7 +14,7 @@
     "draftpilot": "yarn build && yarn go",
     "go": "node --enable-source-maps ./cli.js",
     "init": "yarn go init",
-    "prepack": "yarn build",
+    "prepare": "yarn build",
     "test": "yarn tsc && mocha",
     "watch": "yarn clean && node esbuild.js --watch & yarn nodemon  --enable-source-maps -w dist cli.js --skip-open --dev-server",
     "watch-fe": "node esbuild.js --watch & node --enable-source-maps cli.js --skip-open --dev-server"
@@ -24,7 +24,7 @@
   "bin": "./cli.js",
   "files": [
     "cli.js",
-    "dist/index.js"
+    "dist"
   ],
   "dependencies": {
     "@heroicons/react": "^2.0.17",
