@@ -6,12 +6,18 @@ import { Configuration, OpenAIApi } from 'openai'
 import fs from 'fs'
 import { log } from '@/utils/logger'
 import { IncomingMessage } from 'http'
+import { tracker } from '@/utils/tracker'
+import { encode } from 'gpt-3-encoder'
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
 const openai = new OpenAIApi(configuration)
+
+const tokenCount = (messages: ChatMessage[]) => {
+  return messages.reduce((acc, message) => acc + encode(message.content).length, 0)
+}
 
 export async function chatCompletion(
   prompt: string,
@@ -29,8 +35,10 @@ export async function chatCompletion(
       ]
     : [{ role: 'user', content: prompt }]
 
+  const start = Date.now()
   const responseContent = await chatWithHistory(messages, model, stop)
   cache.set(prompt, responseContent)
+  tracker.chatCompletion(model, Date.now() - start, tokenCount(messages))
   return responseContent
 }
 
@@ -42,12 +50,15 @@ export async function chatWithHistory(
   try {
     const tempInput = writeTempFile(messages, model)
 
+    const start = Date.now()
     const completion = await openai.createChatCompletion({
       model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
       messages,
       temperature: config.temperature,
       stop: stop,
     })
+    tracker.chatCompletion(model, Date.now() - start, tokenCount(messages))
+
     const response = completion.data.choices[0].message
     const output = response?.content || ''
 
@@ -68,6 +79,7 @@ export async function streamChatWithHistory(
   try {
     const tempInput = writeTempFile(messages, model)
 
+    const start = Date.now()
     const response = await openai.createChatCompletion(
       {
         model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
@@ -108,7 +120,9 @@ export async function streamChatWithHistory(
       stream.on('error', reject)
     })
 
+    tracker.chatCompletion(model, Date.now() - start, tokenCount(messages))
     writeTempFile(messages.concat({ content: output, role: 'assistant' }), model, tempInput)
+    // tracker.logStreamCompletion(messages, model, output)
     return output
   } catch (e) {
     throw parseError(e)
