@@ -1,6 +1,6 @@
 import { chatCompletion } from '@/ai/api'
 import config from '@/config'
-import { getSimilarMethods } from '@/context/similar'
+import { getSimilarMethods } from '@/context/relevantFiles'
 import { cache } from '@/db/cache'
 import { Indexer } from '@/db/indexer'
 import { log, verboseLog } from '@/utils/logger'

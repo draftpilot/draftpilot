@@ -1,6 +1,6 @@
 import { chatWithHistory, streamChatWithHistory } from '@/ai/api'
+import { findRelevantDocs } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
-import { findRelevantDocs } from '@/directors/agentPlanner'
 import { compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, Intent, MessagePayload, Model, PostMessage } from '@/types'
 import { encode } from 'gpt-3-encoder'
