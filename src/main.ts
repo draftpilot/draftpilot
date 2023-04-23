@@ -107,6 +107,7 @@ export default function () {
 
   const options = program.parse()
   config.options = options
+
   tracker.launch(process.argv[2])
 }
 
