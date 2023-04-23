@@ -86,9 +86,9 @@ The way you use the tools is by specifying a json blob. The format is:
 The json object should only contain tool and input. Input is always a string. Use no more than 3 tools.`
 
     const instructions = `ALWAYS Use the following format:
-${this.requestParam}: the request you must fulfill
+Request: the request you must fulfill
 Thought: you should always think about what to do
-${this.actionParam}:
+Action:
 $JSON_BLOB
 Observation: the result of the action
 ... (this Thought/${this.actionParam}/Observation can repeat 5 times)
