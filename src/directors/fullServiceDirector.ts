@@ -14,6 +14,7 @@ import { log } from '@/utils/logger'
 import path from 'path'
 import { readProjectContext } from '@/context/projectContext'
 import { CrashPilot } from '@/directors/crashPilot'
+import { tracker } from '@/utils/tracker'
 
 export class FullServiceDirector {
   interrupted = new Set<string>()
@@ -33,6 +34,7 @@ export class FullServiceDirector {
     }
 
     if (message.role == 'assistant') {
+      tracker.regenerateResponse(message.intent)
       await this.regenerateResponse(payload, postMessage)
     } else if (message.role == 'user') {
       let intent = message.intent
@@ -46,6 +48,7 @@ export class FullServiceDirector {
         }
       }
       if (intent) log('received intent', intent)
+      tracker.userMessage(intent)
       await this.handleDetectedIntent(intent as Intent, payload, undefined, postMessage)
     } else {
       log('got sent a system message, doing nothing')

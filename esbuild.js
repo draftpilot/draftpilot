@@ -1,5 +1,4 @@
 import esbuild from 'esbuild'
-import tsPaths from 'esbuild-ts-paths'
 import { nodeExternalsPlugin } from 'esbuild-node-externals'
 import FastGlob from 'fast-glob'
 
@@ -9,7 +8,7 @@ const mainConfig = {
   outdir: 'dist',
   platform: 'node',
   target: 'node14',
-  plugins: [tsPaths(), nodeExternalsPlugin()],
+  plugins: [nodeExternalsPlugin()],
   format: 'esm',
   sourcemap: true,
 }
@@ -22,7 +21,7 @@ const testConfig = {
   outdir: 'dist/test',
   platform: 'node',
   target: 'node14',
-  plugins: [tsPaths(), nodeExternalsPlugin()],
+  plugins: [nodeExternalsPlugin()],
   format: 'esm',
   sourcemap: true,
 }

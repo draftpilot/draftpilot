@@ -5,6 +5,34 @@ __metadata:
   version: 6
   cacheKey: 8
 
+"@amplitude/analytics-core@npm:^0.13.0":
+  version: 0.13.0
+  resolution: "@amplitude/analytics-core@npm:0.13.0"
+  dependencies:
+    "@amplitude/analytics-types": ^0.18.0
+    tslib: ^2.4.1
+  checksum: 6cd97570155e9880bd334c015f1076e2115e31fa031b85a53882ed11c7dfc52e1c860bd6661f759d9012ad2ae44fc59a0b49eba13a7a245de127a94fecdd76de
+  languageName: node
+  linkType: hard
+
+"@amplitude/analytics-node@npm:^1.1.3":
+  version: 1.1.3
+  resolution: "@amplitude/analytics-node@npm:1.1.3"
+  dependencies:
+    "@amplitude/analytics-core": ^0.13.0
+    "@amplitude/analytics-types": ^0.18.0
+    tslib: ^2.4.1
+  checksum: 20b5d57b953a8984eebe4eaa9652c455b4af1b83abaa16b38cfd74a86709b3c8cb1bd5d705bc31a0ef789774dccb8feb6784f2e6d24f8b42fcb842b465c61581
+  languageName: node
+  linkType: hard
+
+"@amplitude/analytics-types@npm:^0.18.0":
+  version: 0.18.0
+  resolution: "@amplitude/analytics-types@npm:0.18.0"
+  checksum: ff5edd38cfbfa78915a487d500c5ed4b7e5656ef453ac1ee51131b55e15b703c71d2766f68c29b5549b34a29de7f4c32049bc487b1e411d7877369bcdee686a5
+  languageName: node
+  linkType: hard
+
 "@ampproject/remapping@npm:^2.2.0":
   version: 2.2.1
   resolution: "@ampproject/remapping@npm:2.2.1"
@@ -2091,6 +2119,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "draftpilot@workspace:."
   dependencies:
+    "@amplitude/analytics-node": ^1.1.3
     "@heroicons/react": ^2.0.17
     "@nanostores/react": ^0.5.0
     "@types/diff": ^5.0.3
