@@ -1,38 +1,50 @@
 import { EventEmitter } from 'events'
 import { init, track, identify, Identify } from '@amplitude/analytics-node'
 import path from 'path'
-
 class Tracker extends EventEmitter {
-  init() {
-    const project = path.basename(process.cwd())
-    // get unix user name
-    const username = process.env.USER || process.env.USERNAME || 'unknown'
+  project: string
+  user_id: string
 
-    init('e0deb1643e51c5cdfaa7b78a085d5cc6')
-    const identifyObj = new Identify()
-    identifyObj.set('project', project)
-    identifyObj.set('username', username)
-    identify(identifyObj)
+  constructor() {
+    super()
+    this.project = path.basename(process.cwd())
+
+    const username = process.env.USER || process.env.USERNAME || 'unknown'
+    const hostname = process.env.HOSTNAME || 'unknown'
+    this.user_id = `${username}@${hostname}`
+
+    init('e0deb1643e51c5cdfaa7b78a085d5cc6', { flushIntervalMillis: 200 })
   }
 
-  launch(command?: string) {
-    track('launch', { command })
+  logEvent = (event: string, properties?: any) => {
+    const eventOptions = {
+      user_id: this.user_id,
+    }
+
+    if (!properties) properties = {}
+    properties.project = this.project
+    track(event, properties, eventOptions)
+  }
+
+  launch(arg?: string) {
+    const command = arg && !arg.startsWith('-') ? arg : undefined
+    this.logEvent('launch', { command })
   }
 
   chatCompletion(model: string, time: number, tokens: number) {
-    track('chatCompletion', { model, time, tokens })
+    this.logEvent('chatCompletion', { model, time, tokens })
   }
 
   regenerateResponse(intent: string | undefined) {
-    track('regenerateResponse', { intent })
+    this.logEvent('regenerateResponse', { intent })
   }
 
   userMessage(intent: string | undefined) {
-    track('userMessage', { intent })
+    this.logEvent('userMessage', { intent })
   }
 
   webGetContext() {
-    track('webGetContext')
+    this.logEvent('webGetContext')
   }
 }
 

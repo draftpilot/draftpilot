@@ -28,7 +28,10 @@ jobs:
       - name: Install JS dependencies (workspace)
         run: |
           yarn install --immutable --mode=skip-build
+      - name: Compile
+        run: |
+          yarn tsc
+          yarn build
       - name: Run tests
         run: |
-          yarn build
           yarn test

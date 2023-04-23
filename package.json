@@ -17,7 +17,7 @@
     "prepare": "yarn build",
     "test": "yarn tsc && mocha",
     "watch": "yarn clean && node esbuild.js --watch & yarn nodemon  --enable-source-maps -w dist cli.js --skip-open --dev-server",
-    "watch-fe": "node esbuild.js --watch & node --enable-source-maps cli.js --skip-open --dev-server"
+    "watch-fe": "node esbuild.js && node esbuild.js --watch & node --enable-source-maps cli.js --skip-open --dev-server"
   },
   "author": "Tim Su",
   "license": "LGPL-3.0",
