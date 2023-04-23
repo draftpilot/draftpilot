@@ -21,6 +21,7 @@ import agent from '@/commands/agent'
 import serve from '@/server/server'
 import open from 'open'
 import editOps from '@/commands/editOps'
+import { tracker } from '@/utils/tracker'
 
 export default function () {
   program
@@ -137,6 +138,7 @@ export default function () {
 
   const options = program.parse()
   config.options = options
+  tracker.launch(process.argv[2])
 }
 
 function actionWrapper(fn: (...args: any[]) => Promise<any>) {

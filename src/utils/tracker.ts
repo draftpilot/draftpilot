@@ -1,18 +1,38 @@
 import { EventEmitter } from 'events'
-import { init, logEvent } from '@amplitude/analytics-node'
+import { init, track, identify, Identify } from '@amplitude/analytics-node'
+import path from 'path'
 
 class Tracker extends EventEmitter {
-  constructor() {
-    super()
+  init() {
+    const project = path.basename(process.cwd())
+    // get unix user name
+    const username = process.env.USER || process.env.USERNAME || 'unknown'
+
     init('e0deb1643e51c5cdfaa7b78a085d5cc6')
+    const identifyObj = new Identify()
+    identifyObj.set('project', project)
+    identifyObj.set('username', username)
+    identify(identifyObj)
   }
 
-  launch() {
-    logEvent('launch')
+  launch(command?: string) {
+    track('launch', { command })
   }
 
   chatCompletion(model: string, time: number, tokens: number) {
-    logEvent('chatCompletion', { model, time, tokens })
+    track('chatCompletion', { model, time, tokens })
+  }
+
+  regenerateResponse(intent: string | undefined) {
+    track('regenerateResponse', { intent })
+  }
+
+  userMessage(intent: string | undefined) {
+    track('userMessage', { intent })
+  }
+
+  webGetContext() {
+    track('webGetContext')
   }
 }
 

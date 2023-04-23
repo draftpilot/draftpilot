@@ -9,6 +9,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import { readProjectContext, writeProjectContext } from '@/context/projectContext'
+import { tracker } from '@/utils/tracker'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // usually dist/
@@ -69,6 +70,7 @@ export default async function serve(
   })
 
   app.get('/api/context', async (_, res) => {
+    tracker.webGetContext()
     const context = readProjectContext()
     res.json({ context })
   })
