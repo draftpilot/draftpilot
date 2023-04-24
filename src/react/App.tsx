@@ -36,7 +36,7 @@ function App() {
         <div className="flex-1 overflow-y-auto pt-8 pb-40">
           <div className="mx-auto w-[768px] max-w-full gap-4 flex flex-col">
             <NoMessages />
-            <ChatInput />
+            <ChatInput initialMessage />
           </div>
         </div>
       ) : (

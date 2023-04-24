@@ -13,13 +13,19 @@ const EncouragingInput = ({ value }: { value: string }) => {
     const messageSet =
       length < 50
         ? [
-            'Provide more details for better results',
-            'The more detail the better',
-            "Remember that I can't read your mind",
+            'Provide more details for better results.',
+            'The more detail the better.',
+            "Remember that I can't read your mind.",
             'Keep writing!',
-            'Please add more detail',
+            'Please add more detail.',
+            'Use @ to reference any relevant files.',
           ]
-        : ['Keep going!', "You're doing great!", 'That looks great!', 'Anything to add?']
+        : [
+            'Thanks for adding details.',
+            "You're doing great!",
+            'That looks great!',
+            'Anything to add?',
+          ]
 
     const randomIndex = Math.floor(Math.random() * messageSet.length)
     setEncouragingMessage(messageSet[randomIndex])
