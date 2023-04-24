@@ -79,7 +79,7 @@ export class WebPlanner {
     postMessage({
       role: 'assistant',
       content: result,
-      intent: Intent.PLANNER,
+      intent: Intent.DRAFTPILOT,
     })
   }
 
@@ -93,21 +93,28 @@ export class WebPlanner {
     // in the follow-up planner, we've already run planning and either proposed a plan or asked
     // the user for feedback. the user has responsed to us, and now we need to figure out what to do.
 
-    const model = message.options?.model || '3.5'
+    const model = message.options?.model || '4'
 
     const prompt = prompts.draftPilot({
       message: message.content,
       references: attachmentBody || '',
     })
 
-    const msessage = compactMessageHistory([...history, { content: prompt, role: 'user' }], model)
+    console.log('attachments', attachmentBody?.length)
 
-    const response = await chatWithHistory(msessage, model)
+    const messages = compactMessageHistory([...history, { content: prompt, role: 'user' }], model, {
+      content: systemMessage,
+      role: 'system',
+    })
 
-    const newMessage: ChatMessage = {
+    const result = await streamChatWithHistory(messages, model, (response) => {
+      postMessage(response)
+    })
+
+    postMessage({
       role: 'assistant',
-      content: response,
-    }
-    postMessage(newMessage)
+      content: result,
+      intent: Intent.DRAFTPILOT,
+    })
   }
 }

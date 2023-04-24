@@ -79,6 +79,7 @@ class MessageStore {
   doCompletion = async (sessionId: string, payload: MessagePayload) => {
     this.inProgress.set(payload)
     this.partialMessage.set(undefined)
+    this.error.set(undefined)
     try {
       await API.sendMessage(payload, (msg) => this.handleIncoming(sessionId, msg))
     } catch (error: any) {
@@ -89,7 +90,6 @@ class MessageStore {
       this.inProgress.set(undefined)
     }
     this.editMessage.set(null)
-    this.error.set(undefined)
   }
 
   handleIncoming = async (sessionId: string, message: ChatMessage | string) => {
@@ -160,7 +160,7 @@ class MessageStore {
       const proceed: ChatMessage = {
         role: 'user',
         content: 'Automatically proceeding',
-        intent: Intent.ACTION,
+        intent: Intent.EDIT_FILES,
       }
       this.sendMessage(proceed, false, sessionId)
     }, 5000)

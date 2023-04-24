@@ -105,7 +105,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
     const answer = content.substring(8)
     bgColor = 'bg-green-200'
     output = answer
-  } else if (message.intent == Intent.ACTION) {
+  } else if (message.intent == Intent.EDIT_FILES) {
     bgColor = 'bg-yellow-200'
   } else if (message.intent == Intent.ANSWER) {
     // if this is an answer, but it has a code block, then it's a possible action

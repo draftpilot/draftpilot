@@ -22,7 +22,7 @@ export class CodebaseEditor {
 
     const model = message.options?.model || '4'
 
-    const planMessageIndex = history.findLastIndex((h) => h.intent == Intent.PLANNER)
+    const planMessageIndex = history.findLastIndex((h) => h.intent == Intent.DRAFTPILOT)
 
     // only accept history after plan message. could be undefined though.
     const planMessage = history[planMessageIndex]
@@ -59,7 +59,7 @@ export class CodebaseEditor {
         role: 'assistant',
         content: `Editing ${pluralize(files.length, 'file')}: ${basenames.join(', ')}`,
         options: { model },
-        intent: Intent.ACTION,
+        intent: Intent.EDIT_FILES,
       })
       await Promise.all(
         files.map(async (file) => {
@@ -79,7 +79,7 @@ export class CodebaseEditor {
         role: 'assistant',
         content: response,
         options: { model },
-        intent: Intent.ACTION,
+        intent: Intent.EDIT_FILES,
       })
     }
   }

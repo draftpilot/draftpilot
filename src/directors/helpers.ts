@@ -39,20 +39,36 @@ export function compactMessageHistory(
       content: msg.content,
     })
   }
+  if (history.length == 0) {
+    throw new Error('no messages fit in the token budget')
+  }
   if (systemMessage) history.push(systemMessage)
   history.reverse()
   return history
 }
 
+function sliceLines(content: string, lines: number) {
+  const splitContent = content.split('\n').filter((l) => l.trim().length > 0)
+  if (splitContent.length < lines) return content
+  return (
+    splitContent.slice(0, lines).join('\n') +
+    `\n... (${splitContent.length - lines} more lines) ...`
+  )
+}
+
 export function attachmentListToString(attachments: Attachment[] | undefined) {
+  if (!attachments) return undefined
+
+  const linesPerFile = 200 / attachments.length
   return attachments
-    ?.map((attachment) => {
+    .map((attachment) => {
       if (attachment.content) {
-        return attachment.name + '\n---\n' + attachment.content
+        return attachment.name + '\n---\n' + sliceLines(attachment.content, linesPerFile)
       } else if (attachment.type === 'file') {
         const filePath = fuzzyMatchingFile(attachment.name, indexer.files)
         if (filePath) {
-          return filePath + '\n---\n' + fs.readFileSync(filePath, 'utf8') + '\n---\n'
+          const content = fs.readFileSync(filePath, 'utf8')
+          return filePath + '\n---\n' + sliceLines(content, linesPerFile) + '\n---\n'
         }
       }
     })

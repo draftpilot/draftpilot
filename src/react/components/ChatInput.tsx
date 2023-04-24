@@ -9,15 +9,13 @@ import Checkbox from '@/react/components/Checkbox'
 import useAutosizeTextArea from '@/react/hooks/useAutosizeTextArea'
 import { Attachment, Intent } from '@/types'
 
-export default () => {
+import EncouragingInput from '@/react/components/EncouragingInput'
+export default ({ initialMessage }: { initialMessage?: boolean }) => {
   const rtaRef = useRef<ReactTextareaAutocomplete<string> | null>(null)
   const ref = useRef<HTMLTextAreaElement | null>(null)
   const inProgress = useStore(messageStore.inProgress)
   const session = useStore(messageStore.session)
   const editMessage = useStore(messageStore.editMessage)
-
-  const [useTools, setUseTools] = useState(true)
-  const [useGPT4, setUseGPT4] = useState(false)
 
   const [value, setValue] = useState('')
   const filesRef = useRef<Set<string>>(new Set())
@@ -59,11 +57,10 @@ export default () => {
       content: ref.current.value,
       role: 'user',
       attachments: toAttach,
-      options: { tools: useTools, model: useGPT4 ? '4' : '3.5' },
     })
     setValue('')
     filesRef.current.clear()
-  }, [useTools, useGPT4, inProgress])
+  }, [inProgress])
 
   const trigger: TriggerType<string> = useMemo(
     () => ({
@@ -126,15 +123,14 @@ export default () => {
           {inProgress ? <Loader size={20} /> : <PaperAirplaneIcon className="w-6 h-6 " />}
         </div>
       </div>
+      {initialMessage && <EncouragingInput value={value} />}
       <div className="flex my-2 gap-4 text-sm">
         <span>
           <b>Mode:</b>{' '}
           {!intent
             ? 'Automatic'
-            : intent == Intent.ACTION
-            ? 'Take Action'
-            : intent == Intent.PLANNER
-            ? 'Planning'
+            : intent == Intent.EDIT_FILES
+            ? 'Edit Files'
             : intent == Intent.PRODUCT
             ? 'Product Manager'
             : intent == Intent.DRAFTPILOT
@@ -145,22 +141,13 @@ export default () => {
             ? 'Crashpilot'
             : 'Chat'}
         </span>
-        {intent == Intent.PLANNER && (
-          <a
-            href="#"
-            className="text-red-600 cursor-pointer"
-            onClick={() => messageStore.intent.set(Intent.ACTION)}
-          >
-            Execution Mode
-          </a>
-        )}
-        {intent != Intent.PLANNER && (
+        {intent != Intent.DRAFTPILOT && (
           <a
             href="#"
             className="text-blue-600 cursor-pointer"
             onClick={() => messageStore.intent.set(Intent.DRAFTPILOT)}
           >
-            Planning Mode
+            DraftPilot Planning Mode
           </a>
         )}
         {intent != Intent.PRODUCT && (

@@ -90,10 +90,9 @@ export type PostMessage = (message: ChatMessage | string) => void
 export enum Intent {
   ANSWER = 'DIRECT_ANSWER',
   COMPLEX = 'COMPLEX_ANSWER',
-  PLANNER = 'PLANNER',
-  ACTION = 'ACTION',
-  PRODUCT = 'PRODUCT',
 
+  EDIT_FILES = 'EDIT_FILES',
+  PRODUCT = 'PRODUCT',
   DRAFTPILOT = 'DRAFTPILOT',
   TESTPILOT = 'TESTPILOT',
   CRASHPILOT = 'CRASHPILOT',
