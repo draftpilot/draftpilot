@@ -1,0 +1,5 @@
+{
+  "[embedded-typescript]": {
+    "editor.wordWrap": "on"
+  }
+}
