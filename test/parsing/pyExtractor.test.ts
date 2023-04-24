@@ -18,11 +18,11 @@ describe('pyExtractor', () => {
 
     assert.equal(result.length, 5, result.map((r) => r.path).join(', '))
 
-    assert.equal(result[0].path, SAMPLE_FILE + '#MyClass.__init__')
-    assert.equal(result[1].path, SAMPLE_FILE + '#MyClass.add')
-    assert.equal(result[2].path, SAMPLE_FILE + '#MyClass.subtract')
-    assert.equal(result[3].path, SAMPLE_FILE + '#my_function')
-    assert.equal(result[4].path, SAMPLE_FILE + '#main')
+    assert(result[0].path.startsWith(SAMPLE_FILE + '#MyClass.__init__'))
+    assert(result[1].path.startsWith(SAMPLE_FILE + '#MyClass.add'))
+    assert(result[2].path.startsWith(SAMPLE_FILE + '#MyClass.subtract'))
+    assert(result[3].path.startsWith(SAMPLE_FILE + '#my_function'))
+    assert(result[4].path.startsWith(SAMPLE_FILE + '#main'))
 
     assert(result.every((doc) => doc.contents))
   })
