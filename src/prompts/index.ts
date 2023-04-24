@@ -1,9 +1,9 @@
-import systemMessage from './systemMessage.ets'
-import detectIntent from './detectIntent.ets'
-import draftPilot from './draftPilot.ets'
-import crashPilot from './crashPilot.ets'
-import editPilot from './editPilot.ets'
-import fileEditor from './fileEditor.ets'
+import systemMessage from './systemMessage.ets.ts'
+import detectIntent from './detectIntent.ets.ts'
+import draftPilot from './draftPilot.ets.ts'
+import crashPilot from './crashPilot.ets.ts'
+import editPilot from './editPilot.ets.ts'
+import fileEditor from './fileEditor.ets.ts'
 
 export default {
   systemMessage,
