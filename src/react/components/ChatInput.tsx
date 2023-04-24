@@ -14,6 +14,7 @@ export default () => {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   const inProgress = useStore(messageStore.inProgress)
   const session = useStore(messageStore.session)
+  const editMessage = useStore(messageStore.editMessage)
 
   const [useTools, setUseTools] = useState(true)
   const [useGPT4, setUseGPT4] = useState(false)
@@ -23,13 +24,16 @@ export default () => {
 
   useEffect(() => {
     fileStore.loadData()
-    return messageStore.editMessage.listen((message) => {
-      if (!message) return
-      setValue(message.content)
-      if (message.attachments) filesRef.current = new Set(message.attachments.map((a) => a.name))
-      ref.current?.focus()
-    })
   }, [])
+
+  useEffect(() => {
+    if (editMessage) {
+      setValue(editMessage.content)
+      if (editMessage.attachments)
+        filesRef.current = new Set(editMessage.attachments.map((a) => a.name))
+      ref.current?.focus()
+    }
+  }, [editMessage])
 
   useEffect(() => {
     ref.current?.focus()

@@ -59,9 +59,11 @@ class MessageStore {
     this.intent.set(Intent.DRAFTPILOT)
     this.error.set(undefined)
     this.partialMessage.set(undefined)
+    this.editMessage.set(null)
   }
 
   sendMessage = async (message: ChatMessage, skipHistory?: boolean, sessionId?: string) => {
+    this.editMessage.set(null)
     const id = generateUUID()
     const payload: MessagePayload = { id, message, history: this.messages.get() }
     log(payload)
