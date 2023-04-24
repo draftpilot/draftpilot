@@ -61,23 +61,24 @@ class MessageStore {
     this.partialMessage.set(undefined)
   }
 
-  sendMessage = async (message: ChatMessage, skipHistory?: boolean) => {
+  sendMessage = async (message: ChatMessage, skipHistory?: boolean, sessionId?: string) => {
     const id = generateUUID()
     const payload: MessagePayload = { id, message, history: this.messages.get() }
     log(payload)
     if (!message.intent && this.intent.get()) message.intent = this.intent.get()
     this.shouldDing = true
 
-    if (!this.session.get().name) this.updateSessionName(message)
-    this.doCompletion(payload)
-    if (!skipHistory) this.updateMessages([...this.messages.get(), message])
+    if (!sessionId && !this.session.get().name) this.updateSessionName(message)
+    if (!sessionId) sessionId = this.session.get().id
+    this.doCompletion(sessionId, payload)
+    if (!skipHistory) this.updateMessages(sessionId, [...this.messages.get(), message])
   }
 
-  doCompletion = async (payload: MessagePayload) => {
+  doCompletion = async (sessionId: string, payload: MessagePayload) => {
     this.inProgress.set(payload)
     this.partialMessage.set(undefined)
     try {
-      await API.sendMessage(payload, this.handleIncoming)
+      await API.sendMessage(payload, (msg) => this.handleIncoming(sessionId, msg))
     } catch (error: any) {
       const message = API.unwrapError(error)
       this.error.set(message)
@@ -89,11 +90,15 @@ class MessageStore {
     this.error.set(undefined)
   }
 
-  handleIncoming = (message: ChatMessage | string) => {
+  handleIncoming = async (sessionId: string, message: ChatMessage | string) => {
+    const isCurrentSession = sessionId == this.session.get().id
     if (typeof message === 'string') {
+      // streaming completion
+      if (!isCurrentSession) return
       const newMessage = (this.partialMessage.get() || '') + message
       this.partialMessage.set(newMessage)
     } else if (message.error) {
+      // received error
       if (typeof message.error == 'string') {
         this.error.set(message.error)
       } else if (message.error.message) {
@@ -102,16 +107,21 @@ class MessageStore {
         this.error.set(JSON.stringify(message.error))
       }
     } else {
+      // received full message
       this.maybePlayDingSound()
-      if (this.partialMessage.get()) {
+      if (isCurrentSession && this.partialMessage.get()) {
         this.partialMessage.set(undefined)
         this.inProgress.set(undefined)
       }
-      const messages = this.messages.get()
-      if (message.intent) this.intent.set(message.intent)
+      const messages = isCurrentSession
+        ? this.messages.get()
+        : (await this.sessionDb.messages.get(sessionId))?.messages || []
+
+      if (isCurrentSession && message.intent) this.intent.set(message.intent)
       if (message.progressDuration) message.progressStart = Date.now()
       else if (message.progressDuration == 0) {
         this.updateMessages(
+          sessionId,
           messages.filter((m) => {
             if (m.content == message.content && m.progressStart) return false
             return true
@@ -119,26 +129,26 @@ class MessageStore {
         )
         return
       }
-      this.updateMessages([...messages, message])
+      this.updateMessages(sessionId, [...messages, message])
 
       if (message.intent == Intent.DONE) {
         fileStore.loadData()
       }
 
       if (message.content.endsWith('confidence: high')) {
-        this.automaticAction()
+        this.automaticAction(sessionId)
       }
 
       if (message.content.startsWith('PLAN: ')) {
-        this.maybeUpdateSessionName(message.content)
+        this.maybeUpdateSessionName(sessionId, message.content)
       }
     }
   }
 
-  automaticAction = () => {
+  automaticAction = (sessionId: string) => {
     const content = 'Proceeding in 5 seconds since confidence is high...'
     const clearMessage = () =>
-      this.handleIncoming({
+      this.handleIncoming(sessionId, {
         content,
         role: 'system',
         progressDuration: 0,
@@ -150,10 +160,10 @@ class MessageStore {
         content: 'Automatically proceeding',
         intent: Intent.ACTION,
       }
-      this.sendMessage(proceed)
+      this.sendMessage(proceed, false, sessionId)
     }, 5000)
 
-    this.handleIncoming({
+    this.handleIncoming(sessionId, {
       content,
       role: 'system',
       progressDuration: 5000,
@@ -169,14 +179,16 @@ class MessageStore {
     })
   }
 
-  addSystemMessage = (message: ChatMessage) => {
-    this.updateMessages([...this.messages.get(), message])
+  addSystemMessage = (message: ChatMessage, sessionId?: string) => {
+    this.updateMessages(sessionId || this.session.get().id, [...this.messages.get(), message])
   }
 
-  updateMessages = (messages: ChatMessage[]) => {
-    this.messages.set(messages)
-    const id = this.session.get().id
-    this.sessionDb.messages.put({ id, messages })
+  updateMessages = (sessionId: string, messages: ChatMessage[]) => {
+    const currentSessionId = this.session.get().id
+    if (sessionId == currentSessionId) {
+      this.messages.set(messages)
+    }
+    this.sessionDb.messages.put({ id: sessionId, messages })
   }
 
   popMessages = (target: ChatMessage) => {
@@ -220,10 +232,10 @@ class MessageStore {
     this.sessions.set([session, ...this.sessions.get()])
   }
 
-  maybeUpdateSessionName = (content: string) => {
+  maybeUpdateSessionName = (sessionId: string, content: string) => {
     const name = content.substring(0, content.indexOf('\n')).replace('PLAN: ', '')
     if (name.length > 3) {
-      this.renameSession(this.session.get().id, name)
+      this.renameSession(sessionId, name)
     }
   }
 
