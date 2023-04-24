@@ -44,8 +44,8 @@ export class Dispatcher {
           .slice()
           .reverse()
           .find((h) => h.intent)?.intent
-        if (lastIntent == Intent.PLANNER || lastIntent == Intent.ACTION) {
-          intent = Intent.PLANNER
+        if (lastIntent == Intent.DRAFTPILOT || lastIntent == Intent.EDIT_FILES) {
+          intent = Intent.DRAFTPILOT
         }
       }
       if (intent) log('received intent', intent)
@@ -134,12 +134,12 @@ export class Dispatcher {
       if (!message.options) message.options = {}
       message.options.model = '4'
       await this.detectIntent(payload, postMessage)
-    } else if (intent == Intent.PLANNER || intent == Intent.DRAFTPILOT) {
+    } else if (intent == Intent.DRAFTPILOT) {
       if (!attachmentBody) attachmentBody = attachmentListToString(message.attachments)
       await this.usePlanningAgent(payload, attachmentBody, postMessage)
     } else if (intent == Intent.CRASHPILOT) {
       await this.useCrashPilot(payload, postMessage)
-    } else if (intent == Intent.ACTION) {
+    } else if (intent == Intent.EDIT_FILES) {
       await this.useActingAgent(payload, postMessage)
     } else if (intent == Intent.PRODUCT) {
       await this.useProductAssistant(payload, postMessage)
@@ -154,7 +154,7 @@ export class Dispatcher {
     attachmentBody: string | undefined,
     postMessage: PostMessage
   ) => {
-    if (payload.history.find((h) => h.state)) {
+    if (payload.history.find((h) => h.role == 'assistant' && h.intent == Intent.DRAFTPILOT)) {
       // if we have a state, we're in the middle of a planning session
       await this.planner.runFollowupPlanner(
         payload,
