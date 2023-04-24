@@ -35,7 +35,6 @@ export function MessageActions({ message }: Props) {
   }
 
   if (message.role == 'assistant') {
-    const options = message.options
     return (
       <div className="flex flex-col -mt-1 invisible group-hover:visible">
         <Button className="hover:bg-gray-300" title="Regenerate" onClick={regenerate}>

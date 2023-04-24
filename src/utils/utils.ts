@@ -28,7 +28,7 @@ export function generateSecretKey() {
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
-    .replace(/\=/g, '')
+    .replace(/=/g, '')
 }
 
 export function error(...args: any[]) {
