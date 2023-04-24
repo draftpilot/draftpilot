@@ -18,6 +18,7 @@ import serve from '@/server/server'
 import open from 'open'
 import editOps from '@/commands/editOps'
 import { tracker } from '@/utils/tracker'
+import { updateGitIgnores } from '@/utils/git'
 
 export default function () {
   program
@@ -92,6 +93,7 @@ export default function () {
     .description('Server mode (runs when no command is specified))')
     .action(
       actionWrapper(async (workingDir: string, opts) => {
+        updateGitIgnores([config.configFolder])
         if (workingDir) process.chdir(workingDir)
         const url = await serve(
           opts.port ? parseInt(opts.port) : undefined,
