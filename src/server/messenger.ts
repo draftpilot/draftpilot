@@ -1,12 +1,12 @@
-import { FullServiceDirector } from '@/directors/fullServiceDirector'
+import { Dispatcher } from '@/directors/dispatcher'
 import { ChatMessage, MessagePayload } from '@/types'
 import { Response } from 'express'
 
 export class Messenger {
-  agent = new FullServiceDirector()
+  dispatcher = new Dispatcher()
 
   async init() {
-    await this.agent.init()
+    await this.dispatcher.init()
   }
 
   respondToMessages = async (input: MessagePayload, res: Response) => {
@@ -16,7 +16,7 @@ export class Messenger {
     }
 
     try {
-      await this.agent.onMessage(input, (incoming: ChatMessage | string) => {
+      await this.dispatcher.onMessage(input, (incoming: ChatMessage | string) => {
         res.write(JSON.stringify(incoming) + ',')
       })
 
@@ -30,6 +30,6 @@ export class Messenger {
   }
 
   respondToInterrupt = async (id: string) => {
-    this.agent.onInterrupt(id)
+    this.dispatcher.onInterrupt(id)
   }
 }

@@ -16,7 +16,7 @@ import { readProjectContext } from '@/context/projectContext'
 import { CrashPilot } from '@/directors/crashPilot'
 import { tracker } from '@/utils/tracker'
 
-export class FullServiceDirector {
+export class Dispatcher {
   interrupted = new Set<string>()
   context: string = ''
 
