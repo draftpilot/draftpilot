@@ -195,7 +195,7 @@ Analyze and categorize my query: `
 
   editor = new CodebaseEditor()
   useActingAgent = async (payload: MessagePayload, postMessage: PostMessage) => {
-    await this.editor.planChanges(payload, postMessage)
+    await this.editor.planChanges(payload, postMessage, this.systemMessage())
   }
 
   productAssistant = new ProductAssistant()
