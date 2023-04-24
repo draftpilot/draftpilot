@@ -12,7 +12,8 @@ import ContextEditor from '@/react/components/ContextEditor'
 function App() {
   const messages = useStore(messageStore.messages)
   const projectContext = useStore(uiStore.editingProjectContext)
-  const noMessages = messages.length === 0
+  const editing = useStore(messageStore.editMessage)
+  const noMessages = messages.length === 0 && !editing
 
   useWindowVisible()
   useEffect(() => {
@@ -43,15 +44,18 @@ function App() {
           <div className="flex-1 overflow-y-auto pb-40">
             <div className="mx-auto w-[768px] max-w-full">
               <Messages />
+              {editing && <ChatInput />}
             </div>
           </div>
 
-          <div className="fixed bottom-0 left-0 sm:left-56 right-0">
-            <div className="mx-auto w-[768px] max-w-full">
-              <div className="bg-gradient-to-b from-transparent to-gray-200 h-10" />
-              <ChatInput />
+          {!editing && (
+            <div className="fixed bottom-0 left-0 sm:left-56 right-0">
+              <div className="mx-auto w-[768px] max-w-full">
+                <div className="bg-gradient-to-b from-transparent to-gray-200 h-10" />
+                <ChatInput />
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>
