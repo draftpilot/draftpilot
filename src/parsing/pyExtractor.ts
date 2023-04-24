@@ -1,5 +1,5 @@
 import { CodeDoc, SourceFile } from '@/types'
-import { Extractor } from './extractor'
+import { Extractor, chunkLines } from './extractor'
 
 type Func = { name: string; contents: string }
 
@@ -15,10 +15,13 @@ export class PyExtractor implements Extractor {
 
     this.parseLoop('', '', false, context)
 
-    return context.functions.map((func) => ({
-      path: file.name + '#' + func.name,
-      contents: func.contents,
-    }))
+    const docs: CodeDoc[] = []
+    context.functions.forEach((func) => {
+      const lines = func.contents.split('\n')
+      chunkLines(file.name + '#' + func.name, lines, docs)
+    })
+
+    return docs
   }
 
   private parseLoop = (
