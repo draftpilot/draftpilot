@@ -5,7 +5,6 @@ import { useEffect } from 'react'
 export default function useWindowVisible() {
   useEffect(() => {
     const handleVisibilityChange = () => {
-      log('windowVisible', !document.hidden)
       uiStore.windowVisible.set(!document.hidden)
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)

@@ -15,8 +15,9 @@ import path from 'path'
 import { readProjectContext } from '@/context/projectContext'
 import { CrashPilot } from '@/directors/crashPilot'
 import { tracker } from '@/utils/tracker'
+import prompts from '@/prompts'
 
-export class FullServiceDirector {
+export class Dispatcher {
   interrupted = new Set<string>()
   context: string = ''
 
@@ -67,7 +68,6 @@ export class FullServiceDirector {
 
     const reversedHistory = history.slice().reverse()
     const lastIntent = reversedHistory.find((h) => h.intent)?.intent
-    const lastUserMessage = reversedHistory.find((h) => h.role == 'user')
 
     const intent = message.intent || lastIntent
 
@@ -78,10 +78,11 @@ export class FullServiceDirector {
 
   systemMessage = () => {
     const project = path.basename(process.cwd())
-    const systemMessage =
-      'You are an EngineerGPT, an expert software engineer working in a ' +
-      `${detectProjectLanguage()} project called ${project}. ${this.context}`
-    return systemMessage
+    return prompts.systemMessage({
+      language: detectProjectLanguage() || 'unknown',
+      project,
+      context: this.context,
+    })
   }
 
   detectIntent = async (payload: MessagePayload, postMessage: PostMessage) => {
@@ -89,29 +90,7 @@ export class FullServiceDirector {
     const { message, history } = payload
 
     const model = message.options?.model || '3.5'
-    const canTakeAction = history.length > 0 // if there has been previous conversation, allow direct actions
-
-    const prompt = `Based on my query + previous history, determine the type of request:
-- product or business discussion that a product manager assistant is better suited for, type = PRODUCT, message = switching to product assistant
-  example requests: "how should this feature work", "what should the ux be", "how do i get user feedback", "help me think through..."
-${
-  canTakeAction ? `- if the user says 'do it' or similar, type = ACTION, message = thinking...` : ''
-}
-- simple question that can be answered with only the context provided:
-  ${
-    model != '4'
-      ? `if requires code generation or other complex reasoning, type = COMPLEX_ANSWER, message = thinking...
-  else, `
-      : ''
-  }type = DIRECT_ANSWER, message = answer to the question or request with code snippets if relevant
-- requires context or taking action (from the file system, user, or internet), type = PLANNER, message = let the user know planning is happening
-  example requests: "add this feature", "fix this bug", "where is the code for this"
-- if none of these, type = DIRECT_ANSWER, message = ask the user for clarification and tell them to try again
-
-ALWAYS Return in the format "<type>: <message to the user>", e.g. DIRECT_ANSWER: the answer is 42
-
-Analyze and categorize my query: `
-
+    const prompt = prompts.detectIntent({ model })
     const attachmentBody = attachmentListToString(message.attachments)
     const userMessage: ChatMessage = {
       role: 'user',

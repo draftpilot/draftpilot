@@ -78,7 +78,7 @@ export default async function serve(
   app.put('/api/context', async (req, res) => {
     const context = req.body
     writeProjectContext(context)
-    messenger.agent.context = context
+    messenger.dispatcher.context = context
     res.json({ success: true })
   })
 

@@ -7,6 +7,7 @@ import { fuzzyMatchingFile, fuzzyParseJSON, pluralize } from '@/utils/utils'
 import fs from 'fs'
 import path from 'path'
 import { encode } from 'gpt-3-encoder'
+import prompts from '@/prompts'
 
 type EditPlan = { context: string; [path: string]: string }
 
@@ -27,25 +28,13 @@ export class CodebaseEditor {
     const planMessage = history[planMessageIndex]
     const recentHistory = planMessage ? history.slice(planMessageIndex - 1) : history
 
-    const prefix = `Given the request in the prior messages,`
-
-    const prompt = `${prefix} come up with a list of files to create or modify and the changes to make to them.
-If you need some specific details, you can ask for it, otherwise reply in this exact JSON format:
-{
-  "path/to/file": "detailed list of changes to make so an AI can understand",
-  "path/to/bigchange": "! if the changes are large/complex (e.g. 10+ lines of code), add ! at the beginning"
-  ...
-}
-
-The JSON output should ONLY contain string values.
-
-JSON Change Plan or question to ask the user:`
+    const prompt = prompts.editPilot({ message: message.content })
     const newMessage = { ...message, content: prompt }
     const messages = compactMessageHistory([...recentHistory, newMessage], model, {
       role: 'system',
       content:
         systemMessage +
-        `\n\nYou are part of a larger machine-run system. 
+        `\n\n
 1. Do not make up or reference files/paths to edit other than what was mentioned
 2. Only output in the JSON format specified, with file paths as keys & changes as values.`,
     })
@@ -125,26 +114,15 @@ JSON Change Plan or question to ask the user:`
       systemMessage +
       `\n\nYou are a codebase editor. Respond only in the format requested and do 
 not change anything unnecessarily, as your output is written directly to the codebase.`
-    const promptPrefix = `You are given the following plan: ${plan}
 
-Now editing: ${file}
-Changes to make: ${JSON.stringify(changes)}
-
----
-${decoratedContents}
----
-`
-
-    const promptSuffix = outputFullFile
-      ? `---
-
-Output the entire file that I will write to disk, only changing the requested lines, and no markdown like \`\`\`:`
-      : `---
-
-You return a sequence of operations in JSON. This example shows all possible operations & thier
-inputs: ${JSON.stringify(EXAMPLE)}
-
-JSON array of operations to perform:`
+    const promptTemplate = prompts.fileEditor({
+      plan,
+      file,
+      changes: JSON.stringify(changes),
+      contents: decoratedContents,
+      outputFullFile,
+      exampleJson: JSON.stringify(EXAMPLE),
+    })
 
     const similar = await indexer.vectorDB.searchWithScores(plan + '\n' + changes, 6)
     const similarFuncs = similar
@@ -157,7 +135,7 @@ JSON array of operations to perform:`
       .map((s) => s[0])
 
     const estimatedOutput = outputFullFile ? encode(contents).length || 300 : 100
-    let tokenBudget = (model == '3.5' ? 3900 : 7000) - encode(promptPrefix + promptSuffix).length
+    let tokenBudget = (model == '3.5' ? 3900 : 7000) - encode(promptTemplate).length
     const funcsToShow = (similarFuncs || []).filter((doc) => {
       const encoded = encode(doc.pageContent).length
       if (tokenBudget > encoded) {
@@ -168,10 +146,12 @@ JSON array of operations to perform:`
     })
 
     const decoratedFuncs = funcsToShow.length
-      ? 'Possibly related code:\n\n' + funcsToShow.map((s) => s.pageContent).join('\n-----\n')
+      ? 'Possibly related code:\n\n' +
+        funcsToShow.map((s) => s.pageContent).join('\n-----\n') +
+        '\n\n'
       : ''
 
-    const prompt = promptPrefix + decoratedFuncs + promptSuffix
+    const prompt = decoratedFuncs + promptTemplate
 
     const totalTokens = encode(prompt).length + estimatedOutput
     const estimatedDuration = totalTokens * (model == '3.5' ? 7 : 10)

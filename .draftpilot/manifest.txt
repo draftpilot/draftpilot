@@ -1,12 +1,2 @@
 # manifest format: folder: description. lines beginning in ! will be excluded
-.: root folder
-./src: general stuff here
-./src/agent: ai agent logic and tools
-./src/ai: ai api
-./src/commands: command line commands
-./src/context: for info on the project
-./src/db: files, indexes, databases
-./src/parsing: parsing source code
-./src/tools: planning and executing
-./src/types: typedefs
-./src/utils: utilities
+!src/prompts
