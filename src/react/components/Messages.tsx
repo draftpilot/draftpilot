@@ -27,7 +27,7 @@ export default () => {
         <Message key={i} message={message} lastMessage={i == messages.length - 1} />
       ))}
       {inProgress && <Message />}
-      {error && <div className="my-2 text-red-600">{error}</div>}
+      {error && <div className="my-2 text-red-600">Error: {error}</div>}
       {mergeInfo && <MergeTool />}
     </div>
   )

@@ -131,10 +131,8 @@ export default () => {
           <b>Mode:</b>{' '}
           {!intent
             ? 'Automatic'
-            : intent == Intent.ACTION
-            ? 'Take Action'
-            : intent == Intent.PLANNER
-            ? 'Planning'
+            : intent == Intent.EDIT_FILES
+            ? 'Edit Files'
             : intent == Intent.PRODUCT
             ? 'Product Manager'
             : intent == Intent.DRAFTPILOT
@@ -145,22 +143,13 @@ export default () => {
             ? 'Crashpilot'
             : 'Chat'}
         </span>
-        {intent == Intent.PLANNER && (
-          <a
-            href="#"
-            className="text-red-600 cursor-pointer"
-            onClick={() => messageStore.intent.set(Intent.ACTION)}
-          >
-            Execution Mode
-          </a>
-        )}
-        {intent != Intent.PLANNER && (
+        {intent != Intent.DRAFTPILOT && (
           <a
             href="#"
             className="text-blue-600 cursor-pointer"
             onClick={() => messageStore.intent.set(Intent.DRAFTPILOT)}
           >
-            Planning Mode
+            DraftPilot Planning Mode
           </a>
         )}
         {intent != Intent.PRODUCT && (

@@ -26,7 +26,6 @@ export function compactMessageHistory(
   let tokenBudget = model == '4' ? 6000 : 3500
 
   if (systemMessage) tokenBudget -= encode(systemMessage.content).length
-  console.log('compacto', tokenBudget)
 
   const history: ChatMessage[] = []
   for (let i = messages.length - 1; i >= 0; i--) {
