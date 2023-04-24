@@ -10,27 +10,27 @@ import { encode } from 'gpt-3-encoder'
 
 type EditPlan = { context: string; [path: string]: string }
 
-// for files below this length, have the AI output the entire file
-const FULL_OUTPUT_THRESHOLD = 250
-
 // actor which can take actions on a codebase
 export class CodebaseEditor {
-  planChanges = async (payload: MessagePayload, postMessage: PostMessage) => {
+  planChanges = async (
+    payload: MessagePayload,
+    postMessage: PostMessage,
+    systemMessage: string
+  ) => {
     const { message, history } = payload
 
-    const model = message.options?.model || '3.5'
-    const attachments = attachmentListToString(message.attachments)
+    const model = message.options?.model || '4'
 
     const planMessageIndex = history.findLastIndex((h) => h.intent == Intent.PLANNER)
 
     // only accept history after plan message. could be undefined though.
     const planMessage = history[planMessageIndex]
-    const recentHistory = planMessage ? history.slice(planMessageIndex) : history
+    const recentHistory = planMessage ? history.slice(planMessageIndex - 1) : history
 
     const prefix = `Given the request in the prior messages,`
 
     const prompt = `${prefix} come up with a list of files to create or modify and the changes to make to them.
-If you need more context, you can ask for it, otherwise reply in this exact JSON format:
+If you need some specific details, you can ask for it, otherwise reply in this exact JSON format:
 {
   "path/to/file": "detailed list of changes to make so an AI can understand",
   "path/to/bigchange": "! if the changes are large/complex (e.g. 10+ lines of code), add ! at the beginning"
@@ -43,10 +43,11 @@ JSON Change Plan or question to ask the user:`
     const newMessage = { ...message, content: prompt }
     const messages = compactMessageHistory([...recentHistory, newMessage], model, {
       role: 'system',
-      content: `You are part of a larger machine-run system. 
-1. Do not make up a plan if uncertain.
-2. Do not make up or reference files/paths to edit other than what was mentioned
-3. Only output in the JSON format specified, with file paths as keys & changes as values.`,
+      content:
+        systemMessage +
+        `\n\nYou are part of a larger machine-run system. 
+1. Do not make up or reference files/paths to edit other than what was mentioned
+2. Only output in the JSON format specified, with file paths as keys & changes as values.`,
     })
 
     const response = await chatWithHistory(messages, model)
@@ -75,7 +76,7 @@ JSON Change Plan or question to ask the user:`
         files.map(async (file) => {
           const changes = parsed[file]
           const fileModel = '4' // changes.startsWith('!') ? '4' : model
-          await this.editFile(fileModel, context, file, changes, postMessage)
+          await this.editFile(fileModel, context, file, changes, postMessage, systemMessage)
         })
       )
       postMessage({
@@ -99,7 +100,8 @@ JSON Change Plan or question to ask the user:`
     plan: string,
     file: string,
     changes: any,
-    postMessage: PostMessage
+    postMessage: PostMessage,
+    systemMessage: string
   ) => {
     let contents = ''
     let decoratedContents = '<empty file>'
@@ -110,7 +112,7 @@ JSON Change Plan or question to ask the user:`
       const fileLines = contents.split('\n')
       log('editing file', file, fileLines.length)
 
-      outputFullFile = fileLines.length < FULL_OUTPUT_THRESHOLD
+      outputFullFile = false
 
       decoratedContents = outputFullFile
         ? contents
@@ -119,7 +121,9 @@ JSON Change Plan or question to ask the user:`
       log('creating file', file)
     }
 
-    const systemMessage = `You are a codebase editor. Respond only in the format requested and do 
+    systemMessage =
+      systemMessage +
+      `\n\nYou are a codebase editor. Respond only in the format requested and do 
 not change anything unnecessarily, as your output is written directly to the codebase.`
     const promptPrefix = `You are given the following plan: ${plan}
 
@@ -164,7 +168,7 @@ JSON array of operations to perform:`
     })
 
     const decoratedFuncs = funcsToShow.length
-      ? 'Possibly related code:\n' + funcsToShow.map((s) => s.pageContent).join('\n---\n')
+      ? 'Possibly related code:\n\n' + funcsToShow.map((s) => s.pageContent).join('\n-----\n')
       : ''
 
     const prompt = promptPrefix + decoratedFuncs + promptSuffix
