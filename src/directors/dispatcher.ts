@@ -68,7 +68,6 @@ export class Dispatcher {
 
     const reversedHistory = history.slice().reverse()
     const lastIntent = reversedHistory.find((h) => h.intent)?.intent
-    const lastUserMessage = reversedHistory.find((h) => h.role == 'user')
 
     const intent = message.intent || lastIntent
 

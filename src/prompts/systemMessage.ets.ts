@@ -21,5 +21,7 @@ export default function (props: Props): string {
   result += props.project;
   result += ". ";
   result += props.context;
+  result +=
+    "\n\nAlways follow the required output format, it is parsed by a machine and will break if improper.";
   return result;
 }

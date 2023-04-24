@@ -7,6 +7,7 @@ import { fuzzyMatchingFile, fuzzyParseJSON, pluralize } from '@/utils/utils'
 import fs from 'fs'
 import path from 'path'
 import { encode } from 'gpt-3-encoder'
+import prompts from '@/prompts'
 
 type EditPlan = { context: string; [path: string]: string }
 
@@ -27,25 +28,13 @@ export class CodebaseEditor {
     const planMessage = history[planMessageIndex]
     const recentHistory = planMessage ? history.slice(planMessageIndex - 1) : history
 
-    const prefix = `Given the request in the prior messages,`
-
-    const prompt = `${prefix} come up with a list of files to create or modify and the changes to make to them.
-If you need some specific details, you can ask for it, otherwise reply in this exact JSON format:
-{
-  "path/to/file": "detailed list of changes to make so an AI can understand",
-  "path/to/bigchange": "! if the changes are large/complex (e.g. 10+ lines of code), add ! at the beginning"
-  ...
-}
-
-The JSON output should ONLY contain string values.
-
-JSON Change Plan or question to ask the user:`
+    const prompt = prompts.editPilot({ message: message.content })
     const newMessage = { ...message, content: prompt }
     const messages = compactMessageHistory([...recentHistory, newMessage], model, {
       role: 'system',
       content:
         systemMessage +
-        `\n\nYou are part of a larger machine-run system. 
+        `\n\n
 1. Do not make up or reference files/paths to edit other than what was mentioned
 2. Only output in the JSON format specified, with file paths as keys & changes as values.`,
     })
