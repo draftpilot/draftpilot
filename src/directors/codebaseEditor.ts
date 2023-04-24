@@ -10,9 +10,6 @@ import { encode } from 'gpt-3-encoder'
 
 type EditPlan = { context: string; [path: string]: string }
 
-// for files below this length, have the AI output the entire file
-const FULL_OUTPUT_THRESHOLD = 250
-
 // actor which can take actions on a codebase
 export class CodebaseEditor {
   planChanges = async (
@@ -33,7 +30,7 @@ export class CodebaseEditor {
     const prefix = `Given the request in the prior messages,`
 
     const prompt = `${prefix} come up with a list of files to create or modify and the changes to make to them.
-If you need more context, you can ask for it, otherwise reply in this exact JSON format:
+If you need some specific details, you can ask for it, otherwise reply in this exact JSON format:
 {
   "path/to/file": "detailed list of changes to make so an AI can understand",
   "path/to/bigchange": "! if the changes are large/complex (e.g. 10+ lines of code), add ! at the beginning"
@@ -49,9 +46,8 @@ JSON Change Plan or question to ask the user:`
       content:
         systemMessage +
         `\n\nYou are part of a larger machine-run system. 
-1. Do not make up a plan if uncertain.
-2. Do not make up or reference files/paths to edit other than what was mentioned
-3. Only output in the JSON format specified, with file paths as keys & changes as values.`,
+1. Do not make up or reference files/paths to edit other than what was mentioned
+2. Only output in the JSON format specified, with file paths as keys & changes as values.`,
     })
 
     const response = await chatWithHistory(messages, model)
@@ -116,7 +112,7 @@ JSON Change Plan or question to ask the user:`
       const fileLines = contents.split('\n')
       log('editing file', file, fileLines.length)
 
-      outputFullFile = fileLines.length < FULL_OUTPUT_THRESHOLD
+      outputFullFile = false
 
       decoratedContents = outputFullFile
         ? contents
@@ -172,7 +168,7 @@ JSON array of operations to perform:`
     })
 
     const decoratedFuncs = funcsToShow.length
-      ? 'Possibly related code:\n' + funcsToShow.map((s) => s.pageContent).join('\n---\n')
+      ? 'Possibly related code:\n\n' + funcsToShow.map((s) => s.pageContent).join('\n-----\n')
       : ''
 
     const prompt = promptPrefix + decoratedFuncs + promptSuffix
