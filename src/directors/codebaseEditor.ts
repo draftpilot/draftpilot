@@ -114,26 +114,15 @@ export class CodebaseEditor {
       systemMessage +
       `\n\nYou are a codebase editor. Respond only in the format requested and do 
 not change anything unnecessarily, as your output is written directly to the codebase.`
-    const promptPrefix = `You are given the following plan: ${plan}
 
-Now editing: ${file}
-Changes to make: ${JSON.stringify(changes)}
-
----
-${decoratedContents}
----
-`
-
-    const promptSuffix = outputFullFile
-      ? `---
-
-Output the entire file that I will write to disk, only changing the requested lines, and no markdown like \`\`\`:`
-      : `---
-
-You return a sequence of operations in JSON. This example shows all possible operations & thier
-inputs: ${JSON.stringify(EXAMPLE)}
-
-JSON array of operations to perform:`
+    const promptTemplate = prompts.fileEditor({
+      plan,
+      file,
+      changes: JSON.stringify(changes),
+      contents: decoratedContents,
+      outputFullFile,
+      exampleJson: JSON.stringify(EXAMPLE),
+    })
 
     const similar = await indexer.vectorDB.searchWithScores(plan + '\n' + changes, 6)
     const similarFuncs = similar
@@ -146,7 +135,7 @@ JSON array of operations to perform:`
       .map((s) => s[0])
 
     const estimatedOutput = outputFullFile ? encode(contents).length || 300 : 100
-    let tokenBudget = (model == '3.5' ? 3900 : 7000) - encode(promptPrefix + promptSuffix).length
+    let tokenBudget = (model == '3.5' ? 3900 : 7000) - encode(promptTemplate).length
     const funcsToShow = (similarFuncs || []).filter((doc) => {
       const encoded = encode(doc.pageContent).length
       if (tokenBudget > encoded) {
@@ -157,10 +146,12 @@ JSON array of operations to perform:`
     })
 
     const decoratedFuncs = funcsToShow.length
-      ? 'Possibly related code:\n\n' + funcsToShow.map((s) => s.pageContent).join('\n-----\n')
+      ? 'Possibly related code:\n\n' +
+        funcsToShow.map((s) => s.pageContent).join('\n-----\n') +
+        '\n\n'
       : ''
 
-    const prompt = promptPrefix + decoratedFuncs + promptSuffix
+    const prompt = decoratedFuncs + promptTemplate
 
     const totalTokens = encode(prompt).length + estimatedOutput
     const estimatedDuration = totalTokens * (model == '3.5' ? 7 : 10)
