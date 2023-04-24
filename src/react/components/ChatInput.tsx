@@ -9,6 +9,7 @@ import Checkbox from '@/react/components/Checkbox'
 import useAutosizeTextArea from '@/react/hooks/useAutosizeTextArea'
 import { Attachment, Intent } from '@/types'
 
+import EncouragingInput from '@/react/components/EncouragingInput';
 export default () => {
   const rtaRef = useRef<ReactTextareaAutocomplete<string> | null>(null)
   const ref = useRef<HTMLTextAreaElement | null>(null)
@@ -126,6 +127,7 @@ export default () => {
           {inProgress ? <Loader size={20} /> : <PaperAirplaneIcon className="w-6 h-6 " />}
         </div>
       </div>
+      <EncouragingInput value={value} />
       <div className="flex my-2 gap-4 text-sm">
         <span>
           <b>Mode:</b>{' '}
