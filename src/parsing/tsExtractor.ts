@@ -12,7 +12,8 @@ type FuncChunk = {
 }
 
 // chunk every 10 lines
-const CHUNK_SIZE = 50
+const CHUNK_SIZE = 30
+const CHUNK_OVERLAP = 5
 
 // parses a javascript / typescript file and returns functions
 export class TSExtractor implements Extractor {
@@ -66,7 +67,7 @@ export class TSExtractor implements Extractor {
 
         const chunks: FuncChunk[] = []
         // chunk every 100 lines, but include the last 10 lines of prev chunk for context
-        for (let i = 0; i < splitContents.length; i += CHUNK_SIZE - 10) {
+        for (let i = 0; i < splitContents.length; i += CHUNK_SIZE - CHUNK_OVERLAP) {
           const chunk = splitContents.slice(i, i + CHUNK_SIZE).join('\n')
           chunks.push({ name, contents: chunk, line })
         }
