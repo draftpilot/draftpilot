@@ -8,15 +8,17 @@ import fs from 'fs'
 import path from 'path'
 import { encode } from 'gpt-3-encoder'
 import prompts from '@/prompts'
+import { IntentHandler } from '@/directors/intentHandler'
 
 type EditPlan = { context: string; [path: string]: string }
 
 // actor which can take actions on a codebase
-export class CodebaseEditor {
-  planChanges = async (
+export class CodebaseEditor extends IntentHandler {
+  initialRun = async (
     payload: MessagePayload,
-    postMessage: PostMessage,
-    systemMessage: string
+    attachmentBody: string | undefined,
+    systemMessage: string,
+    postMessage: PostMessage
   ) => {
     const { message, history } = payload
 
@@ -28,7 +30,7 @@ export class CodebaseEditor {
     const planMessage = history[planMessageIndex]
     const recentHistory = planMessage ? history.slice(planMessageIndex - 1) : history
 
-    const prompt = prompts.editPilot({ message: message.content })
+    const prompt = prompts.editPilot({ message: message.content, attachments: attachmentBody })
     const newMessage = { ...message, content: prompt }
     const messages = compactMessageHistory([...recentHistory, newMessage], model, {
       role: 'system',
@@ -68,19 +70,19 @@ export class CodebaseEditor {
           await this.editFile(fileModel, context, file, changes, postMessage, systemMessage)
         })
       )
-      postMessage({
+      return {
         role: 'assistant',
         content: `OUTCOME: Files edited: ${files.join(', ')}`,
         options: { model },
         intent: Intent.DONE,
-      })
+      } as ChatMessage
     } else {
-      postMessage({
+      return {
         role: 'assistant',
         content: response,
         options: { model },
         intent: Intent.EDIT_FILES,
-      })
+      } as ChatMessage
     }
   }
 
@@ -260,6 +262,15 @@ not change anything unnecessarily, as your output is written directly to the cod
     }
 
     return lines.join('\n')
+  }
+
+  followupRun = async (
+    payload: MessagePayload,
+    attachmentBody: string | undefined,
+    systemMessage: string,
+    postMessage: PostMessage
+  ): Promise<ChatMessage> => {
+    return await this.initialRun(payload, attachmentBody, systemMessage, postMessage)
   }
 }
 

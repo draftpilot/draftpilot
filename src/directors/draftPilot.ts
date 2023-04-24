@@ -2,6 +2,7 @@ import { chatWithHistory, streamChatWithHistory } from '@/ai/api'
 import { findRelevantDocs } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
+import { IntentHandler } from '@/directors/intentHandler'
 import prompts from '@/prompts'
 import { ChatMessage, Intent, MessagePayload, Model, PostMessage } from '@/types'
 import { encode } from 'gpt-3-encoder'
@@ -14,18 +15,14 @@ enum PlanOutcome {
 }
 
 // planner that exists as part of a multi-intent flow
-export class WebPlanner {
-  constructor(public interrupted: Set<string>) {}
-
-  runInitialPlanning = async (
+export class DraftPilot extends IntentHandler {
+  initialRun = async (
     payload: MessagePayload,
     attachmentBody: string | undefined,
     systemMessage: string,
     postMessage: PostMessage
   ) => {
-    let { id, message, history } = payload
-    const { options } = message
-
+    let { message, history } = payload
     const relevantDocs = await findRelevantDocs(message.content, indexer.files, 50)
     const similarCode = await indexer.vectorDB.searchWithScores(message.content, 6)
     const similarFuncs = similarCode
@@ -76,14 +73,13 @@ export class WebPlanner {
       postMessage(response)
     })
 
-    postMessage({
+    return {
       role: 'assistant',
       content: result,
-      intent: Intent.DRAFTPILOT,
-    })
+    } as ChatMessage
   }
 
-  runFollowupPlanner = async (
+  followupRun = async (
     payload: MessagePayload,
     attachmentBody: string | undefined,
     systemMessage: string,
@@ -111,10 +107,10 @@ export class WebPlanner {
       postMessage(response)
     })
 
-    postMessage({
+    return {
       role: 'assistant',
       content: result,
       intent: Intent.DRAFTPILOT,
-    })
+    } as ChatMessage
   }
 }

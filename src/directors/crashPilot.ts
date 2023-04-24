@@ -1,36 +1,36 @@
 import { streamChatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { attachmentListToString, compactMessageHistory } from '@/directors/helpers'
+import { IntentHandler } from '@/directors/intentHandler'
 import prompts from '@/prompts'
 import { ChatMessage, MessagePayload, PostMessage } from '@/types'
 
-export class CrashPilot {
-  constructor(public interrupted: Set<string>) {}
-
-  useCrashPilot = async (
+export class CrashPilot extends IntentHandler {
+  initialRun = async (
     payload: MessagePayload,
+    attachmentBody: string | undefined,
     systemMessage: string,
     postMessage: PostMessage
   ) => {
     const { message, history } = payload
-
-    const model = '4' // message.options?.model || '4'
+    const model = message.options?.model || '4'
 
     const similarCode = await indexer.vectorDB.searchWithScores(message.content, 10)
-    const similarFuncs = similarCode
-      ?.filter((s) => {
-        const [doc, score] = s
-        if (score < 0.15) return false
-        return true
-      })
-      .map((s) => s[0].pageContent)
+    const similarFuncs =
+      similarCode
+        ?.filter((s) => {
+          const [doc, score] = s
+          if (score < 0.15) return false
+          return true
+        })
+        .map((s) => s[0].pageContent) || []
+    if (attachmentBody) similarFuncs.push(attachmentBody)
 
     const prompt = prompts.crashPilot({
       message: message.content,
       references: similarFuncs?.join('\n\n'),
     })
 
-    const attachmentBody = attachmentListToString(message.attachments)
     const userMessage: ChatMessage = {
       role: 'user',
       content: prompt + message.content + attachmentBody,
@@ -47,8 +47,6 @@ export class CrashPilot {
       content: response,
     }
 
-    if (this.interrupted.has(payload.id)) return
-
-    postMessage(responseMessage)
+    return responseMessage
   }
 }
