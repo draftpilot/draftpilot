@@ -16,10 +16,14 @@ ALWAYS return in this output format:
   a '---' separator
   the question(s) you need the user to provide, e.g. APIs you don't know about, or more context
 
-- If the request requires editing more than 5 files, start with "SUGGESTION: <3-6 word summary of the request>"
+  examples: implement a NextJS 13 router
+
+- If the request cannot be handled by editing at most 5 files, start with "SUGGESTION: <3-6 word summary of the request>"
   then the proposed steps in markdown
   a '---' separator
   a suggested way the user could implement the request themselves, e.g. with unix tools or their IDE.
+
+  examples: replace 'bob' with 'joe' everywhere
 
 - If you know what to do, start with "PLAN: <3-6 word summary of the request>"
   then the steps in markdown

@@ -8,14 +8,16 @@
 
 interface Props {
   message: string;
-  attachments?: string;
+  files: string;
+  exampleJson: string;
 }
 
 export default function (props: Props): string {
   let result = "";
-  result += props.attachments;
   result +=
-    '\nGiven the request in the prior messages, come up with a list of files to create or modify and the changes to make to them. If you need some specific details, you can ask for it, otherwise reply in this exact JSON format:\n\n{\n  "path/to/file": "detailed list of changes to make so an AI can understand",\n  "path/to/bigchange": "! if the changes are large/complex (e.g. 10+ lines of code), add ! at the beginning"\n  ...\n}\n\nThe JSON output should ONLY contain string values.\n\nJSON Change Plan or question to ask the user: ';
-  result += props.message;
+    "Given the request in the prior messages, make the requested changes using the JSON operation format\ndescribed. If there are no edits to make, don't include that file. New files will be created.\n\nHere is a list of files.\n";
+  result += props.files;
+  result +=
+    '\n\n---\nThis example shows all possible operations & thier inputs: ${props.exampleJson}\n\nYour return format is a JSON object with files as keys and arrays of operations as values:\n{\n  "path/to/file": [edit operations],\n  "path/to/newfile": [insertion operation],\n  ...\n}\n\nResponse JSON:';
   return result;
 }

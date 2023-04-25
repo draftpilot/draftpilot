@@ -1,4 +1,4 @@
-import { chatCompletion, chatWithHistory, getModel } from '@/ai/api'
+import { chatCompletion, chatWithHistory, getModel, streamChatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { attachmentListToString, compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, Intent, MessagePayload, Model, PostMessage } from '@/types'
@@ -9,6 +9,7 @@ import path from 'path'
 import { encode } from 'gpt-3-encoder'
 import prompts from '@/prompts'
 import { IntentHandler } from '@/directors/intentHandler'
+import chalk from 'chalk'
 
 type EditPlan = { context: string; [path: string]: string }
 
@@ -23,165 +24,144 @@ export class CodebaseEditor extends IntentHandler {
     const { message, history } = payload
     const planMessageIndex = history.findLastIndex((h) => h.intent == Intent.DRAFTPILOT)
 
-    // only accept history after plan message. could be undefined though.
-    const planMessage = history[planMessageIndex]
-    const recentHistory = planMessage ? history.slice(planMessageIndex - 1) : history
+    // only accept history after plan message
+    const planMessage = history[planMessageIndex] || history[history.length - 1]
+    const recentHistory = history.slice(planMessageIndex - 1)
 
-    const prompt = prompts.editPilot({ message: message.content, attachments: attachmentBody })
-    const newMessage = { ...message, content: prompt }
-    const model = getModel(false)
-
-    const messages = compactMessageHistory([...recentHistory, newMessage], model, {
+    const model = getModel(true)
+    const basePrompt = prompts.editPilot({
+      message: message.content,
+      files: '',
+      exampleJson: JSON.stringify(EXAMPLE),
+    })
+    const baseMessage = { role: 'user', content: basePrompt } as ChatMessage
+    const messages = compactMessageHistory([...recentHistory, baseMessage], model, {
       role: 'system',
       content: systemMessage,
     })
 
-    const response = await chatWithHistory(messages, model)
+    const { filesToEdit, fileBodies } = this.readFilesToEdit(payload, planMessage.content)
 
-    const parsed: EditPlan = fuzzyParseJSON(response)
-    if (parsed) {
-      const context = planMessage ? planMessage.content : message.content
-      const files = Object.keys(parsed)
-        .filter((f) => f != 'context')
-        .map((f) => {
-          if (f.indexOf('/') == -1) {
-            return fuzzyMatchingFile(f, indexer.files) || f
-          } else {
-            return f
-          }
-        })
-
-      const basenames = files.map((f) => path.basename(f))
-      postMessage({
-        role: 'assistant',
-        content: `Editing ${pluralize(files.length, 'file')}: ${basenames.join(', ')}`,
-        intent: Intent.EDIT_FILES,
-      })
-      await Promise.all(
-        files.map(async (file) => {
-          const changes = parsed[file]
-          const fileModel = getModel(true)
-          await this.editFile(fileModel, context, file, changes, postMessage, systemMessage)
-        })
-      )
-      return {
-        role: 'assistant',
-        content: `OUTCOME: Files edited: ${files.join(', ')}`,
-        intent: Intent.DONE,
-      } as ChatMessage
-    } else {
-      return {
-        role: 'assistant',
-        content: response,
-        intent: Intent.EDIT_FILES,
-      } as ChatMessage
-    }
-  }
-
-  editFile = async (
-    model: Model,
-    plan: string,
-    file: string,
-    changes: any,
-    postMessage: PostMessage,
-    systemMessage: string
-  ) => {
-    let contents = ''
-    let decoratedContents = '<empty file>'
-    let outputFullFile = true
-
-    if (fs.existsSync(file)) {
-      contents = fs.readFileSync(file, 'utf8')
-      const fileLines = contents.split('\n')
-      log('editing file', file, fileLines.length)
-
-      outputFullFile = false
-
-      decoratedContents = outputFullFile
-        ? contents
-        : fileLines.map((line, i) => `${i + 1}: ${line}`).join('\n')
-    } else {
-      log('creating file', file)
-    }
-
-    systemMessage =
-      systemMessage +
-      `\n\nYou are a codebase editor. Respond only in the format requested and do 
-not change anything unnecessarily, as your output is written directly to the codebase.`
-
-    const promptTemplate = prompts.fileEditor({
-      plan,
-      file,
-      changes: JSON.stringify(changes),
-      contents: decoratedContents,
-      outputFullFile,
-      exampleJson: JSON.stringify(EXAMPLE),
+    const basenames = filesToEdit.map((f) => path.basename(f))
+    postMessage({
+      role: 'assistant',
+      content: `Editing ${pluralize(filesToEdit.length, 'file')}: ${basenames.join(', ')}`,
+      intent: Intent.EDIT_FILES,
     })
 
-    const similar = await indexer.vectorDB.searchWithScores(plan + '\n' + changes, 6)
+    await this.editFiles(model, planMessage.content, filesToEdit, fileBodies, messages, postMessage)
+
+    return {
+      role: 'assistant',
+      content: 'Finished editing files',
+      state: filesToEdit,
+      intent: Intent.EDIT_FILES,
+    } as ChatMessage
+  }
+
+  readFilesToEdit = (payload: MessagePayload, plan: string) => {
+    const { message } = payload
+    const filesToEdit = this.getFilesFromPlan(plan)
+    if (message.attachments) message.attachments.forEach((a) => filesToEdit.push(a.name))
+
+    if (filesToEdit.length == 0) {
+      log(chalk.yellow('WARNING: No files to edit'))
+      // it's possible that code snippets are enough to make edits
+    } else {
+      filesToEdit.unshift('Files to edit:')
+    }
+
+    let fileBodies = []
+    for (const file of filesToEdit) {
+      if (fs.existsSync(file)) {
+        const contents = fs.readFileSync(file, 'utf-8')
+        const fileLines = contents.split('\n')
+        const decorated = fileLines.map((line, i) => `${i + 1}: ${line}`).join('\n')
+        fileBodies.push(file + '\n' + decorated)
+      } else {
+        fileBodies.push(file + '\nNew File')
+      }
+    }
+
+    return { filesToEdit, fileBodies }
+  }
+
+  editFiles = async (
+    model: Model,
+    plan: string,
+    filesToEdit: string[],
+    fileBodies: string[],
+    messages: ChatMessage[],
+    postMessage: PostMessage
+  ) => {
+    const similar = await indexer.vectorDB.searchWithScores(plan, 6)
     const similarFuncs = similar
       ?.filter((s) => {
         const [doc, score] = s
         if (score < 0.15) return false
-        if (doc.metadata.path.includes(file)) return false
+        const existing = filesToEdit.find((f) => doc.metadata.path.includes(f))
+        if (existing) return false
         return true
       })
       .map((s) => s[0])
-
-    const estimatedOutput = outputFullFile ? encode(contents).length || 300 : 100
-    let tokenBudget = (model == '3.5' ? 3900 : 7000) - encode(promptTemplate).length
-    const funcsToShow = (similarFuncs || []).filter((doc) => {
-      const encoded = encode(doc.pageContent).length
-      if (tokenBudget > encoded) {
-        tokenBudget -= encoded
-        return true
-      }
-      return false
-    })
-
-    const decoratedFuncs = funcsToShow.length
-      ? 'Possibly related code:\n\n' +
-        funcsToShow.map((s) => s.pageContent).join('\n-----\n') +
-        '\n\n'
+    const similarFuncText = similarFuncs?.length
+      ? 'Related functions:\n' +
+        similarFuncs.map((s) => s.metadata.path + '\n' + s.pageContent).join('\n\n') +
+        '------\n\n'
       : ''
 
-    const prompt = decoratedFuncs + promptTemplate
+    const messageTokenCount = messages.reduce((acc, m) => acc + encode(m.content).length, 0)
+    const tokenBudget = model == '3.5' ? 4000 : 8000
 
-    const totalTokens = encode(prompt).length + estimatedOutput
-    const estimatedDuration = totalTokens * (model == '3.5' ? 7 : 10)
+    // check if entire sequence fits in my token count
+    const similarFuncLength = encode(similarFuncText).length
+    const estimatedOutput = encode(plan).length
+    const allFileBodies = fileBodies.join('\n\n')
+    const fileBodyTokens = encode(allFileBodies).length
 
-    postMessage({
-      role: 'assistant',
-      content: file,
-      progressDuration: estimatedDuration,
-    })
+    const editorPrompt = messages[messages.length - 1]
+    const baseEditorContent = '\n\n' + editorPrompt.content
+    const editFileHelper = async (fileContent: string) => {
+      editorPrompt.content =
+        similarFuncText +
+        'Files to edit (only edit these files):\n' +
+        fileContent +
+        baseEditorContent
 
-    const response = await chatCompletion(prompt, model, systemMessage)
-
-    let output: string = response
-    if (!outputFullFile) {
-      const parsed: Op[] = fuzzyParseJSON(response)
-      if (!parsed) throw new Error(`Could not parse response`)
-
-      output = this.applyOps(contents, parsed)
-    } else if (output.startsWith('```') || output.endsWith('```')) {
-      const start = output.indexOf('```')
-      const end = output.lastIndexOf('```')
-      if (end > start + 100) output = output.substring(start + 3, end)
-    } else if (output.startsWith('---') || output.endsWith('---')) {
-      const start = output.indexOf('---')
-      const end = output.lastIndexOf('---')
-      if (end > start + 100) output = output.substring(start + 3, end)
+      const response = await streamChatWithHistory(messages, model, postMessage)
+      postMessage({
+        role: 'assistant',
+        content: response,
+        intent: Intent.EDIT_FILES,
+      } as ChatMessage)
+      return response
     }
 
-    if (!contents) fs.mkdirSync(path.dirname(file), { recursive: true })
-    fs.writeFileSync(file, output, 'utf8')
+    const promises: Promise<string>[] = []
+    if (messageTokenCount + similarFuncLength + estimatedOutput + fileBodyTokens < tokenBudget) {
+      promises.push(editFileHelper(allFileBodies))
+    } else {
+      // we need to send files separately
+      let currentFileBodies: string[] = []
+      while (fileBodies.length) {
+        const nextFile = fileBodies.shift()!
+        const nextFileTokens = encode(nextFile).length
 
-    postMessage({
-      role: 'assistant',
-      content: file,
-      progressDuration: 0,
-    })
+        const totalTokens = messageTokenCount + similarFuncLength + estimatedOutput + nextFileTokens
+        if (totalTokens > tokenBudget) {
+          promises.push(editFileHelper(currentFileBodies.join('\n\n')))
+          currentFileBodies = []
+        }
+      }
+      if (currentFileBodies.length) {
+        promises.push(editFileHelper(currentFileBodies.join('\n\n')))
+      }
+    }
+
+    const results = await Promise.all(promises)
+    // fuzzy parse and merge all results
+    const merged = results.map((r) => fuzzyParseJSON(r)).reduce((acc, r) => ({ ...acc, ...r }), {})
+    return merged
   }
 
   applyOps = (contents: string, ops: Op[]) => {
@@ -263,6 +243,33 @@ not change anything unnecessarily, as your output is written directly to the cod
     postMessage: PostMessage
   ): Promise<ChatMessage> => {
     return await this.initialRun(payload, attachmentBody, systemMessage, postMessage)
+  }
+
+  getFilesFromPlan = (plan: string) => {
+    const firstSep = plan.indexOf('---\n')
+    const lastSep = plan.lastIndexOf('---\n')
+
+    // files is typically in format - <path> - edits
+    const fileRegex = /^. ([^ ]+)/
+    let fileText = plan
+    if (firstSep > -1 && lastSep > -1) {
+      fileText = plan.substring(firstSep + 4, lastSep)
+    }
+
+    const splitFileText = fileText.split('\n')
+    const files = splitFileText
+      .map((f) => {
+        const match = f.match(fileRegex)
+        if (!match) return ''
+        return match[1]
+      })
+      .filter(Boolean)
+
+    if (files.length) {
+      return files
+    }
+
+    return []
   }
 }
 

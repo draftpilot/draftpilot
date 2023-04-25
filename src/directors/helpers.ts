@@ -21,9 +21,10 @@ export function pastMessages(history: ChatMessage[]) {
 export function compactMessageHistory(
   messages: ChatMessage[],
   model: Model,
-  systemMessage?: ChatMessage
+  systemMessage?: ChatMessage,
+  answerTokens = 500
 ) {
-  let tokenBudget = model == '4' ? 6000 : 3500
+  let tokenBudget = (model == '4' ? 7500 : 4000) - answerTokens
 
   if (systemMessage) tokenBudget -= encode(systemMessage.content).length
 

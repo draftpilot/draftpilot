@@ -16,7 +16,7 @@ export default async function (file: string, ops: string, options: Options) {
   ops = ops.replace(/\\n/g, '')
   const opsJson = JSON.parse(ops)
 
-  const editor = new CodebaseEditor()
+  const editor = new CodebaseEditor(new Set())
 
   const output = editor.applyOps(fileContents, opsJson)
 
