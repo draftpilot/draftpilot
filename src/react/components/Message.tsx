@@ -94,10 +94,14 @@ const MessageContents = ({ message, pos }: Props) => {
     const proposal = content.substring(5)
     output = `**Action Plan**${proposal}*`
     postMessageAction = <ConfirmAction />
-  } else if (content.startsWith('ASK:')) {
+  } else if (content.startsWith('RESEARCH:')) {
     bgColor = 'bg-yellow-200'
-    const ask = content.substring(5)
-    output = `**Question:**\n\n${ask}`
+    const ask = content.substring(9)
+    output = `**Research Request:**\n\n${ask}`
+  } else if (content.startsWith('SUGGESTION:')) {
+    bgColor = 'bg-green-200'
+    const ask = content.substring(11)
+    output = `**Suggested Approach:**\n\n${ask}`
   } else if (content.startsWith('ANSWER:')) {
     const answer = content.substring(7)
     output = answer
