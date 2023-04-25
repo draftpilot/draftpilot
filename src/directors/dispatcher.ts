@@ -58,6 +58,11 @@ export class Dispatcher {
   onInterrupt = async (id: string) => {
     log('interrupting', id)
     this.interrupted.add(id)
+    this.postAction.interrupt(id)
+  }
+
+  onAction = async (id: string, action: string, postMessage: PostMessage) => {
+    this.postAction.takeAction(id, action, postMessage)
   }
 
   regenerateResponse = async (payload: MessagePayload, postMessage: PostMessage) => {
@@ -128,11 +133,11 @@ export class Dispatcher {
         postMessage
       )
     } else {
-      this.postAction.onMessage(payload, nextMessage, postMessage)
+      await this.postAction.onMessage({ payload, nextMessage, postMessage })
     }
   }
 
-  postAction = new PostAction(this.interrupted)
+  postAction = new PostAction(this, this.interrupted)
   intentDetector = new IntentDetector(this.interrupted)
   draftPilot = new DraftPilot(this.interrupted)
   codeEditor = new CodebaseEditor(this.interrupted)

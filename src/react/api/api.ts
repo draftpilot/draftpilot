@@ -22,7 +22,11 @@ class APIService {
   }
 
   interrupt = async (id: string): Promise<void> => {
-    await axios.post(`${this.endpoint}/interrupt?id=${id}&all=true`)
+    await axios.post(`${this.endpoint}/interrupt?id=${id}`)
+  }
+
+  takeAction = async (id: string, action: string): Promise<void> => {
+    await axios.post(`${this.endpoint}/message/action?id=${id}&action=${action}`)
   }
 
   sendMessage = (

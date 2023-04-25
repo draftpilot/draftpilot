@@ -63,6 +63,13 @@ export default async function serve(
     messenger.respondToMessages(input, res)
   })
 
+  app.post('/api/messageAction', async (req, res) => {
+    const { id, action } = req.body
+    res.setHeader('Content-Type', 'application/json')
+
+    messenger.respondToAction(id, action, res)
+  })
+
   app.post('/api/interrupt', async (req, res) => {
     const { id, all } = req.query
     // TODO: if all = true, fan out to all servers

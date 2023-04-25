@@ -7,7 +7,9 @@ interface Props {
 <%= props.references ? 'Potentially relevant context:\n' + props.references : '' %>
 
 ======
-User's request: <%= props.message %>. Think step by step to come up with a plan of action. You can take one of the following actions:
+User's request: <%= props.message %>
+
+Think step by step to come up with a plan of action. You can take one of the following actions:
 
 ALWAYS return in this output format:
 
@@ -34,4 +36,4 @@ ALWAYS return in this output format:
   (do not output actual code but include any context needed for an agent to make the change like 
    paths to other files, actual urls, etc. do not make reference to previous chat messages):
   a '---' separator
-  confidence: how confident you are this is 100% correct, no need for confirmation - low, medium, or high
+  confidence: how confident you are that this plan is correct and can be executed as written - low, medium, or high

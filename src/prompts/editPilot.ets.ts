@@ -15,9 +15,12 @@ interface Props {
 export default function (props: Props): string {
   let result = "";
   result +=
-    "Given the request in the prior messages, make the requested changes using the JSON operation format\ndescribed. If there are no edits to make, don't include that file. New files will be created.\n\nHere is a list of files.\n";
+    "Given the request in the prior messages, make the requested changes to the files using the JSON operation format described. If there are no edits to make, don't include that file. New files will be created.\n\nHere is a list of files.\n";
   result += props.files;
   result +=
-    '\n\n---\nThis example shows all possible operations & thier inputs: ${props.exampleJson}\n\nYour return format is a JSON object with files as keys and arrays of operations as values:\n{\n  "path/to/file": [edit operations],\n  "path/to/newfile": [insertion operation],\n  ...\n}\n\nResponse JSON:';
+    "\n\n---\nThis example shows all possible operations & thier inputs: ";
+  result += props.exampleJson;
+  result +=
+    '\n\nYour return format is a JSON object with files as keys and arrays of operations as values:\n{\n  "path/to/file": [edit operations],\n  "path/to/newfile": [insertion operation],\n  ...\n}\n\nResponse JSON:';
   return result;
 }

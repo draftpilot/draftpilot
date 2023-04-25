@@ -43,6 +43,10 @@ class Tracker extends EventEmitter {
     this.logEvent('userMessage', { intent })
   }
 
+  autoMessage(intent: string | undefined) {
+    this.logEvent('autoMessage', { intent })
+  }
+
   webGetContext() {
     this.logEvent('webGetContext')
   }

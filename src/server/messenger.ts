@@ -32,4 +32,18 @@ export class Messenger {
   respondToInterrupt = async (id: string) => {
     this.dispatcher.onInterrupt(id)
   }
+
+  respondToAction = async (id: string, action: string, res: Response) => {
+    try {
+      await this.dispatcher.onAction(id, action, (incoming: ChatMessage | string) => {
+        res.write(JSON.stringify(incoming) + ',')
+      })
+      res.end()
+    } catch (e: any) {
+      console.error(e)
+      const message = e.message || e.toString()
+      res.write(JSON.stringify({ error: message }) + ',')
+      res.end()
+    }
+  }
 }
