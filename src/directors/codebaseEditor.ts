@@ -361,7 +361,12 @@ type PasteOp = {
 type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp
 
 const EXAMPLE: Op[] = [
-  { op: 'replace', search: 'text to search', replace: 'replace with text' },
+  // not sure if this is a good idea.
+  // {
+  //   op: 'replace',
+  //   search: 'text to search (case sensitive)',
+  //   replace: 'global file text replacement',
+  // },
   { op: 'edit', line: 1, delLines: 1, startLine: 'first line to alter', insert: 'goodbye' },
   { op: 'insert', insert: 'hello', line: 3, startLine: 'existing line to insert below' },
   { op: 'delete', line: 1, startLine: 'first line to delete', delLines: 5 },

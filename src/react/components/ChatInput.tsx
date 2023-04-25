@@ -87,8 +87,12 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
   const placeholder = inProgress
     ? 'Sending...'
     : (intent == Intent.CRASHPILOT
-        ? 'Paste a bug report or crash log.'
-        : 'What would you like to do?') + ' Type "@" to reference a file'
+        ? 'Paste a stack trace or describe the bug to fix.'
+        : intent == Intent.CHAT
+        ? 'Ask a question or generate some code.'
+        : intent == Intent.PRODUCT
+        ? 'Get product and user-related advice.'
+        : 'What would you like to create today?') + ' Type "@" to reference a file'
 
   if (intent == Intent.TESTPILOT) {
     return <div className="text-center text-gray-500">This feature is coming soon.</div>
