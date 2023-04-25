@@ -1,4 +1,4 @@
-import { streamChatWithHistory } from '@/ai/api'
+import { getModel, streamChatWithHistory } from '@/ai/api'
 import { compactMessageHistory, detectTypeFromResponse } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
 import prompts from '@/prompts'
@@ -15,7 +15,7 @@ export class IntentDetector extends IntentHandler {
     // determine what we're doing
     const { message, history } = payload
 
-    const model = message.options?.model || '3.5'
+    const model = getModel(false)
     const prompt = prompts.detectIntent({ model })
     const userMessage: ChatMessage = {
       role: 'user',

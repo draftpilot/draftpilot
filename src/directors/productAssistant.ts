@@ -1,4 +1,4 @@
-import { streamChatWithHistory } from '@/ai/api'
+import { getModel, streamChatWithHistory } from '@/ai/api'
 import { compactMessageHistory } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
 import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
@@ -12,7 +12,7 @@ export class ProductAssistant extends IntentHandler {
     postMessage: PostMessage
   ) => {
     let { message, history } = payload
-    const model = message.options?.model || '3.5'
+    const model = getModel(false)
 
     systemMessage =
       'You are a Product Manager assistant tasked with helping the user, an engineer, get to clarity on their project. ' +

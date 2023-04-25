@@ -16,7 +16,7 @@ const config: Config = {
   server: '',
   options: undefined,
   configFolder: '.draftpilot',
-  gpt4: 'code-only',
+  gpt4: 'always',
   temperature: 0,
   logRequests: true,
 }

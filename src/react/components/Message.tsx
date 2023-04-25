@@ -13,7 +13,7 @@ import MarkdownParser from '@/react/components/MarkdownParser'
 
 export type Props = {
   message?: ChatMessage
-  lastMessage?: boolean
+  pos: { i: number; len: number }
 }
 
 const Message = (props: Props) => {
@@ -24,7 +24,7 @@ const Message = (props: Props) => {
     <>
       <div className="flex group">
         <MessageContents {...props} />
-        <MessageActions message={message} />
+        <MessageActions {...props} />
       </div>
     </>
   )
@@ -61,8 +61,9 @@ const MessageLoading = () => {
   )
 }
 
-const MessageContents = ({ message, lastMessage }: Props) => {
-  const [expanded, setExpanded] = useState(lastMessage)
+const MessageContents = ({ message, pos }: Props) => {
+  const autoExpand = pos.i >= pos.len - 2
+  const [expanded, setExpanded] = useState(autoExpand)
   const contentRef = useRef<HTMLDivElement>(null)
   const [hasMore, setHasMore] = useState(false)
 
@@ -146,7 +147,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
           </div>
         )}
       </div>
-      {lastMessage && postMessageAction}
+      {pos.i == pos.len - 1 ? postMessageAction : null}
     </div>
   )
 }
@@ -171,10 +172,11 @@ function PossibleAction() {
 
 function MessageButtons({ message }: { message: ChatMessage }) {
   const buttons = message.buttons || []
+  // onClick={button.onClick}
   return (
     <div className="flex flex-wrap gap-2 mt-2">
       {buttons.map((button, i) => (
-        <Button key={i} className="bg-blue-500 hover:bg-blue-600" onClick={button.onClick}>
+        <Button key={i} className="bg-blue-500 hover:bg-blue-600">
           {button.label}
         </Button>
       ))}

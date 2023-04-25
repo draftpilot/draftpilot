@@ -102,13 +102,8 @@ export class Dispatcher {
         [Intent.DONE]: this.intentDetector,
         [Intent.CHAT]: this.intentDetector,
         [Intent.ANSWER]: this.intentDetector,
-        [Intent.COMPLEX]: this.intentDetector,
       }[intent || Intent.CHAT] || this.intentDetector
 
-    if (intent == Intent.COMPLEX) {
-      if (!message.options) message.options = {}
-      message.options.model = '4'
-    }
     const isInitialRun =
       history.find((m) => m.role == 'assistant' && m.intent == intent) == undefined
     const isIntentDetection = intent === undefined

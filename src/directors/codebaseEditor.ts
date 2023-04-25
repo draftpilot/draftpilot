@@ -1,4 +1,4 @@
-import { chatCompletion, chatWithHistory } from '@/ai/api'
+import { chatCompletion, chatWithHistory, getModel } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { attachmentListToString, compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, Intent, MessagePayload, Model, PostMessage } from '@/types'
@@ -21,9 +21,6 @@ export class CodebaseEditor extends IntentHandler {
     postMessage: PostMessage
   ) => {
     const { message, history } = payload
-
-    const model = message.options?.model || '4'
-
     const planMessageIndex = history.findLastIndex((h) => h.intent == Intent.DRAFTPILOT)
 
     // only accept history after plan message. could be undefined though.
@@ -32,6 +29,7 @@ export class CodebaseEditor extends IntentHandler {
 
     const prompt = prompts.editPilot({ message: message.content, attachments: attachmentBody })
     const newMessage = { ...message, content: prompt }
+    const model = getModel(false)
     const messages = compactMessageHistory([...recentHistory, newMessage], model, {
       role: 'system',
       content:
@@ -60,27 +58,24 @@ export class CodebaseEditor extends IntentHandler {
       postMessage({
         role: 'assistant',
         content: `Editing ${pluralize(files.length, 'file')}: ${basenames.join(', ')}`,
-        options: { model },
         intent: Intent.EDIT_FILES,
       })
       await Promise.all(
         files.map(async (file) => {
           const changes = parsed[file]
-          const fileModel = '4' // changes.startsWith('!') ? '4' : model
+          const fileModel = getModel(true)
           await this.editFile(fileModel, context, file, changes, postMessage, systemMessage)
         })
       )
       return {
         role: 'assistant',
         content: `OUTCOME: Files edited: ${files.join(', ')}`,
-        options: { model },
         intent: Intent.DONE,
       } as ChatMessage
     } else {
       return {
         role: 'assistant',
         content: response,
-        options: { model },
         intent: Intent.EDIT_FILES,
       } as ChatMessage
     }

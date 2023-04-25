@@ -1,4 +1,4 @@
-import { streamChatWithHistory } from '@/ai/api'
+import { getModel, streamChatWithHistory } from '@/ai/api'
 import { compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, MessagePayload, PostMessage } from '@/types'
 
@@ -21,7 +21,7 @@ export abstract class IntentHandler {
     postMessage: PostMessage
   ): Promise<ChatMessage> => {
     const { message, history } = payload
-    const model = message.options?.model || '4'
+    const model = getModel(false)
 
     const userMessage: ChatMessage = {
       role: 'user',

@@ -20,37 +20,7 @@ const tokenCount = (messages: ChatMessage[]) => {
   return messages.reduce((acc, message) => acc + encode(message.content).length, 0)
 }
 
-let fakeMode = false
-let fakeModeResponse: string | null = null
-
-export function setFakeMode() {
-  log(chalk.yellow('FAKE MODE ENABLED'))
-  fakeMode = true
-}
-
-export function setFakeModeResponse(response: string) {
-  if (!fakeMode) return
-  fakeModeResponse = response
-}
-
-function generateFakeResponse(model: string, messages: ChatMessage[]) {
-  if (fakeModeResponse) {
-    const response = fakeModeResponse
-    fakeModeResponse = null
-    return response
-  }
-
-  const lastMessage = messages
-    .slice()
-    .reverse()
-    .find((m) => m.role == 'user')
-  const lastLine = (lastMessage?.content || 'unknown')
-    .split('\n')
-    .filter((x) => x.trim())
-    .pop()
-
-  return `fake GPT-${model} response to your request: ${lastLine}`.trim()
-}
+// --- completion api
 
 export async function chatCompletion(
   prompt: string,
@@ -188,4 +158,44 @@ function parseError(e: any) {
     }
   }
   return e
+}
+
+export function getModel(isCode: boolean) {
+  const policy = config.gpt4
+  if (policy == 'always' || (policy == 'code-only' && isCode)) return '4'
+  return '3.5'
+}
+
+// --- fake requests
+
+let fakeMode = false
+let fakeModeResponse: string | null = null
+
+export function setFakeMode() {
+  log(chalk.yellow('FAKE MODE ENABLED'))
+  fakeMode = true
+}
+
+export function setFakeModeResponse(response: string) {
+  if (!fakeMode) return
+  fakeModeResponse = response
+}
+
+function generateFakeResponse(model: string, messages: ChatMessage[]) {
+  if (fakeModeResponse) {
+    const response = fakeModeResponse
+    fakeModeResponse = null
+    return response
+  }
+
+  const lastMessage = messages
+    .slice()
+    .reverse()
+    .find((m) => m.role == 'user')
+  const lastLine = (lastMessage?.content || 'unknown')
+    .split('\n')
+    .filter((x) => x.trim())
+    .pop()
+
+  return `fake GPT-${model} response to your request: ${lastLine}`.trim()
 }

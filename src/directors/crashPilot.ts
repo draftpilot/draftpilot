@@ -1,4 +1,4 @@
-import { streamChatWithHistory } from '@/ai/api'
+import { getModel, streamChatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { attachmentListToString, compactMessageHistory } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
@@ -13,7 +13,7 @@ export class CrashPilot extends IntentHandler {
     postMessage: PostMessage
   ) => {
     const { message, history } = payload
-    const model = message.options?.model || '4'
+    const model = getModel(true)
 
     const similarCode = await indexer.vectorDB.searchWithScores(message.content, 10)
     const similarFuncs =

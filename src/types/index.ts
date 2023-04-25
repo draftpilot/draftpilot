@@ -38,8 +38,8 @@ export type ChatMessage = {
   progressDuration?: number
   progressStart?: number
   error?: { message: string } | string
-  options?: { model?: Model; tools?: boolean; type?: string }
-  buttons?: { label: string; onClick: () => void }[]
+  options?: {}
+  buttons?: { label: string; action: string }[]
 }
 
 export type Plan = {
@@ -89,8 +89,6 @@ export type PostMessage = (message: ChatMessage | string) => void
 
 export enum Intent {
   ANSWER = 'DIRECT_ANSWER',
-  COMPLEX = 'COMPLEX_ANSWER',
-
   EDIT_FILES = 'EDIT_FILES',
   PRODUCT = 'PRODUCT',
   DRAFTPILOT = 'DRAFTPILOT',

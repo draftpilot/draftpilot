@@ -28,11 +28,7 @@ export default function () {
     .option('-v, --verbose', 'verbose logging', () => setVerbose(1))
     .option('--skip-cache', 'skip cache for all requests', cache.skipCache)
     .option('--fake', 'use fake api requests', () => setFakeMode())
-    .option(
-      '--gpt4 <policy>',
-      'usage of gpt-4 over gpt-3.5-turbo (always, code-only, never)',
-      overrideGPT4
-    )
+    .option('--gpt4 <policy>', 'usage of gpt-4 (always, code-only, never)', overrideGPT4)
     .option('--temperature <number>', 'temperature for AI generations', (temperature) => {
       config.temperature = parseFloat(temperature)
     })

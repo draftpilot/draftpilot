@@ -137,48 +137,10 @@ class MessageStore {
         fileStore.loadData()
       }
 
-      if (message.content.endsWith('confidence: high')) {
-        this.automaticAction(sessionId)
-      }
-
       if (message.content.startsWith('PLAN: ')) {
         this.maybeUpdateSessionName(sessionId, message.content)
       }
     }
-  }
-
-  automaticAction = (sessionId: string) => {
-    const content = 'Proceeding in 5 seconds since confidence is high...'
-    const clearMessage = () =>
-      this.handleIncoming(sessionId, {
-        content,
-        role: 'system',
-        progressDuration: 0,
-      })
-    const timeout = setTimeout(() => {
-      clearMessage()
-      const proceed: ChatMessage = {
-        role: 'user',
-        content: 'Automatically proceeding',
-        intent: Intent.EDIT_FILES,
-      }
-      this.sendMessage(proceed, false, sessionId)
-    }, 5000)
-
-    this.handleIncoming(sessionId, {
-      content,
-      role: 'system',
-      progressDuration: 5000,
-      buttons: [
-        {
-          label: 'Cancel',
-          onClick: () => {
-            clearTimeout(timeout)
-            clearMessage()
-          },
-        },
-      ],
-    })
   }
 
   addSystemMessage = (message: ChatMessage, sessionId?: string) => {

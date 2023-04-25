@@ -1,4 +1,4 @@
-import { chatWithHistory, setFakeModeResponse, streamChatWithHistory } from '@/ai/api'
+import { chatWithHistory, getModel, setFakeModeResponse, streamChatWithHistory } from '@/ai/api'
 import { findRelevantDocs } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
@@ -43,7 +43,7 @@ export class DraftPilot extends IntentHandler {
       ...similarFuncs,
     ]
 
-    const model = '4'
+    const model = getModel(false)
 
     const basePrompt = prompts.draftPilot({ message: message.content, references: '' })
 
@@ -92,7 +92,7 @@ export class DraftPilot extends IntentHandler {
     // in the follow-up planner, we've already run planning and either proposed a plan or asked
     // the user for feedback. the user has responsed to us, and now we need to figure out what to do.
 
-    const model = message.options?.model || '4'
+    const model = getModel(false)
 
     const prompt = prompts.draftPilot({
       message: message.content,
