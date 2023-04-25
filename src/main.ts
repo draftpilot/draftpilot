@@ -19,6 +19,7 @@ import open from 'open'
 import editOps from '@/commands/editOps'
 import { tracker } from '@/utils/tracker'
 import { updateGitIgnores } from '@/utils/git'
+import { setFakeMode } from '@/ai/api'
 
 export default function () {
   program
@@ -26,6 +27,7 @@ export default function () {
     .description('AI-assisted coding')
     .option('-v, --verbose', 'verbose logging', () => setVerbose(1))
     .option('--skip-cache', 'skip cache for all requests', cache.skipCache)
+    .option('--fake', 'use fake api requests', () => setFakeMode())
     .option(
       '--gpt4 <policy>',
       'usage of gpt-4 over gpt-3.5-turbo (always, code-only, never)',

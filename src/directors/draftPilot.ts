@@ -1,4 +1,4 @@
-import { chatWithHistory, streamChatWithHistory } from '@/ai/api'
+import { chatWithHistory, setFakeModeResponse, streamChatWithHistory } from '@/ai/api'
 import { findRelevantDocs } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
@@ -69,6 +69,9 @@ export class DraftPilot extends IntentHandler {
       role: 'system',
     })
 
+    setFakeModeResponse(
+      'PLAN: fake plan 123\n1. create draftpilot\n2. ???\n3. profit\n---\n- README.md - take over the world\n---\nconfidence: high'
+    )
     const result = await streamChatWithHistory(messages, model, (response) => {
       postMessage(response)
     })

@@ -1,12 +1,6 @@
-import { chatWithHistory, streamChatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
-import {
-  attachmentListToString,
-  compactMessageHistory,
-  detectProjectLanguage,
-  detectTypeFromResponse,
-} from '@/directors/helpers'
+import { attachmentListToString, detectProjectLanguage } from '@/directors/helpers'
 import { ProductAssistant } from '@/directors/productAssistant'
 import { DraftPilot } from '@/directors/draftPilot'
 import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
@@ -18,6 +12,7 @@ import { tracker } from '@/utils/tracker'
 import prompts from '@/prompts'
 import { IntentDetector } from '@/directors/intentDetector'
 import { IntentHandler } from '@/directors/intentHandler'
+import { PostAction } from '@/directors/postAction'
 
 export class Dispatcher {
   interrupted = new Set<string>()
@@ -124,6 +119,9 @@ export class Dispatcher {
       ? await handler.initialRun(payload, attachmentBody, this.systemMessage(), postMessage)
       : await handler.followupRun(payload, attachmentBody, this.systemMessage(), postMessage)
     if (!nextMessage.intent) nextMessage.intent = intent
+
+    if (this.interrupted.has(payload.id)) return
+
     postMessage(nextMessage)
     history.push(nextMessage)
 
@@ -134,9 +132,12 @@ export class Dispatcher {
         attachmentBody,
         postMessage
       )
+    } else {
+      this.postAction.onMessage(payload, nextMessage, postMessage)
     }
   }
 
+  postAction = new PostAction()
   intentDetector = new IntentDetector(this.interrupted)
   draftPilot = new DraftPilot(this.interrupted)
   codeEditor = new CodebaseEditor(this.interrupted)

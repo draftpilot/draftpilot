@@ -2,12 +2,13 @@ import config from '@/config'
 import { cache } from '@/db/cache'
 import { ChatMessage, Model } from '@/types'
 import { isAxiosError } from 'axios'
-import { Configuration, OpenAIApi } from 'openai'
+import { Configuration, CreateChatCompletionResponse, OpenAIApi } from 'openai'
 import fs from 'fs'
 import { log } from '@/utils/logger'
 import { IncomingMessage } from 'http'
 import { tracker } from '@/utils/tracker'
 import { encode } from 'gpt-3-encoder'
+import chalk from 'chalk'
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -17,6 +18,38 @@ const openai = new OpenAIApi(configuration)
 
 const tokenCount = (messages: ChatMessage[]) => {
   return messages.reduce((acc, message) => acc + encode(message.content).length, 0)
+}
+
+let fakeMode = false
+let fakeModeResponse: string | null = null
+
+export function setFakeMode() {
+  log(chalk.yellow('FAKE MODE ENABLED'))
+  fakeMode = true
+}
+
+export function setFakeModeResponse(response: string) {
+  if (!fakeMode) return
+  fakeModeResponse = response
+}
+
+function generateFakeResponse(model: string, messages: ChatMessage[]) {
+  if (fakeModeResponse) {
+    const response = fakeModeResponse
+    fakeModeResponse = null
+    return response
+  }
+
+  const lastMessage = messages
+    .slice()
+    .reverse()
+    .find((m) => m.role == 'user')
+  const lastLine = (lastMessage?.content || 'unknown')
+    .split('\n')
+    .filter((x) => x.trim())
+    .pop()
+
+  return `fake GPT-${model} response to your request: ${lastLine}`.trim()
 }
 
 export async function chatCompletion(
@@ -49,19 +82,20 @@ export async function chatWithHistory(
 ) {
   try {
     const tempInput = writeTempFile(messages, model)
+    if (fakeMode) {
+      await new Promise((resolve) => setTimeout(resolve, 5000))
+      return generateFakeResponse(model, messages)
+    }
 
     const start = Date.now()
-    const completion = await openai.createChatCompletion({
+    const response = await openai.createChatCompletion({
       model: model == '3.5' ? 'gpt-3.5-turbo' : 'gpt-4',
       messages,
       temperature: config.temperature,
       stop: stop,
     })
+    const output = response.data.choices[0].message?.content || ''
     tracker.chatCompletion(model, Date.now() - start, tokenCount(messages))
-
-    const response = completion.data.choices[0].message
-    const output = response?.content || ''
-
     writeTempFile(messages.concat({ content: output, role: 'assistant' }), model, tempInput)
 
     return output
@@ -78,6 +112,14 @@ export async function streamChatWithHistory(
 ) {
   try {
     const tempInput = writeTempFile(messages, model)
+    if (fakeMode) {
+      const response = generateFakeResponse(model, messages)
+      for (let i = 0; i < response.length; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 20))
+        onChunk(response[i])
+      }
+      return response
+    }
 
     const start = Date.now()
     const response = await openai.createChatCompletion(
@@ -122,7 +164,6 @@ export async function streamChatWithHistory(
 
     tracker.chatCompletion(model, Date.now() - start, tokenCount(messages))
     writeTempFile(messages.concat({ content: output, role: 'assistant' }), model, tempInput)
-    // tracker.logStreamCompletion(messages, model, output)
     return output
   } catch (e) {
     throw parseError(e)
