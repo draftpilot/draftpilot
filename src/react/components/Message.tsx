@@ -157,7 +157,7 @@ function PossibleAction() {
     messageStore.sendMessage({
       content: 'Take action',
       role: 'user',
-      intent: 'ACTION',
+      intent: Intent.EDIT_FILES,
     })
   }
   return (
@@ -196,7 +196,7 @@ function ConfirmAction() {
     messageStore.sendMessage({
       content: 'Proceed',
       role: 'user',
-      intent: 'ACTION',
+      intent: Intent.EDIT_FILES,
     })
   }
   return (

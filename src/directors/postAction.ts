@@ -1,6 +1,6 @@
 // post-action is the class that deals with the result of a single dispatch flow.
 
-import { ChatMessage, MessagePayload, PostMessage } from '@/types'
+import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
 import { generateUUID } from '@/utils/utils'
 
 const DEFAULT_TIME = 15
@@ -15,6 +15,9 @@ export class PostAction {
     postMessage: PostMessage
   ) => {
     const id = generateUUID()
+
+    // for now only continue draftpilots.
+    if (newMessage.intent != Intent.DRAFTPILOT) return
 
     const message = `Automatically taking next action in ${DEFAULT_TIME} seconds...`
     postMessage({
