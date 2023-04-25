@@ -34,11 +34,29 @@ const MessageLoading = () => {
   const partialMessage = useStore(messageStore.partialMessage)
 
   let bg = 'bg-blue-100'
-  let partialContent = partialMessage
+  let partialContent: undefined | string | JSX.Element = partialMessage
 
   if (partialMessage && partialMessage.startsWith('PLAN:')) {
     bg = 'bg-yellow-100'
-    partialContent = 'Action Plan' + partialMessage.substring(5)
+    partialContent = (
+      <>
+        <b>Action Plan:</b>
+        {partialMessage.substring(5)}
+      </>
+    )
+  } else if (partialMessage && partialMessage.startsWith('{')) {
+    bg = 'bg-yellow-100'
+    partialContent = (
+      <>
+        <b>Generating changes operations...</b>
+        <pre
+          className="mt-4 whitespace-pre-wrap rounded bg-slate-950 p-2
+            overflow-x-scroll text-xs text-slate-100"
+        >
+          {partialMessage}
+        </pre>
+      </>
+    )
   }
 
   return (

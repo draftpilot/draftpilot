@@ -67,8 +67,6 @@ export class CodebaseEditor extends IntentHandler {
     if (filesToEdit.length == 0) {
       log(chalk.yellow('WARNING: No files to edit'))
       // it's possible that code snippets are enough to make edits
-    } else {
-      filesToEdit.unshift('Files to edit:')
     }
 
     let fileBodies = []
