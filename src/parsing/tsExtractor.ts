@@ -19,7 +19,7 @@ export class TSExtractor implements Extractor {
     const docs: CodeDoc[] = []
     functions.forEach((node) => {
       const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart())
-      let name: string = 'L' + line
+      let name: string = file.name + ' L' + line
 
       if (ts.isFunctionDeclaration(node)) {
         if (node.name) name = node.name?.getText()

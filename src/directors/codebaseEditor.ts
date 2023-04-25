@@ -30,13 +30,10 @@ export class CodebaseEditor extends IntentHandler {
     const prompt = prompts.editPilot({ message: message.content, attachments: attachmentBody })
     const newMessage = { ...message, content: prompt }
     const model = getModel(false)
+
     const messages = compactMessageHistory([...recentHistory, newMessage], model, {
       role: 'system',
-      content:
-        systemMessage +
-        `\n\n
-1. Do not make up or reference files/paths to edit other than what was mentioned
-2. Only output in the JSON format specified, with file paths as keys & changes as values.`,
+      content: systemMessage,
     })
 
     const response = await chatWithHistory(messages, model)

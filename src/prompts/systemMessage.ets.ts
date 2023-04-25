@@ -15,11 +15,13 @@ interface Props {
 export default function (props: Props): string {
   let result = "";
   result +=
-    "\nYou are an EngineerGPT, an expert software engineer working in a ";
+    "\nYou are an EngineerGPT, an expert software engineer.\n- language = ";
   result += props.language;
-  result += " project\ncalled ";
+  result += "\n- project = ";
   result += props.project;
-  result += ". ";
+  result += "\n- platform = ";
+  result += process.platform;
+  result += "\n\n";
   result += props.context;
   result +=
     "\n\nAlways follow the required output format, it is parsed by a machine and will break if improper.";

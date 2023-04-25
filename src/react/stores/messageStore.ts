@@ -60,6 +60,7 @@ class MessageStore {
     this.error.set(undefined)
     this.partialMessage.set(undefined)
     this.editMessage.set(null)
+    this.sessionAutoNamed = false
   }
 
   sendMessage = async (message: ChatMessage, skipHistory?: boolean, sessionId?: string) => {
@@ -70,7 +71,6 @@ class MessageStore {
     if (!message.intent && this.intent.get()) message.intent = this.intent.get()
     this.shouldDing = true
 
-    if (!sessionId && !this.session.get().name) this.updateSessionName(message)
     if (!sessionId) sessionId = this.session.get().id
     this.doCompletion(sessionId, payload)
     if (!skipHistory) this.updateMessages(sessionId, [...this.messages.get(), message])
@@ -137,9 +137,7 @@ class MessageStore {
         fileStore.loadData()
       }
 
-      if (message.content.startsWith('PLAN: ')) {
-        this.maybeUpdateSessionName(sessionId, message.content)
-      }
+      this.maybeUpdateSessionName(sessionId, message.content)
     }
   }
 
@@ -192,21 +190,33 @@ class MessageStore {
     this.session.set({ ...this.session.get(), cwd })
   }
 
-  updateSessionName = (message: ChatMessage) => {
+  sessionAutoNamed = false
+  autoUpdateSessionName = (sessionId: string, message: ChatMessage) => {
+    this.sessionAutoNamed = true
     const input = message.content
     const name = smartTruncate(input, 50)
-    const session = { ...this.session.get(), name }
-    this.session.set(session)
-    this.sessionDb.sessions.put(session)
-
-    this.sessions.set([session, ...this.sessions.get()])
+    this.renameSession(sessionId, name)
   }
 
   maybeUpdateSessionName = (sessionId: string, content: string) => {
-    const name = content.substring(0, content.indexOf('\n')).replace('PLAN: ', '')
-    if (name.length > 3) {
-      this.renameSession(sessionId, name)
+    const session = this.session.get()
+    if (sessionId != session.id) return
+    if (!session.name || this.sessionAutoNamed) return
+
+    const checkPrefix = (prefix: string) => {
+      if (content.startsWith(prefix)) {
+        const name = content.substring(prefix.length, content.indexOf('\n'))
+        if (name.length > 3) {
+          this.renameSession(sessionId, name)
+          return true
+        }
+      }
     }
+    for (const prefix of ['PLAN: ', 'SUGGESTION: ', 'RESEARCH: ']) {
+      if (checkPrefix(prefix)) return
+    }
+    const userMessage = this.messages.get()[0]
+    if (!this.sessionAutoNamed && userMessage) this.autoUpdateSessionName(sessionId, userMessage)
   }
 
   loadSessions = async () => {
