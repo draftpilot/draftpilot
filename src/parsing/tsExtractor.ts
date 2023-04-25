@@ -19,7 +19,7 @@ export class TSExtractor implements Extractor {
     const docs: CodeDoc[] = []
     functions.forEach((node) => {
       const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart())
-      let name: string = file.name + ' L' + line
+      let name: string = 'function'
 
       if (ts.isFunctionDeclaration(node)) {
         if (node.name) name = node.name?.getText()
@@ -54,7 +54,7 @@ export class TSExtractor implements Extractor {
       const contents = node.getText()
       const splitContents = contents.split('\n')
 
-      chunkLines(name, splitContents, docs)
+      chunkLines(file.name + ':' + name, splitContents, docs)
     })
 
     return docs

@@ -176,9 +176,7 @@ class MessageStore {
   }
 
   handleMessageButton = (message: ChatMessage, button: MessageButton) => {
-    if (button.action == 'cancel') {
-      API.interrupt(message.state)
-    }
+    API.takeAction(message.state, button.action)
   }
 
   // --- session management
@@ -199,9 +197,9 @@ class MessageStore {
   }
 
   maybeUpdateSessionName = (sessionId: string, content: string) => {
-    const session = this.session.get()
-    if (sessionId != session.id) return
-    if (!session.name || this.sessionAutoNamed) return
+    const session = this.sessions.get().find((s) => s.id == sessionId)!
+    const isCurrentSession = sessionId == this.session.get().id
+    if (session.name && (!isCurrentSession || !this.sessionAutoNamed)) return
 
     const checkPrefix = (prefix: string) => {
       if (content.startsWith(prefix)) {

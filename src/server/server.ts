@@ -63,7 +63,7 @@ export default async function serve(
     messenger.respondToMessages(input, res)
   })
 
-  app.post('/api/messageAction', async (req, res) => {
+  app.post('/api/message/action', async (req, res) => {
     const { id, action } = req.body
     res.setHeader('Content-Type', 'application/json')
 
