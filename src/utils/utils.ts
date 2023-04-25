@@ -104,8 +104,10 @@ export function fuzzyParseJSON(input: string) {
 }
 
 export function generateUUID() {
-  if (window.isSecureContext && window.crypto.randomUUID) {
+  if (global.window && window.isSecureContext && window.crypto.randomUUID) {
     return window.crypto.randomUUID()
+  } else if (!global.window && crypto) {
+    return crypto.randomUUID()
   } else {
     let d = new Date().getTime()
     if (typeof performance !== 'undefined' && typeof performance.now === 'function') {

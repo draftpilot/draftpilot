@@ -132,7 +132,7 @@ export class Dispatcher {
     }
   }
 
-  postAction = new PostAction()
+  postAction = new PostAction(this.interrupted)
   intentDetector = new IntentDetector(this.interrupted)
   draftPilot = new DraftPilot(this.interrupted)
   codeEditor = new CodebaseEditor(this.interrupted)

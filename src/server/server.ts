@@ -64,7 +64,8 @@ export default async function serve(
   })
 
   app.post('/api/interrupt', async (req, res) => {
-    const { id } = req.query
+    const { id, all } = req.query
+    // TODO: if all = true, fan out to all servers
     messenger.respondToInterrupt(id as string)
     res.json({ success: true })
   })

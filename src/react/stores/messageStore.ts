@@ -1,5 +1,5 @@
 import { API, isAxiosError } from '@/react/api/api'
-import { ChatMessage, Intent, MessagePayload } from '@/types'
+import { ChatMessage, Intent, MessageButton, MessagePayload } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
@@ -175,6 +175,12 @@ class MessageStore {
     const payload = this.inProgress.get()
     if (payload) API.interrupt(payload.id)
     this.inProgress.set(undefined)
+  }
+
+  handleMessageButton = (message: ChatMessage, button: MessageButton) => {
+    if (button.action == 'cancel') {
+      API.interrupt(message.state)
+    }
   }
 
   // --- session management

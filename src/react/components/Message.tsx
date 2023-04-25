@@ -172,11 +172,18 @@ function PossibleAction() {
 
 function MessageButtons({ message }: { message: ChatMessage }) {
   const buttons = message.buttons || []
-  // onClick={button.onClick}
   return (
     <div className="flex flex-wrap gap-2 mt-2">
       {buttons.map((button, i) => (
-        <Button key={i} className="bg-blue-500 hover:bg-blue-600">
+        <Button
+          key={i}
+          className={
+            button.action == 'cancel'
+              ? 'bg-red-500 hover:bg-red-600'
+              : 'bg-blue-500 hover:bg-blue-600'
+          }
+          onClick={() => messageStore.handleMessageButton(message, button)}
+        >
           {button.label}
         </Button>
       ))}

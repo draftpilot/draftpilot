@@ -39,8 +39,10 @@ export type ChatMessage = {
   progressStart?: number
   error?: { message: string } | string
   options?: {}
-  buttons?: { label: string; action: string }[]
+  buttons?: MessageButton[]
 }
+
+export type MessageButton = { label: string; action: string }
 
 export type Plan = {
   // the overall request
