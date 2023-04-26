@@ -36,4 +36,6 @@ ALWAYS return in this output format:
   (do not output actual code but include any context needed for an agent to make the change like 
    paths to other files, actual urls, etc. do not make reference to previous chat messages):
   a '---' separator
-  confidence: how confident you are that this plan is correct and can be executed as written - low, medium, or high
+  confidence: low or high
+    high = the user's request was clear and straightforward, there's not much room for interpretation
+    low = the user's request was vague, i had to make up a lot of implementation details

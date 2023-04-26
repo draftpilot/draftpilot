@@ -31,8 +31,6 @@ class SessionDatabase extends Dexie {
   }
 }
 
-const AUTO_PROCEED_TIME = 15
-
 class MessageStore {
   sessionDb = new SessionDatabase()
 
@@ -151,10 +149,15 @@ class MessageStore {
       fileStore.loadData()
     } else if (message.intent == Intent.DRAFTPILOT) {
       if (message.content.startsWith('PLAN:')) {
-        const content = `Automatically executing in ${AUTO_PROCEED_TIME} seconds`
+        const highConfidence = message.content.includes('confidence: high')
+        const proceedTime = highConfidence ? 15 : 30
+
+        const content = `${
+          highConfidence ? 'High' : 'Low'
+        } confidence - automatically executing in ${proceedTime} seconds`
         const msg: ChatMessage = {
           content,
-          progressDuration: AUTO_PROCEED_TIME * 1000,
+          progressDuration: proceedTime * 1000,
           role: 'system',
           buttons: [
             { label: 'Continue', action: 'continue' },
@@ -164,7 +167,7 @@ class MessageStore {
         this.addSystemMessage(msg, sessionId)
         const timeout = setTimeout(() => {
           this.autoActionHandler?.('continue')
-        }, AUTO_PROCEED_TIME * 1000)
+        }, proceedTime * 1000)
         this.autoActionHandler = (action) => {
           clearTimeout(timeout)
           this.updateMessages(
