@@ -104,7 +104,7 @@ const MessageContents = ({ message, pos }: Props) => {
   let postMessageAction: JSX.Element | undefined
 
   if (message.role == 'user') {
-    bgColor = 'bg-white'
+    bgColor = 'bg-slate-100'
   } else if (message.role == 'system') {
     bgColor = 'bg-green-300'
   } else if (content.startsWith('Thought:')) {
@@ -144,7 +144,7 @@ const MessageContents = ({ message, pos }: Props) => {
 
   return (
     <div className="overflow-hidden">
-      <div className={`flex-1 ${bgColor} shadow-md rounded relative overflow-hidden message`}>
+      <div className={`flex-1 ${bgColor} shadow-md rounded-md relative overflow-hidden message`}>
         <div
           ref={contentRef}
           className={(expanded ? '' : 'max-h-60 ') + 'p-4 overflow-hidden ease-out'}

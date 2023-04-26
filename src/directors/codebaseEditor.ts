@@ -47,16 +47,22 @@ export class CodebaseEditor extends IntentHandler {
     postMessage({
       role: 'assistant',
       content: `Editing ${pluralize(filesToEdit.length, 'file')}: ${basenames.join(', ')}`,
-      intent: Intent.EDIT_FILES,
+      intent: Intent.DRAFTPILOT,
     })
 
-    await this.editFiles(model, planMessage.content, filesToEdit, fileBodies, messages, postMessage)
+    const response = await this.editFiles(
+      model,
+      planMessage.content,
+      filesToEdit,
+      fileBodies,
+      messages,
+      postMessage
+    )
 
     return {
       role: 'assistant',
-      content: 'Finished editing files',
-      state: filesToEdit,
-      intent: Intent.DONE,
+      content: response,
+      intent: Intent.EDIT_FILES,
     } as ChatMessage
   }
 
@@ -128,11 +134,6 @@ export class CodebaseEditor extends IntentHandler {
         baseEditorContent
 
       const response = await streamChatWithHistory(messages, model, postMessage)
-      postMessage({
-        role: 'assistant',
-        content: response,
-        intent: Intent.EDIT_FILES,
-      } as ChatMessage)
       return response
     }
 

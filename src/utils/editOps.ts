@@ -24,7 +24,7 @@ export const applyOps = (contents: string, ops: Op[]) => {
       case 'edit': {
         const { delLines, insert } = op
         const insertLines = insert.split('\n')
-        matchIndent(lines[line - 1], insertLines)
+        matchIndent(lines[line], insertLines)
         lines = lines
           .slice(0, line)
           .concat(insertLines)
@@ -35,7 +35,7 @@ export const applyOps = (contents: string, ops: Op[]) => {
       case 'insert': {
         const { insert } = op
         const insertLines = insert.split('\n')
-        matchIndent(lines[line - 1], insertLines)
+        matchIndent(lines[line], insertLines)
         lines = lines.slice(0, line).concat(insertLines).concat(lines.slice(line))
         updateLines(insertLines.length)
         break
@@ -52,7 +52,7 @@ export const applyOps = (contents: string, ops: Op[]) => {
         break
       }
       case 'paste': {
-        matchIndent(lines[line - 1], clipboard)
+        matchIndent(lines[line], clipboard)
         lines = lines.slice(0, line).concat(clipboard).concat(lines.slice(line))
         updateLines(clipboard.length)
         break

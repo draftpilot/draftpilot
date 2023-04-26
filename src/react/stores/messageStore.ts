@@ -154,6 +154,11 @@ class MessageStore {
     this.sessionDb.messages.put({ id: sessionId, messages })
   }
 
+  onUpdateSingleMessage = (message: ChatMessage) => {
+    // save all the messages
+    this.updateMessages(this.session.get().id, this.messages.get())
+  }
+
   popMessages = (target: ChatMessage) => {
     const messages = this.messages.get()
     const index = messages.indexOf(target)

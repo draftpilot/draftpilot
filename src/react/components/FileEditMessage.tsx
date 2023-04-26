@@ -10,14 +10,17 @@ import { API } from '@/react/api/api'
 import { Op, applyOps } from '@/utils/editOps'
 import Loader from '@/react/components/Loader'
 import Button from '@/react/components/Button'
+import { messageStore } from '@/react/stores/messageStore'
 
-type DiffState = 'accepted' | 'rejected' | undefined
+type DiffState = 'accepted' | 'rejected' | 'edited' | undefined
 
 type DiffMap = { [file: string]: DiffState }
+type CodeMap = { [file: string]: string }
 
 export default function FileEditMessage({ message }: { message: ChatMessage }) {
   const content = message.content
-  const [diffMap, setDiffMap] = useState<DiffMap>({})
+  const [diffMap, setDiffMap] = useState<DiffMap>(message.state || {})
+  const [codeMap, setCodeMap] = useState<CodeMap>({})
 
   const jsonStart = content.indexOf('{')
   const preContent = content.slice(0, jsonStart).replace(/```.*/g, '').trim()
@@ -29,6 +32,18 @@ export default function FileEditMessage({ message }: { message: ChatMessage }) {
     .trim()
 
   const json = fuzzyParseJSON(jsonContent)
+
+  const onSetState = (file: string, state: DiffState) => {
+    const newMap = { ...diffMap, [file]: state }
+    setDiffMap(newMap)
+    message.state = newMap
+    messageStore.onUpdateSingleMessage(message)
+  }
+
+  const allDecided =
+    json &&
+    Object.values(diffMap).every((v) => v !== undefined) &&
+    Object.keys(diffMap).length >= Object.keys(json).length
 
   return (
     <div className="flex flex-col gap-4">
@@ -45,10 +60,12 @@ export default function FileEditMessage({ message }: { message: ChatMessage }) {
             file={key}
             ops={json[key]}
             state={diffMap[key]}
-            setState={(state) => setDiffMap({ ...diffMap, [key]: state })}
+            setState={(state) => onSetState(key, state)}
+            setCode={(code) => setCodeMap({ ...codeMap, [key]: code })}
           />
         ))}
       <TextContent content={postContent} />
+      {allDecided && <PostDiffActions code={codeMap} state={diffMap} setState={onSetState} />}
     </div>
   )
 }
@@ -68,15 +85,18 @@ function DiffContent({
   ops,
   state,
   setState,
+  setCode,
 }: {
   file: string
   ops: Op[]
   state: DiffState
   setState: (state: DiffState) => void
+  setCode: (code: string) => void
 }) {
   const [oldCode, setOldCode] = useState<string | null>(null)
   const [newCode, setNewCode] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
+  const [splitView, setSplitView] = useState(false)
 
   useEffect(() => {
     API.loadFile(file).then((res) => {
@@ -84,6 +104,7 @@ function DiffContent({
 
       const applied = applyOps(res.file, ops)
       setNewCode(applied)
+      setCode(applied)
     })
   }, [file, ops])
 
@@ -99,7 +120,7 @@ function DiffContent({
               compareMethod={DiffMethod.LINES}
               renderContent={HighlightedCode}
               leftTitle={file}
-              splitView={false}
+              splitView={splitView}
             />
           )}
         </div>
@@ -116,22 +137,32 @@ function DiffContent({
         </div>
       )}
       <div className="flex justify-center my-4 gap-4 mx-auto w-[768px] max-w-full">
-        {state != 'accepted' && (
+        {!state && (
           <Button onClick={() => setState('accepted')} className="bg-blue-600">
             Accept Diff
           </Button>
         )}
-        {state != 'rejected' && (
+        {!state && (
           <Button onClick={() => setState('rejected')} className="bg-red-600">
             Reject Diff
           </Button>
         )}
         {state && (
-          <Button onClick={() => setOpen(!open)} className="bg-gray-600">
-            Toggle Diff
+          <Button onClick={() => setState(undefined)} className="bg-gray-600">
+            Review Diff
           </Button>
         )}
-        <Button className="bg-gray-600">Edit File</Button>
+        {(!state || open) && (
+          <>
+            <Button onClick={() => setSplitView(!splitView)} className="bg-gray-600">
+              Toggle Split View
+            </Button>
+
+            <Button className="bg-gray-600" onClick={() => alert('coming soon.')}>
+              Edit File
+            </Button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -152,5 +183,55 @@ function Code({ children }: { children: string }) {
     <pre className="inline" ref={ref}>
       {children}
     </pre>
+  )
+}
+
+function PostDiffActions({
+  code,
+  state,
+  setState,
+}: {
+  code: CodeMap
+  state: DiffMap
+  setState: (file: string, state: DiffState) => void
+}) {
+  const allRejected = Object.values(state).every((v) => v == 'rejected')
+
+  if (allRejected) {
+    return (
+      <div className="flex justify-center my-4 gap-4 mx-auto w-[768px] max-w-full">
+        You rejected all changes, looks like we did not do that well.
+      </div>
+    )
+  }
+
+  // you already did this
+  if (state['saved'])
+    return (
+      <div className="text-xl font-bold flex justify-center my-4 gap-4 mx-auto w-[768px] max-w-full">
+        Changes persisted!
+        <a
+          href="#"
+          onClick={() => setState('saved', undefined)}
+          className="text-gray-500 hover:underline"
+        >
+          Reset
+        </a>
+      </div>
+    )
+
+  const save = () => {
+    Object.keys(state).forEach((file) => {
+      if (state[file] == 'accepted') API.saveFile(file, code[file])
+    })
+    setState('saved', 'accepted')
+  }
+
+  return (
+    <div className="text-xl font-bold flex justify-center my-4 gap-4 mx-auto w-[768px] max-w-full">
+      <Button onClick={() => alert('coming soon.')} className="bg-blue-600">
+        Persist all changes?
+      </Button>
+    </div>
   )
 }
