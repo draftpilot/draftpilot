@@ -225,11 +225,22 @@ class MessageStore {
 
   loadSessions = async () => {
     const sessions = await this.sessionDb.sessions.where('cwd').equals(this.cwd).reverse().toArray()
+    const url = new URL(window.location.href)
+    const sessionIdFromUrl = url.searchParams.get('sessionId')
+    if (sessionIdFromUrl && this.session.get().id != sessionIdFromUrl) {
+      this.loadSession(sessionIdFromUrl)
+    }
     this.sessions.set(sessions)
   }
 
   loadSession = async (id: string) => {
     const session = await this.sessionDb.sessions.get(id)
+    if (!session) return
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('sessionId') !== id) {
+      url.searchParams.set('sessionId', id)
+      window.history.pushState({}, '', url.toString())
+    }
     if (!session) return
     uiStore.sidebarVisible.set(false)
     this.clearData()

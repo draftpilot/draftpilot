@@ -96,7 +96,7 @@ const findLineIndex = (lines: string[], op: OpWithLine) => {
     if (i >= 0 && lines[line - i]?.trim() == trimmed) return line - i
   }
   log('could not find starting line for op, searched', maxSearch, op)
-  if (line > lines.length - 0) return lines.length - 1
+  if (line > lines.length - 1) return lines.length - 1
   return line
 }
 

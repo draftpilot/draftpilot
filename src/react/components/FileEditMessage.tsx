@@ -59,7 +59,7 @@ export default function FileEditMessage({ message }: { message: ChatMessage }) {
             key={key}
             file={key}
             ops={json[key]}
-            state={diffMap[key]}
+            stateMap={diffMap}
             setState={(state) => onSetState(key, state)}
             setCode={(code) => setCodeMap({ ...codeMap, [key]: code })}
           />
@@ -80,16 +80,18 @@ function TextContent({ content }: { content: string }) {
   )
 }
 
+const SAVED_KEY = 'saved'
+
 function DiffContent({
   file,
   ops,
-  state,
+  stateMap,
   setState,
   setCode,
 }: {
   file: string
   ops: Op[]
-  state: DiffState
+  stateMap: DiffMap
   setState: (state: DiffState) => void
   setCode: (code: string) => void
 }) {
@@ -98,13 +100,19 @@ function DiffContent({
   const [open, setOpen] = useState(false)
   const [splitView, setSplitView] = useState(false)
 
+  const state = stateMap[file]
+
   useEffect(() => {
     API.loadFile(file).then((res) => {
       setOldCode(res.file)
 
-      const applied = applyOps(res.file, ops)
-      setNewCode(applied)
-      setCode(applied)
+      try {
+        const applied = stateMap[SAVED_KEY] ? res.file : applyOps(res.file, ops)
+        setNewCode(applied)
+        setCode(applied)
+      } catch (e: any) {
+        setNewCode(e.message || e.toString())
+      }
     })
   }, [file, ops])
 
@@ -206,13 +214,13 @@ function PostDiffActions({
   }
 
   // you already did this
-  if (state['saved'])
+  if (state[SAVED_KEY])
     return (
       <div className="text-xl font-bold flex justify-center my-4 gap-4 mx-auto w-[768px] max-w-full">
         Changes persisted!
         <a
           href="#"
-          onClick={() => setState('saved', undefined)}
+          onClick={() => setState(SAVED_KEY, undefined)}
           className="text-gray-500 hover:underline"
         >
           Reset
@@ -224,12 +232,12 @@ function PostDiffActions({
     Object.keys(state).forEach((file) => {
       if (state[file] == 'accepted') API.saveFile(file, code[file])
     })
-    setState('saved', 'accepted')
+    setState(SAVED_KEY, 'accepted')
   }
 
   return (
     <div className="text-xl font-bold flex justify-center my-4 gap-4 mx-auto w-[768px] max-w-full">
-      <Button onClick={() => alert('coming soon.')} className="bg-blue-600">
+      <Button onClick={save} className="bg-blue-600">
         Persist all changes?
       </Button>
     </div>

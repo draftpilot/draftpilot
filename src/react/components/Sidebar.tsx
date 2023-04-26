@@ -15,10 +15,6 @@ export default () => {
   const sessions = useStore(messageStore.sessions)
   const projectContext = useStore(uiStore.editingProjectContext)
 
-  useEffect(() => {
-    messageStore.loadSessions()
-  }, [])
-
   const loadSession = (id: string) => {
     if (projectContext) uiStore.toggleProjectContext()
     messageStore.loadSession(id)
