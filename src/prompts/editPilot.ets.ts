@@ -21,6 +21,6 @@ export default function (props: Props): string {
     "\n\n---\nThis example shows all possible operations & thier inputs: ";
   result += props.exampleJson;
   result +=
-    '\n\nYour return format is a JSON object with files as keys and arrays of operations as values:\n{\n  "path/to/file": [edit operations],\n  "path/to/newfile": [insertion operation],\n  ...\n}\n\nResponse JSON:';
+    '\n\nYour return format is a JSON object with files as keys and arrays of operations as values. If the edit operations are long or require many changes, you can return the entire file as a string.  \n{\n  "path/to/file": [edit operations],\n  "path/to/newfile": "new file as a string",\n  ...\n}\n\nResponse JSON:';
   return result;
 }

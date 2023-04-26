@@ -160,6 +160,7 @@ export class CodebaseEditor extends IntentHandler {
     }
 
     const results = await Promise.all(promises)
+    console.log(results)
     // fuzzy parse and merge all results
     const merged = results.map((r) => fuzzyParseJSON(r)).reduce((acc, r) => ({ ...acc, ...r }), {})
     return merged

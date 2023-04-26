@@ -1,6 +1,6 @@
 {
   "name": "draftpilot",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "AI-assisted codebase helper",
   "main": "dist/index.js",
   "type": "module",
@@ -61,6 +61,7 @@
     "react-diff-viewer": "^3.1.1",
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.7",
+    "react-simple-code-editor": "^0.13.1",
     "snarkdown": "^2.0.0",
     "sqlite3": "^5.1.6",
     "typescript": "^5.0.4"

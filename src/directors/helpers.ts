@@ -4,6 +4,7 @@ import { fuzzyMatchingFile } from '@/utils/utils'
 import { encode } from 'gpt-3-encoder'
 import path from 'path'
 import fs from 'fs'
+import { extToLanguage } from '@/context/language'
 
 export function pastMessages(history: ChatMessage[]) {
   const pastMessages: ChatMessage[] = []
@@ -97,26 +98,6 @@ export function detectProjectLanguage() {
     return topLanguage
   }
   return topLanguage + ' / ' + secondLanguage
-}
-
-const extToLanguage = {
-  '.py': 'python',
-  '.js': 'javascript',
-  '.jsx': 'javascript',
-  '.ts': 'typescript',
-  '.tsx': 'typescript',
-  '.java': 'java',
-  '.cs': 'csharp',
-  '.go': 'go',
-  '.rb': 'ruby',
-  '.php': 'php',
-  '.rs': 'rust',
-  '.cpp': 'cpp',
-  '.c': 'c',
-  '.kt': 'kotlin',
-  '.scala': 'scala',
-  '.swift': 'swift',
-  '.hs': 'haskell',
 }
 
 export function detectTypeFromResponse<T extends string>(

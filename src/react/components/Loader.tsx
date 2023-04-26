@@ -1,7 +1,6 @@
 type Props = {
-  class?: string
   size?: number
-}
+} & React.HTMLAttributes<HTMLDivElement>
 
 export default ({ size = 20, ...rest }: Props) => (
   <div {...rest} style={{ width: size, height: size }}>

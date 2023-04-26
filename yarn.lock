@@ -2353,6 +2353,7 @@ __metadata:
     react-diff-viewer: ^3.1.1
     react-dom: ^18.2.0
     react-markdown: ^8.0.7
+    react-simple-code-editor: ^0.13.1
     snarkdown: ^2.0.0
     sqlite3: ^5.1.6
     tailwindcss: ^3.3.1
@@ -5315,6 +5316,16 @@ mocha@latest:
   version: 0.14.0
   resolution: "react-refresh@npm:0.14.0"
   checksum: dc69fa8c993df512f42dd0f1b604978ae89bd747c0ed5ec595c0cc50d535fb2696619ccd98ae28775cc01d0a7c146a532f0f7fb81dc22e1977c242a4912312f4
+  languageName: node
+  linkType: hard
+
+"react-simple-code-editor@npm:^0.13.1":
+  version: 0.13.1
+  resolution: "react-simple-code-editor@npm:0.13.1"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 1d223e34ccac5d7f91318f28d5edab6ccb13c51b1afb502094b8475214321263bb44258d355978e1714e9360c9081fb9f38d3ae89071a06628407627c362cc45
   languageName: node
   linkType: hard
 

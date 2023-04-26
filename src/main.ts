@@ -22,6 +22,7 @@ import { updateGitIgnores } from '@/utils/git'
 import { setFakeMode } from '@/ai/api'
 
 export default function () {
+  if (!process.env.OPENAI_API_KEY) return fatal('env variable OPENAI_API_KEY is not set')
   program
     .name('draftpilot')
     .description('AI-assisted coding')
