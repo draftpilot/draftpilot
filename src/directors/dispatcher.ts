@@ -19,7 +19,6 @@ export class Dispatcher {
   context: string = ''
 
   init = async () => {
-    indexer.loadFilesIntoVectors()
     this.context = readProjectContext() || ''
   }
 
@@ -31,6 +30,7 @@ export class Dispatcher {
       origPostMessage(msg)
     }
 
+    indexer.loadFilesIntoVectors()
     if (message.role == 'assistant') {
       tracker.regenerateResponse(message.intent)
       await this.regenerateResponse(payload, postMessage)
