@@ -2,32 +2,41 @@
 interface Props {
   message: string
   references: string | undefined
+  exampleJson: string
 }
 ---
-<%= props.references ? 'Potentially relevant context:\n' + props.references : '' %>
-
-======
+<%= props.references %>
+=======
 User's request: <%= props.message %>
 
 Think step by step to come up with a plan of action. You can take one of the following actions:
 
-ALWAYS return in this output format:
+ALWAYS return in this format:
 
-- If you need to research information, start with "RESEARCH: <3-6 word summary of the request>"
+- If you need key information, output "RESEARCH: <3-6 word summary of the request>"
   then the proposed steps in markdown
   a '---' separator
-  the question(s) you need the user to provide, e.g. APIs you don't know about, or more context
+  the question(s) you need the user to provide, e.g. a spec, APIs you don't know about, or more context
 
-  examples: implement a NextJS 13 router
+  examples: implement a NextJS 13 router, implement a backend for me
 
-- If the request cannot be handled by editing at most 5 files, start with "SUGGESTION: <3-6 word summary of the request>"
+- If request involves moving folders or editing more than 5 files, output "SUGGESTION: <3-6 word summary of the request>"
   then the proposed steps in markdown
   a '---' separator
   a suggested way the user could implement the request themselves, e.g. with unix tools or their IDE.
 
   examples: replace 'bob' with 'joe' everywhere
 
-- If you know what to do, start with "PLAN: <3-6 word summary of the request>"
+- If request involves small changes that you know exactly how to do, output "EDITS: <3-6 word summary of the request>"
+  Then, a JSON object with files as keys and arrays of operations as values:
+  {
+    "path/to/file": [edit operations],
+    "path/to/newfile": "new file as a string",
+    ...
+  }
+  This example shows all possible operations & thier inputs: <%= props.exampleJson %>
+
+- Otherwise, start with "PLAN: <3-6 word summary of the request>"
   then the steps in markdown
   a '---' separator
   the list of files to modify (with full paths) and how they should be changed in this format:

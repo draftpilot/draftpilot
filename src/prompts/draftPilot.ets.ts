@@ -9,16 +9,18 @@
 interface Props {
   message: string;
   references: string | undefined;
+  exampleJson: string;
 }
 
 export default function (props: Props): string {
   let result = "";
-  result += props.references
-    ? "Potentially relevant context:\n" + props.references
-    : "";
-  result += "\n\n======\nUser's request: ";
+  result += props.references;
+  result += "\n=======\nUser's request: ";
   result += props.message;
   result +=
-    "\n\nThink step by step to come up with a plan of action. You can take one of the following actions:\n\nALWAYS return in this output format:\n\n- If you need to research information, start with \"RESEARCH: <3-6 word summary of the request>\"\n  then the proposed steps in markdown\n  a '---' separator\n  the question(s) you need the user to provide, e.g. APIs you don't know about, or more context\n\n  examples: implement a NextJS 13 router\n\n- If the request cannot be handled by editing at most 5 files, start with \"SUGGESTION: <3-6 word summary of the request>\"\n  then the proposed steps in markdown\n  a '---' separator\n  a suggested way the user could implement the request themselves, e.g. with unix tools or their IDE.\n\n  examples: replace 'bob' with 'joe' everywhere\n\n- If you know what to do, start with \"PLAN: <3-6 word summary of the request>\"\n  then the steps in markdown\n  a '---' separator\n  the list of files to modify (with full paths) and how they should be changed in this format:\n  - path/to/file.tsx - add a row of buttons under the main <div>\n  - other/path/style.css - add a new class called .my-class\n  (do not output actual code but include any context needed for an agent to make the change like \n   paths to other files, actual urls, etc. do not make reference to previous chat messages):\n  a '---' separator\n  confidence: low or high\n    high = the user's request was clear and straightforward, there's not much room for interpretation\n    low = the user's request was vague, i had to make up a lot of implementation details";
+    '\n\nThink step by step to come up with a plan of action. You can take one of the following actions:\n\nALWAYS return in this format:\n\n- If you need key information, output "RESEARCH: <3-6 word summary of the request>"\n  then the proposed steps in markdown\n  a \'---\' separator\n  the question(s) you need the user to provide, e.g. a spec, APIs you don\'t know about, or more context\n\n  examples: implement a NextJS 13 router, implement a backend for me\n\n- If request involves moving folders or editing more than 5 files, output "SUGGESTION: <3-6 word summary of the request>"\n  then the proposed steps in markdown\n  a \'---\' separator\n  a suggested way the user could implement the request themselves, e.g. with unix tools or their IDE.\n\n  examples: replace \'bob\' with \'joe\' everywhere\n\n- If request involves small changes that you know exactly how to do, output "EDITS: <3-6 word summary of the request>"\n  Then, a JSON object with files as keys and arrays of operations as values:\n  {\n    "path/to/file": [edit operations],\n    "path/to/newfile": "new file as a string",\n    ...\n  }\n  This example shows all possible operations & thier inputs: ';
+  result += props.exampleJson;
+  result +=
+    "\n\n- Otherwise, start with \"PLAN: <3-6 word summary of the request>\"\n  then the steps in markdown\n  a '---' separator\n  the list of files to modify (with full paths) and how they should be changed in this format:\n  - path/to/file.tsx - add a row of buttons under the main <div>\n  - other/path/style.css - add a new class called .my-class\n  (do not output actual code but include any context needed for an agent to make the change like \n   paths to other files, actual urls, etc. do not make reference to previous chat messages):\n  a '---' separator\n  confidence: low or high\n    high = the user's request was clear and straightforward, there's not much room for interpretation\n    low = the user's request was vague, i had to make up a lot of implementation details";
   return result;
 }
