@@ -12,6 +12,8 @@ import Loader from '@/react/components/Loader'
 import Button from '@/react/components/Button'
 import { messageStore } from '@/react/stores/messageStore'
 import { extToLanguage } from '@/context/language'
+import useAutosizeTextArea from '@/react/hooks/useAutosizeTextArea'
+import CodeEditor from 'react-simple-code-editor'
 
 type DiffState = 'accepted' | 'rejected' | 'edited' | undefined
 
@@ -108,6 +110,7 @@ function DiffContent({
 }) {
   const [oldCode, setOldCode] = useState<string | null>(null)
   const [newCode, setNewCode] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
   const [splitView, setSplitView] = useState(false)
 
   const state = stateMap[file]
@@ -136,14 +139,29 @@ function DiffContent({
   const ext = file.split('.').pop()
   const language = extToLanguage['.' + ext!]
 
+  if (editing) {
+    return (
+      <Editor
+        file={file}
+        language={language}
+        code={newCode!}
+        setCode={(code) => {
+          setCode(code)
+          setNewCode(code)
+        }}
+        setEditing={setEditing}
+      />
+    )
+  }
+
   return (
     <div>
       {!state && (
         <div className="diff-view mb-4 shadow-md text-xs flex-1 max-w-full overflow-x-auto">
-          {!oldCode || (!newCode && <Loader />)}
-          {oldCode && newCode && (
+          {oldCode == null && <Loader className="text-black" />}
+          {newCode != null && (
             <ReactDiffViewer
-              oldValue={oldCode}
+              oldValue={oldCode || ''}
               newValue={newCode}
               compareMethod={DiffMethod.LINES}
               renderContent={(line) => <Code language={language} code={line} />}
@@ -186,11 +204,59 @@ function DiffContent({
               Toggle Split View
             </Button>
 
-            <Button className="bg-gray-600" onClick={() => alert('coming soon.')}>
+            <Button className="bg-gray-600" onClick={() => setEditing(true)}>
               Edit File
             </Button>
           </>
         )}
+      </div>
+    </div>
+  )
+}
+
+function Editor({
+  file,
+  language,
+  code,
+  setCode,
+  setEditing,
+}: {
+  file: string
+  language: string
+  code: string
+  setCode: (code: string) => void
+  setEditing: (editing: boolean) => void
+}) {
+  const [newCode, setNewCode] = useState(code)
+
+  const save = () => {
+    setCode(newCode)
+    setEditing(false)
+  }
+
+  const discard = () => {
+    setEditing(false)
+  }
+
+  return (
+    <div className="flex flex-col gap-4 mx-auto w-[768px] max-w-full">
+      <div className="mb-4 shadow-md flex-1 max-w-full overflow-x-auto font-mono">
+        <CodeEditor
+          className="w-full"
+          autoFocus
+          value={newCode}
+          highlight={(code) => hljs.highlight(code, { language }).value}
+          padding={10}
+          onValueChange={(code) => setNewCode(code)}
+        />
+      </div>
+      <div className="flex justify-center my-4 gap-4">
+        <Button onClick={save} className="bg-blue-600">
+          Save
+        </Button>
+        <Button onClick={discard} className="bg-red-600">
+          Discard
+        </Button>
       </div>
     </div>
   )
@@ -231,14 +297,14 @@ function PostDiffActions({
   // you already did this
   if (state[SAVED_KEY])
     return (
-      <div className="text-xl font-bold flex justify-center my-4 gap-4 mx-auto w-[768px] max-w-full">
+      <div className="text-xl font-bold flex items-center justify-center my-4 gap-4 mx-auto w-[768px] max-w-full">
         Changes persisted!
         <a
           href="#"
           onClick={() => setState(SAVED_KEY, undefined)}
-          className="text-gray-500 hover:underline"
+          className="text-gray-500 hover:underline text-sm"
         >
-          Reset
+          (Reset)
         </a>
       </div>
     )
