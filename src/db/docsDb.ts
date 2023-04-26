@@ -127,10 +127,12 @@ export default class FileDB {
       return
     }
 
-    const rows = docs.map((doc) => {
-      const vectors = JSON.stringify(doc.vectors)
-      return [doc.path, doc.hash, vectors]
-    })
+    const rows = docs
+      .filter((doc) => doc.vectors)
+      .map((doc) => {
+        const vectors = JSON.stringify(doc.vectors)
+        return [doc.path, doc.hash, vectors]
+      })
 
     const stmt = this.db.prepare(
       `INSERT OR REPLACE INTO docs (path, hash, vectors) VALUES (?, ?, ?)`
