@@ -222,7 +222,7 @@ function PostDiffActions({
   if (allRejected) {
     return (
       <div className="flex justify-center my-4 gap-4 mx-auto w-[768px] max-w-full">
-        You rejected all changes, looks like we did not do that well.
+        You rejected all changes.
       </div>
     )
   }
