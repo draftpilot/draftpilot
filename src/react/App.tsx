@@ -61,10 +61,11 @@ function App() {
           </div>
 
           {!editing && (
-            <div className="fixed bottom-0 left-0 sm:left-56 right-0">
+            <div className={`fixed bottom-0 ${showSidebar ? 'left-56' : 'left-0'} right-0`}>
               <div className="mx-auto w-[768px] max-w-full">
-                <div className="bg-gradient-to-b from-transparent to-gray-200 h-10" />
-                <ChatInput />
+                <div className="p-8 pb-4 mb-8 bg-gray-500/50 rounded-md">
+                  <ChatInput />
+                </div>
               </div>
             </div>
           )}

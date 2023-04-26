@@ -99,7 +99,7 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
   }
 
   return (
-    <div className="pb-4 ">
+    <div className="">
       <div className="bg-white shadow-md rounded flex relative">
         <ReactTextareaAutocomplete<string>
           value={value}

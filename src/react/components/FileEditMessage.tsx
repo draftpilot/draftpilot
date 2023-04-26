@@ -11,6 +11,7 @@ import { Op, applyOps } from '@/utils/editOps'
 import Loader from '@/react/components/Loader'
 import Button from '@/react/components/Button'
 import { messageStore } from '@/react/stores/messageStore'
+import { extToLanguage } from '@/context/language'
 
 type DiffState = 'accepted' | 'rejected' | 'edited' | undefined
 
@@ -118,7 +119,7 @@ function DiffContent({
   }, [file])
 
   useEffect(() => {
-    if (!oldCode) return
+    if (oldCode == null) return
     try {
       const applied = stateMap[SAVED_KEY]
         ? oldCode
@@ -132,6 +133,9 @@ function DiffContent({
     }
   }, [oldCode, ops])
 
+  const ext = file.split('.').pop()
+  const language = extToLanguage['.' + ext!]
+
   return (
     <div>
       {!state && (
@@ -142,7 +146,7 @@ function DiffContent({
               oldValue={oldCode}
               newValue={newCode}
               compareMethod={DiffMethod.LINES}
-              renderContent={HighlightedCode}
+              renderContent={(line) => <Code language={language} code={line} />}
               leftTitle={file}
               splitView={splitView}
             />
@@ -192,21 +196,16 @@ function DiffContent({
   )
 }
 
-function HighlightedCode(children: string) {
-  return <Code children={children} />
-}
+function Code({ code, language }: { code: string; language: string }) {
+  if (!code) return null
 
-function Code({ children }: { children: string }) {
-  const ref = useRef<HTMLPreElement | null>(null)
-  useEffect(() => {
-    if (!ref.current) return
-    hljs.highlightBlock(ref.current)
-  }, [children])
-
+  const html = hljs.highlight(code, { language }).value
   return (
-    <pre className="inline" ref={ref}>
-      {children}
-    </pre>
+    <span
+      dangerouslySetInnerHTML={{
+        __html: html,
+      }}
+    />
   )
 }
 
