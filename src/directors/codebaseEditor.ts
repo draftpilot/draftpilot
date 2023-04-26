@@ -172,7 +172,31 @@ export class CodebaseEditor extends IntentHandler {
     systemMessage: string,
     postMessage: PostMessage
   ): Promise<ChatMessage> => {
-    return await this.initialRun(payload, attachmentBody, systemMessage, postMessage)
+    const { message, history } = payload
+    const prevPlanIndex = history.findLastIndex((h) => h.intent == Intent.DRAFTPILOT)
+    const prevEditIndex = history.findLastIndex((h) => h.intent == Intent.EDIT_FILES)
+
+    if (prevPlanIndex > prevEditIndex) {
+      // there was a planning session in between - treat this like an initial run
+      return this.initialRun(payload, attachmentBody, systemMessage, postMessage)
+    }
+
+    // only accept history after edit message
+    const recentHistory = history.slice(prevEditIndex - 1)
+
+    const model = getModel(true)
+    const messages = compactMessageHistory([...recentHistory, message], model, {
+      role: 'system',
+      content: systemMessage,
+    })
+
+    const response = await streamChatWithHistory(messages, model, postMessage)
+
+    return {
+      role: 'assistant',
+      content: response,
+      intent: Intent.EDIT_FILES,
+    } as ChatMessage
   }
 
   getFilesFromPlan = (plan: string) => {

@@ -83,16 +83,19 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
   useAutosizeTextArea(ref.current, value)
 
   const intent = useStore(messageStore.intent)
+  const firstMessage = useStore(messageStore.messages).length == 0
 
   const placeholder = inProgress
     ? 'Sending...'
-    : (intent == Intent.CRASHPILOT
+    : firstMessage
+    ? (intent == Intent.CRASHPILOT
         ? 'Paste a stack trace or describe the bug to fix.'
         : intent == Intent.CHAT
         ? 'Ask a question or generate some code.'
         : intent == Intent.PRODUCT
         ? 'Get product and user-related advice.'
         : 'What would you like to create today?') + ' Type "@" to reference a file'
+    : 'Type a response. Use "@" to reference a file'
 
   if (intent == Intent.TESTPILOT) {
     return <div className="text-center text-gray-500">This feature is coming soon.</div>
