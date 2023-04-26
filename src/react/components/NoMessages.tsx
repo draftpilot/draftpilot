@@ -40,7 +40,7 @@ export default () => {
           Running in: <code>{cwd}</code>
         </p>
 
-        <p>Here are some things you can ask me to do:</p>
+        <p>Here are some things you can do:</p>
 
         <ul className="list-disc list-inside mt-2 flex flex-col gap-2">
           <li>
@@ -48,10 +48,10 @@ export default () => {
           </li>
           <li>Find a package for a fuzzy string matcher</li>
           <li>
-            For all instances of <code>FOO</code>, add <code>BAR</code> next to it
+            Create a new <code>BarClass</code> based on <code>FooClass</code> with all stub methods
           </li>
           <li>
-            Look for bugs in <code>importantFile.ts</code>
+            Add try/catch around API calls in <code>importantFile.ts</code>
           </li>
           <li>Create a React hook for auto-expanding textarea and save it to src/components</li>
         </ul>

@@ -107,7 +107,6 @@ function DiffContent({
 }) {
   const [oldCode, setOldCode] = useState<string | null>(null)
   const [newCode, setNewCode] = useState<string | null>(null)
-  const [open, setOpen] = useState(false)
   const [splitView, setSplitView] = useState(false)
 
   const state = stateMap[file]
@@ -115,24 +114,27 @@ function DiffContent({
   useEffect(() => {
     API.loadFile(file).then((res) => {
       setOldCode(res.file)
-
-      try {
-        const applied = stateMap[SAVED_KEY]
-          ? res.file
-          : Array.isArray(ops)
-          ? applyOps(res.file, ops)
-          : ops
-        setNewCode(applied)
-        setCode(applied)
-      } catch (e: any) {
-        setNewCode(e.message || e.toString())
-      }
     })
-  }, [file, ops])
+  }, [file])
+
+  useEffect(() => {
+    if (!oldCode) return
+    try {
+      const applied = stateMap[SAVED_KEY]
+        ? oldCode
+        : Array.isArray(ops)
+        ? applyOps(oldCode, ops)
+        : ops
+      setNewCode(applied)
+      setCode(applied)
+    } catch (e: any) {
+      setNewCode(e.message || e.toString())
+    }
+  }, [oldCode, ops])
 
   return (
     <div>
-      {(!state || open) && (
+      {!state && (
         <div className="diff-view mb-4 shadow-md text-xs flex-1 max-w-full overflow-x-auto">
           {!oldCode || (!newCode && <Loader />)}
           {oldCode && newCode && (
@@ -174,7 +176,7 @@ function DiffContent({
             Review Diff
           </Button>
         )}
-        {(!state || open) && (
+        {!state && (
           <>
             <Button onClick={() => setSplitView(!splitView)} className="bg-gray-600">
               Toggle Split View
