@@ -59,12 +59,10 @@ export default function FileEditMessage({ message }: { message: ChatMessage }) {
     Object.values(diffMap).every((v) => v !== undefined) &&
     Object.keys(diffMap).length >= Object.keys(plan).length
 
-  console.l
-
   return (
     <div className="flex flex-col gap-4">
       {preContent && <TextContent content={preContent} />}
-      {!plan && (
+      {(!plan || Object.keys(plan).length == 0) && (
         <div className="flex-1 bg-red-600 text-white shadow-md rounded message p-4">
           Error parsing JSON content
         </div>
