@@ -5,6 +5,7 @@ import * as Diff from 'diff'
 import { splitOnce } from '@/utils/utils'
 import child_process from 'child_process'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
+import { applyOps } from '@/utils/editOps'
 
 type Options = {}
 
@@ -16,9 +17,7 @@ export default async function (file: string, ops: string, options: Options) {
   ops = ops.replace(/\\n/g, '')
   const opsJson = JSON.parse(ops)
 
-  const editor = new CodebaseEditor(new Set())
-
-  const output = editor.applyOps(fileContents, opsJson)
+  const output = applyOps(fileContents, opsJson)
 
   fs.writeFileSync(file, output)
 

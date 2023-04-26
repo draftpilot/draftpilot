@@ -10,6 +10,7 @@ import { messageStore } from '@/react/stores/messageStore'
 import { useStore } from '@nanostores/react'
 import ProgressBar from '@/react/components/ProgressBar'
 import MarkdownParser from '@/react/components/MarkdownParser'
+import FileEditMessage from '@/react/components/FileEditMessage'
 
 export type Props = {
   message?: ChatMessage
@@ -20,9 +21,12 @@ const Message = (props: Props) => {
   const { message } = props
   if (!message) return <MessageLoading />
 
+  if (message.intent == Intent.EDIT_FILES && message.content.includes('{'))
+    return <FileEditMessage message={message} />
+
   return (
     <>
-      <div className="flex group">
+      <div className="flex group mx-auto w-[768px] max-w-full">
         <MessageContents {...props} />
         <MessageActions {...props} />
       </div>
@@ -48,7 +52,7 @@ const MessageLoading = () => {
     bg = 'bg-yellow-100'
     partialContent = (
       <>
-        <b>Generating changes operations...</b>
+        <b>Generating change operations...</b>
         <pre
           className="mt-4 whitespace-pre-wrap rounded bg-slate-950 p-2
             overflow-x-scroll text-xs text-slate-100"
@@ -60,7 +64,7 @@ const MessageLoading = () => {
   }
 
   return (
-    <div className="mr-8">
+    <div className="mr-8 mx-auto w-[768px] max-w-full">
       <div className={`flex-1 ${bg} p-4 shadow-md rounded whitespace-pre-wrap`}>
         {partialContent}
         <div className="dot-flashing ml-4 my-2" />

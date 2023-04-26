@@ -26,9 +26,11 @@ export default () => {
       {messages.map((message, i) => (
         <Message key={i} message={message} pos={{ i, len: messages.length }} />
       ))}
-      {inProgress && <Message pos={{ i: messages.length, len: messages.length }} />}
-      {error && <div className="my-2 text-red-600">Error: {error}</div>}
-      {mergeInfo && <MergeTool />}
+      <div className="mx-auto w-[768px] max-w-full">
+        {inProgress && <Message pos={{ i: messages.length, len: messages.length }} />}
+        {error && <div className="my-2 text-red-600">Error: {error}</div>}
+        {mergeInfo && <MergeTool />}
+      </div>
     </div>
   )
 }

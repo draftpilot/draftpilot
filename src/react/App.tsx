@@ -42,10 +42,8 @@ function App() {
       ) : (
         <>
           <div className="flex-1 overflow-y-auto pb-40">
-            <div className="mx-auto w-[768px] max-w-full">
-              <Messages />
-              {editing && <ChatInput />}
-            </div>
+            <Messages />
+            <div className="mx-auto w-[768px] max-w-full">{editing && <ChatInput />}</div>
           </div>
 
           {!editing && (
