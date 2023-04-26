@@ -27,7 +27,7 @@ jobs:
             ${{ runner.os }}-node-
       - name: Install JS dependencies (workspace)
         run: |
-          yarn install --immutable --mode=skip-build
+          yarn install --immutable
       - name: Compile
         run: |
           yarn tsc
