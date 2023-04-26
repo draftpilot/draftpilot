@@ -99,7 +99,7 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
   }
 
   return (
-    <div className="pb-4 bg-gray-200">
+    <div className="pb-4 ">
       <div className="bg-white shadow-md rounded flex relative">
         <ReactTextareaAutocomplete<string>
           value={value}
@@ -151,16 +151,7 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
             className="text-blue-600 cursor-pointer"
             onClick={() => messageStore.intent.set(Intent.DRAFTPILOT)}
           >
-            DraftPilot Planning Mode
-          </a>
-        )}
-        {intent != Intent.PRODUCT && (
-          <a
-            href="#"
-            className="text-blue-600 cursor-pointer"
-            onClick={() => messageStore.intent.set(Intent.PRODUCT)}
-          >
-            Product Manager Mode
+            Planning Mode
           </a>
         )}
         {intent && intent != Intent.CHAT && (

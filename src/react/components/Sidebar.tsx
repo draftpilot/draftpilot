@@ -41,7 +41,8 @@ export default () => {
   }
 
   return (
-    <div className="p-4 flex flex-col gap-2 overflow-y-auto h-full">
+    <div className="py-6 px-10 flex flex-col gap-2 overflow-y-auto h-full border-r border-gray-200">
+      <h1 className="text-xl font-bold mb-4">Draftpilot</h1>
       <button
         onClick={() => uiStore.toggleProjectContext()}
         className={`p-2 rounded border-2 border-gray-600 cursor-pointer hover:bg-gray-400 

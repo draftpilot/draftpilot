@@ -22,7 +22,7 @@ function App() {
 
   return (
     <div className="flex h-full relative">
-      <div className="hidden sm:block w-56 bg-gray-300">
+      <div className="hidden sm:block w-72">
         <Sidebar />
       </div>
 
