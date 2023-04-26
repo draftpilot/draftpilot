@@ -38,7 +38,8 @@ describe('codebaseEditor', () => {
 
   it('should read the requested files', () => {
     const editor = new CodebaseEditor(new Set())
-    const result = editor.readFilesToEdit(payload, plan)
+    const somePlan = `- README.md - stuff\n- newfile.md - more stuff`
+    const result = editor.readFilesToEdit(payload, somePlan)
 
     assert.deepEqual(result.filesToEdit, ['README.md', 'newfile.md'])
     assert(result.fileBodies[0].includes('Draftpilot'))
