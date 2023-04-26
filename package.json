@@ -1,6 +1,6 @@
 {
   "name": "draftpilot",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "AI-assisted codebase helper",
   "main": "dist/index.js",
   "type": "module",
@@ -10,12 +10,13 @@
   },
   "scripts": {
     "build": "vite build --mode production --outDir dist && node esbuild.js",
+    "build-cli": "node esbuild.js",
     "clean": "rm -rf dist",
     "draftpilot": "yarn build && yarn go",
     "go": "node --enable-source-maps ./cli.js",
     "init": "yarn go init",
     "prepare": "yarn build",
-    "test": "yarn tsc && mocha",
+    "test": "yarn build-cli && mocha",
     "watch": "yarn clean && node esbuild.js --watch & yarn nodemon  --enable-source-maps -w dist cli.js --skip-open --dev-server",
     "watch-fe": "node esbuild.js && node esbuild.js --watch & node --enable-source-maps cli.js --skip-open --dev-server"
   },
@@ -57,6 +58,7 @@
     "p-queue": "^7.3.4",
     "p-retry": "^5.1.2",
     "react": "^18.2.0",
+    "react-diff-viewer": "^3.1.1",
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.7",
     "snarkdown": "^2.0.0",

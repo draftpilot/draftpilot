@@ -4,7 +4,7 @@ import { ArrowPathIcon, PencilIcon, RocketLaunchIcon, TrashIcon } from '@heroico
 import { Props } from './Message'
 
 export function MessageActions({ message }: Props) {
-  if (!message || message.role == 'system') return <div className="w-8" />
+  if (!message) return <div className="w-8" />
 
   const edit = () => {
     messageStore.popMessages(message)
@@ -35,7 +35,6 @@ export function MessageActions({ message }: Props) {
   }
 
   if (message.role == 'assistant') {
-    const options = message.options
     return (
       <div className="flex flex-col -mt-1 invisible group-hover:visible">
         <Button className="hover:bg-gray-300" title="Regenerate" onClick={regenerate}>
@@ -50,6 +49,16 @@ export function MessageActions({ message }: Props) {
                 <Button className="hover:bg-gray-300" title="Bad Answer">
                   <HandThumbDownIcon className="h-4 w-4 text-gray-500" />
                 </Button> */}
+      </div>
+    )
+  }
+
+  if (message.role == 'system') {
+    return (
+      <div className="flex flex-col -mt-1 invisible group-hover:visible">
+        <Button className="hover:bg-gray-300" title="Delete" onClick={deleteMessage}>
+          <TrashIcon className="h-4 w-4 text-gray-500" />
+        </Button>
       </div>
     )
   }

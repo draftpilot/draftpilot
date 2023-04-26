@@ -110,3 +110,7 @@ textarea {
 .message pre.poetry code {
   font-family: inherit;
 }
+
+.diff-view .hljs {
+  background: none;
+}

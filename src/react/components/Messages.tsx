@@ -24,11 +24,13 @@ export default () => {
   return (
     <div className="flex flex-col gap-4 my-4 pb-8" ref={ref}>
       {messages.map((message, i) => (
-        <Message key={i} message={message} lastMessage={i == messages.length - 1} />
+        <Message key={i} message={message} pos={{ i, len: messages.length }} />
       ))}
-      {inProgress && <Message />}
-      {error && <div className="my-2 text-red-600">Error: {error}</div>}
-      {mergeInfo && <MergeTool />}
+      <div className="mx-auto w-[768px] max-w-full">
+        {inProgress && <Message pos={{ i: messages.length, len: messages.length }} />}
+        {error && <div className="my-2 text-red-600">Error: {error}</div>}
+        {mergeInfo && <MergeTool />}
+      </div>
     </div>
   )
 }

@@ -1,10 +1,12 @@
 import CodeActions from '@/react/components/CodeActions'
-import { ChatMessage } from '@/types'
+import { ChatMessage, Intent } from '@/types'
 import { splitOnce } from '@/utils/utils'
 import { ClipboardIcon } from '@heroicons/react/24/outline'
 import hljs from 'highlight.js/lib/common'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import MarkdownParser from './MarkdownParser'
+
+import 'highlight.js/styles/github.css'
 
 export function MessageBody({ message, content }: { message: ChatMessage; content: string }) {
   const contentBlocks = splitCodeBlocks(content)

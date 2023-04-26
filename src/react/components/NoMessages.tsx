@@ -8,22 +8,19 @@ const MODES = [
   {
     name: 'DraftPilot',
     intent: Intent.DRAFTPILOT,
-    desc: 'Make changes to code',
-    color: 'bg-blue-500',
-  },
-  { name: 'Chat', intent: Intent.CHAT, desc: 'Chat about your code', color: 'bg-blue-500' },
-  {
-    name: 'TestPilot',
-    intent: Intent.TESTPILOT,
-    desc: 'Write tests with ease',
-    color: 'bg-gray-500',
+    desc: 'Edit your code',
   },
   {
     name: 'CrashPilot',
     intent: Intent.CRASHPILOT,
     desc: 'Fix bugs and crashes',
-    color: 'bg-gray-500',
   },
+  {
+    name: 'Product Manager',
+    intent: Intent.PRODUCT,
+    desc: 'Talk to a "PM"',
+  },
+  { name: 'Chat', intent: Intent.CHAT, desc: 'Talk about your code' },
 ]
 
 export default () => {
@@ -65,7 +62,9 @@ export default () => {
           <Button
             key={m.intent}
             onClick={() => setIntent(m.intent)}
-            className={(m.intent == intent ? 'bg-blue-700' : m.color) + ' hover:bg-blue-600 flex-1'}
+            className={
+              (m.intent == intent ? 'bg-blue-700' : 'bg-blue-500') + ' hover:bg-blue-600 flex-1'
+            }
           >
             <div className="font-bold">{m.name}</div>
             <div className="text-sm">{m.desc}</div>

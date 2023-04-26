@@ -1,14 +1,8 @@
-import { chatWithHistory, streamChatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
-import {
-  attachmentListToString,
-  compactMessageHistory,
-  detectProjectLanguage,
-  detectTypeFromResponse,
-} from '@/directors/helpers'
+import { attachmentListToString, detectProjectLanguage } from '@/directors/helpers'
 import { ProductAssistant } from '@/directors/productAssistant'
-import { WebPlanner } from '@/directors/webPlanner'
+import { DraftPilot } from '@/directors/draftPilot'
 import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
 import path from 'path'
@@ -16,13 +10,15 @@ import { readProjectContext } from '@/context/projectContext'
 import { CrashPilot } from '@/directors/crashPilot'
 import { tracker } from '@/utils/tracker'
 import prompts from '@/prompts'
+import { IntentDetector } from '@/directors/intentDetector'
+import { IntentHandler } from '@/directors/intentHandler'
+import { PostAction } from '@/directors/postAction'
 
 export class Dispatcher {
   interrupted = new Set<string>()
   context: string = ''
 
   init = async () => {
-    indexer.loadFilesIntoVectors()
     this.context = readProjectContext() || ''
   }
 
@@ -34,6 +30,7 @@ export class Dispatcher {
       origPostMessage(msg)
     }
 
+    indexer.loadFilesIntoVectors()
     if (message.role == 'assistant') {
       tracker.regenerateResponse(message.intent)
       await this.regenerateResponse(payload, postMessage)
@@ -61,6 +58,11 @@ export class Dispatcher {
   onInterrupt = async (id: string) => {
     log('interrupting', id)
     this.interrupted.add(id)
+    this.postAction.interrupt(id)
+  }
+
+  onAction = async (id: string, action: string, postMessage: PostMessage) => {
+    this.postAction.takeAction(id, action, postMessage)
   }
 
   regenerateResponse = async (payload: MessagePayload, postMessage: PostMessage) => {
@@ -85,110 +87,60 @@ export class Dispatcher {
     })
   }
 
-  detectIntent = async (payload: MessagePayload, postMessage: PostMessage) => {
-    // determine what we're doing
-    const { message, history } = payload
-
-    const model = message.options?.model || '3.5'
-    const prompt = prompts.detectIntent({ model })
-    const attachmentBody = attachmentListToString(message.attachments)
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content: prompt + message.content + attachmentBody,
-    }
-    const messages = compactMessageHistory([...history, userMessage], model, {
-      role: 'system',
-      content: this.systemMessage(),
-    })
-
-    const answer = await chatWithHistory(messages, model)
-    const types = Object.values(Intent)
-
-    const { type, response } = detectTypeFromResponse(answer, types, Intent.ANSWER)
-
-    const responseMessage: ChatMessage = {
-      role: 'assistant',
-      content: response,
-      options: { model, type },
-      intent: type,
-    }
-    history.push(message)
-    history.push(responseMessage)
-    postMessage(responseMessage)
-
-    if (type == Intent.ANSWER || (type == Intent.COMPLEX && response.length > 300)) {
-      // we're done
-    } else {
-      await this.handleDetectedIntent(type as Intent, payload, attachmentBody, postMessage)
-    }
-  }
-
   handleDetectedIntent = async (
     intent: Intent | undefined,
     payload: MessagePayload,
     attachmentBody: string | undefined,
     postMessage: PostMessage
   ) => {
-    const { message } = payload
-    if (intent == Intent.COMPLEX) {
-      if (!message.options) message.options = {}
-      message.options.model = '4'
-      await this.detectIntent(payload, postMessage)
-    } else if (intent == Intent.DRAFTPILOT) {
-      if (!attachmentBody) attachmentBody = attachmentListToString(message.attachments)
-      await this.usePlanningAgent(payload, attachmentBody, postMessage)
-    } else if (intent == Intent.CRASHPILOT) {
-      await this.useCrashPilot(payload, postMessage)
-    } else if (intent == Intent.EDIT_FILES) {
-      await this.useActingAgent(payload, postMessage)
-    } else if (intent == Intent.PRODUCT) {
-      await this.useProductAssistant(payload, postMessage)
-    } else {
-      await this.detectIntent(payload, postMessage)
-    }
-  }
+    const { message, history } = payload
 
-  planner = new WebPlanner(this.interrupted)
-  usePlanningAgent = async (
-    payload: MessagePayload,
-    attachmentBody: string | undefined,
-    postMessage: PostMessage
-  ) => {
-    if (payload.history.find((h) => h.role == 'assistant' && h.intent == Intent.DRAFTPILOT)) {
-      // if we have a state, we're in the middle of a planning session
-      await this.planner.runFollowupPlanner(
+    const handler: IntentHandler =
+      {
+        [Intent.PRODUCT]: this.productAssistant,
+        [Intent.EDIT_FILES]: this.codeEditor,
+        [Intent.DRAFTPILOT]: this.draftPilot,
+        [Intent.CRASHPILOT]: this.crashPilot,
+        [Intent.TESTPILOT]: this.draftPilot,
+
+        // the rest are all passed to the intent detector
+        [Intent.DONE]: this.intentDetector,
+        [Intent.CHAT]: this.intentDetector,
+        [Intent.ANSWER]: this.intentDetector,
+      }[intent || Intent.CHAT] || this.intentDetector
+
+    const isInitialRun =
+      history.find((m) => m.role == 'assistant' && m.intent == intent) == undefined
+    const isIntentDetection = intent === undefined
+    if (message.attachments && !attachmentBody)
+      attachmentBody = attachmentListToString(message.attachments)
+
+    const nextMessage = isInitialRun
+      ? await handler.initialRun(payload, attachmentBody, this.systemMessage(), postMessage)
+      : await handler.followupRun(payload, attachmentBody, this.systemMessage(), postMessage)
+    if (!nextMessage.intent) nextMessage.intent = intent
+
+    if (this.interrupted.has(payload.id)) return
+
+    postMessage(nextMessage)
+    history.push(nextMessage)
+
+    if (isIntentDetection && nextMessage.intent) {
+      await this.handleDetectedIntent(
+        nextMessage.intent as Intent,
         payload,
         attachmentBody,
-        this.systemMessage(),
         postMessage
       )
     } else {
-      await this.planner.runInitialPlanning(
-        payload,
-        attachmentBody,
-        this.systemMessage(),
-        postMessage
-      )
+      await this.postAction.onMessage({ payload, nextMessage, postMessage })
     }
   }
 
-  editor = new CodebaseEditor()
-  useActingAgent = async (payload: MessagePayload, postMessage: PostMessage) => {
-    await this.editor.planChanges(payload, postMessage, this.systemMessage())
-  }
-
-  productAssistant = new ProductAssistant()
-  useProductAssistant = async (payload: MessagePayload, postMessage: PostMessage) => {
-    await this.productAssistant.runAgent(payload, postMessage)
-  }
-
+  postAction = new PostAction(this, this.interrupted)
+  intentDetector = new IntentDetector(this.interrupted)
+  draftPilot = new DraftPilot(this.interrupted)
+  codeEditor = new CodebaseEditor(this.interrupted)
+  productAssistant = new ProductAssistant(this.interrupted)
   crashPilot = new CrashPilot(this.interrupted)
-  useCrashPilot = async (payload: MessagePayload, postMessage: PostMessage) => {
-    if (payload.history.find((h) => h.intent == Intent.CRASHPILOT)) {
-      // user has already started a conversation with the crash pilot
-      this.handleDetectedIntent(Intent.COMPLEX, payload, undefined, postMessage)
-    } else {
-      this.crashPilot.useCrashPilot(payload, this.systemMessage(), postMessage)
-    }
-  }
 }

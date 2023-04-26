@@ -3,7 +3,7 @@ import detectIntent from './detectIntent.ets.ts'
 import draftPilot from './draftPilot.ets.ts'
 import crashPilot from './crashPilot.ets.ts'
 import editPilot from './editPilot.ets.ts'
-import fileEditor from './fileEditor.ets.ts'
+import validator from './validator.ets.ts'
 
 export default {
   systemMessage,
@@ -11,5 +11,5 @@ export default {
   draftPilot,
   crashPilot,
   editPilot,
-  fileEditor,
+  validator,
 }

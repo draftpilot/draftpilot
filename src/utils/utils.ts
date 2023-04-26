@@ -28,7 +28,7 @@ export function generateSecretKey() {
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
-    .replace(/\=/g, '')
+    .replace(/=/g, '')
 }
 
 export function error(...args: any[]) {
@@ -104,8 +104,10 @@ export function fuzzyParseJSON(input: string) {
 }
 
 export function generateUUID() {
-  if (window.isSecureContext && window.crypto.randomUUID) {
+  if (global.window && window.isSecureContext && window.crypto.randomUUID) {
     return window.crypto.randomUUID()
+  } else if (!global.window && crypto) {
+    return crypto.randomUUID()
   } else {
     let d = new Date().getTime()
     if (typeof performance !== 'undefined' && typeof performance.now === 'function') {

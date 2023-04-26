@@ -10,21 +10,25 @@ import { messageStore } from '@/react/stores/messageStore'
 import { useStore } from '@nanostores/react'
 import ProgressBar from '@/react/components/ProgressBar'
 import MarkdownParser from '@/react/components/MarkdownParser'
+import FileEditMessage from '@/react/components/FileEditMessage'
 
 export type Props = {
   message?: ChatMessage
-  lastMessage?: boolean
+  pos: { i: number; len: number }
 }
 
 const Message = (props: Props) => {
   const { message } = props
   if (!message) return <MessageLoading />
 
+  if (message.intent == Intent.EDIT_FILES && message.content.includes('{'))
+    return <FileEditMessage message={message} />
+
   return (
     <>
-      <div className="flex group">
+      <div className="flex group mx-auto w-[768px] max-w-full">
         <MessageContents {...props} />
-        <MessageActions message={message} />
+        <MessageActions {...props} />
       </div>
     </>
   )
@@ -34,15 +38,33 @@ const MessageLoading = () => {
   const partialMessage = useStore(messageStore.partialMessage)
 
   let bg = 'bg-blue-100'
-  let partialContent = partialMessage
+  let partialContent: undefined | string | JSX.Element = partialMessage
 
   if (partialMessage && partialMessage.startsWith('PLAN:')) {
     bg = 'bg-yellow-100'
-    partialContent = 'Action Plan' + partialMessage.substring(5)
+    partialContent = (
+      <>
+        <b>Action Plan:</b>
+        {partialMessage.substring(5)}
+      </>
+    )
+  } else if (partialMessage && partialMessage.startsWith('{')) {
+    bg = 'bg-yellow-100'
+    partialContent = (
+      <>
+        <b>Generating change operations...</b>
+        <pre
+          className="mt-4 whitespace-pre-wrap rounded bg-slate-950 p-2
+            overflow-x-scroll text-xs text-slate-100"
+        >
+          {partialMessage}
+        </pre>
+      </>
+    )
   }
 
   return (
-    <div className="mr-8">
+    <div className="mr-8 mx-auto w-[768px] max-w-full">
       <div className={`flex-1 ${bg} p-4 shadow-md rounded whitespace-pre-wrap`}>
         {partialContent}
         <div className="dot-flashing ml-4 my-2" />
@@ -61,8 +83,9 @@ const MessageLoading = () => {
   )
 }
 
-const MessageContents = ({ message, lastMessage }: Props) => {
-  const [expanded, setExpanded] = useState(lastMessage)
+const MessageContents = ({ message, pos }: Props) => {
+  const autoExpand = pos.i >= pos.len - 2
+  const [expanded, setExpanded] = useState(autoExpand)
   const contentRef = useRef<HTMLDivElement>(null)
   const [hasMore, setHasMore] = useState(false)
 
@@ -81,7 +104,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
   let postMessageAction: JSX.Element | undefined
 
   if (message.role == 'user') {
-    bgColor = 'bg-white'
+    bgColor = 'bg-slate-100'
   } else if (message.role == 'system') {
     bgColor = 'bg-green-300'
   } else if (content.startsWith('Thought:')) {
@@ -93,10 +116,14 @@ const MessageContents = ({ message, lastMessage }: Props) => {
     const proposal = content.substring(5)
     output = `**Action Plan**${proposal}*`
     postMessageAction = <ConfirmAction />
-  } else if (content.startsWith('ASK:')) {
+  } else if (content.startsWith('RESEARCH:')) {
     bgColor = 'bg-yellow-200'
-    const ask = content.substring(5)
-    output = `**Question:**\n\n${ask}`
+    const ask = content.substring(9)
+    output = `**Research Request:**\n\n${ask}`
+  } else if (content.startsWith('SUGGESTION:')) {
+    bgColor = 'bg-green-200'
+    const ask = content.substring(11)
+    output = `**Suggested Approach:**\n\n${ask}`
   } else if (content.startsWith('ANSWER:')) {
     const answer = content.substring(7)
     output = answer
@@ -117,7 +144,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
 
   return (
     <div className="overflow-hidden">
-      <div className={`flex-1 ${bgColor} shadow-md rounded relative overflow-hidden message`}>
+      <div className={`flex-1 ${bgColor} shadow-md rounded-md relative overflow-hidden message`}>
         <div
           ref={contentRef}
           className={(expanded ? '' : 'max-h-60 ') + 'p-4 overflow-hidden ease-out'}
@@ -146,7 +173,7 @@ const MessageContents = ({ message, lastMessage }: Props) => {
           </div>
         )}
       </div>
-      {lastMessage && postMessageAction}
+      {pos.i == pos.len - 1 ? postMessageAction : null}
     </div>
   )
 }
@@ -156,7 +183,7 @@ function PossibleAction() {
     messageStore.sendMessage({
       content: 'Take action',
       role: 'user',
-      intent: 'ACTION',
+      intent: Intent.EDIT_FILES,
     })
   }
   return (
@@ -174,7 +201,15 @@ function MessageButtons({ message }: { message: ChatMessage }) {
   return (
     <div className="flex flex-wrap gap-2 mt-2">
       {buttons.map((button, i) => (
-        <Button key={i} className="bg-blue-500 hover:bg-blue-600" onClick={button.onClick}>
+        <Button
+          key={i}
+          className={
+            button.action == 'cancel'
+              ? 'bg-red-500 hover:bg-red-600'
+              : 'bg-blue-500 hover:bg-blue-600'
+          }
+          onClick={() => messageStore.handleMessageButton(message, button)}
+        >
           {button.label}
         </Button>
       ))}
@@ -187,7 +222,7 @@ function ConfirmAction() {
     messageStore.sendMessage({
       content: 'Proceed',
       role: 'user',
-      intent: 'ACTION',
+      intent: Intent.EDIT_FILES,
     })
   }
   return (

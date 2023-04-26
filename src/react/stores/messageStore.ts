@@ -1,5 +1,5 @@
 import { API, isAxiosError } from '@/react/api/api'
-import { ChatMessage, Intent, MessagePayload } from '@/types'
+import { ChatMessage, Intent, MessageButton, MessagePayload } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
@@ -60,9 +60,11 @@ class MessageStore {
     this.error.set(undefined)
     this.partialMessage.set(undefined)
     this.editMessage.set(null)
+    this.sessionAutoNamed = false
   }
 
   sendMessage = async (message: ChatMessage, skipHistory?: boolean, sessionId?: string) => {
+    uiStore.sidebarVisible.set(false)
     this.editMessage.set(null)
     const id = generateUUID()
     const payload: MessagePayload = { id, message, history: this.messages.get() }
@@ -70,7 +72,6 @@ class MessageStore {
     if (!message.intent && this.intent.get()) message.intent = this.intent.get()
     this.shouldDing = true
 
-    if (!sessionId && !this.session.get().name) this.updateSessionName(message)
     if (!sessionId) sessionId = this.session.get().id
     this.doCompletion(sessionId, payload)
     if (!skipHistory) this.updateMessages(sessionId, [...this.messages.get(), message])
@@ -137,48 +138,8 @@ class MessageStore {
         fileStore.loadData()
       }
 
-      if (message.content.endsWith('confidence: high')) {
-        this.automaticAction(sessionId)
-      }
-
-      if (message.content.startsWith('PLAN: ')) {
-        this.maybeUpdateSessionName(sessionId, message.content)
-      }
+      this.maybeUpdateSessionName(sessionId, message.content)
     }
-  }
-
-  automaticAction = (sessionId: string) => {
-    const content = 'Proceeding in 5 seconds since confidence is high...'
-    const clearMessage = () =>
-      this.handleIncoming(sessionId, {
-        content,
-        role: 'system',
-        progressDuration: 0,
-      })
-    const timeout = setTimeout(() => {
-      clearMessage()
-      const proceed: ChatMessage = {
-        role: 'user',
-        content: 'Automatically proceeding',
-        intent: Intent.EDIT_FILES,
-      }
-      this.sendMessage(proceed, false, sessionId)
-    }, 5000)
-
-    this.handleIncoming(sessionId, {
-      content,
-      role: 'system',
-      progressDuration: 5000,
-      buttons: [
-        {
-          label: 'Cancel',
-          onClick: () => {
-            clearTimeout(timeout)
-            clearMessage()
-          },
-        },
-      ],
-    })
   }
 
   addSystemMessage = (message: ChatMessage, sessionId?: string) => {
@@ -191,6 +152,11 @@ class MessageStore {
       this.messages.set(messages)
     }
     this.sessionDb.messages.put({ id: sessionId, messages })
+  }
+
+  onUpdateSingleMessage = (message: ChatMessage) => {
+    // save all the messages
+    this.updateMessages(this.session.get().id, this.messages.get())
   }
 
   popMessages = (target: ChatMessage) => {
@@ -215,6 +181,10 @@ class MessageStore {
     this.inProgress.set(undefined)
   }
 
+  handleMessageButton = (message: ChatMessage, button: MessageButton) => {
+    API.takeAction(message.state, button.action)
+  }
+
   // --- session management
 
   cwd: string = ''
@@ -224,31 +194,55 @@ class MessageStore {
     this.session.set({ ...this.session.get(), cwd })
   }
 
-  updateSessionName = (message: ChatMessage) => {
+  sessionAutoNamed = false
+  autoUpdateSessionName = (sessionId: string, message: ChatMessage) => {
+    this.sessionAutoNamed = true
     const input = message.content
     const name = smartTruncate(input, 50)
-    const session = { ...this.session.get(), name }
-    this.session.set(session)
-    this.sessionDb.sessions.put(session)
-
-    this.sessions.set([session, ...this.sessions.get()])
+    this.renameSession(sessionId, name)
   }
 
   maybeUpdateSessionName = (sessionId: string, content: string) => {
-    const name = content.substring(0, content.indexOf('\n')).replace('PLAN: ', '')
-    if (name.length > 3) {
-      this.renameSession(sessionId, name)
+    const session = this.sessions.get().find((s) => s.id == sessionId)!
+    const isCurrentSession = sessionId == this.session.get().id
+    if (session.name && (!isCurrentSession || !this.sessionAutoNamed)) return
+
+    const checkPrefix = (prefix: string) => {
+      if (content.startsWith(prefix)) {
+        const name = content.substring(prefix.length, content.indexOf('\n'))
+        if (name.length > 3) {
+          this.renameSession(sessionId, name)
+          return true
+        }
+      }
     }
+    for (const prefix of ['PLAN: ', 'SUGGESTION: ', 'RESEARCH: ']) {
+      if (checkPrefix(prefix)) return
+    }
+    const userMessage = this.messages.get()[0]
+    if (!this.sessionAutoNamed && userMessage) this.autoUpdateSessionName(sessionId, userMessage)
   }
 
   loadSessions = async () => {
     const sessions = await this.sessionDb.sessions.where('cwd').equals(this.cwd).reverse().toArray()
+    const url = new URL(window.location.href)
+    const sessionIdFromUrl = url.searchParams.get('sessionId')
+    if (sessionIdFromUrl && this.session.get().id != sessionIdFromUrl) {
+      this.loadSession(sessionIdFromUrl)
+    }
     this.sessions.set(sessions)
   }
 
   loadSession = async (id: string) => {
     const session = await this.sessionDb.sessions.get(id)
     if (!session) return
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('sessionId') !== id) {
+      url.searchParams.set('sessionId', id)
+      window.history.pushState({}, '', url.toString())
+    }
+    if (!session) return
+    uiStore.sidebarVisible.set(false)
     this.clearData()
     this.session.set(session)
     const messages = await this.sessionDb.messages.get(id)
@@ -263,8 +257,13 @@ class MessageStore {
 
   newSession = () => {
     const cwd = this.cwd
-    this.session.set({ id: new Date().toISOString(), name: '', cwd })
+    const newId = new Date().toISOString()
+    this.session.set({ id: newId, name: '', cwd })
     this.clearData()
+
+    const url = new URL(window.location.href)
+    url.searchParams.set('sessionId', newId)
+    window.history.pushState({}, '', url.toString())
   }
 
   deleteSession = async (id: string) => {

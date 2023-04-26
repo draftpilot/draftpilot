@@ -1,18 +1,22 @@
-import { streamChatWithHistory } from '@/ai/api'
+import { getModel, streamChatWithHistory } from '@/ai/api'
 import { compactMessageHistory } from '@/directors/helpers'
-import { Intent, MessagePayload, PostMessage } from '@/types'
+import { IntentHandler } from '@/directors/intentHandler'
+import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
 
 // product manager bot
-export class ProductAssistant {
-  runAgent = async (payload: MessagePayload, postMessage: PostMessage) => {
+export class ProductAssistant extends IntentHandler {
+  initialRun = async (
+    payload: MessagePayload,
+    attachmentBody: string | undefined,
+    systemMessage: string,
+    postMessage: PostMessage
+  ) => {
     let { message, history } = payload
-    const { options } = message
+    const model = getModel(false)
 
-    const systemMessage =
+    systemMessage =
       'You are a Product Manager assistant tasked with helping the user, an engineer, get to clarity on their project. ' +
       'Help the user think strategically about what users want, not just what they want to build.'
-
-    const model = message.options?.model || '3.5'
 
     const messages = compactMessageHistory([...history, message], model, {
       content: systemMessage,
@@ -23,11 +27,10 @@ export class ProductAssistant {
       postMessage(response)
     })
 
-    postMessage({
+    return {
       role: 'assistant',
       content: response,
       options: { model },
-      intent: Intent.PRODUCT,
-    })
+    } as ChatMessage
   }
 }
