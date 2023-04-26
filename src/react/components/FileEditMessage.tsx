@@ -156,21 +156,21 @@ function DiffContent({
 
   return (
     <div>
-      {!state && (
+      {state ? null : newCode == null ? (
+        <Loader className="text-black mx-auto my-4" />
+      ) : (
         <div className="diff-view mb-4 shadow-md text-xs flex-1 max-w-full overflow-x-auto">
-          {oldCode == null && <Loader className="text-black" />}
-          {newCode != null && (
-            <ReactDiffViewer
-              oldValue={oldCode || ''}
-              newValue={newCode}
-              compareMethod={DiffMethod.LINES}
-              renderContent={(line) => <Code language={language} code={line} />}
-              leftTitle={file}
-              splitView={splitView}
-            />
-          )}
+          <ReactDiffViewer
+            oldValue={oldCode || ''}
+            newValue={newCode!}
+            compareMethod={DiffMethod.LINES}
+            renderContent={(line) => <Code language={language} code={line} />}
+            leftTitle={file}
+            splitView={splitView}
+          />
         </div>
       )}
+
       {state && (
         <div
           className={`p-4 mx-auto w-[768px] max-w-full ${
