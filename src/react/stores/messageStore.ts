@@ -164,7 +164,7 @@ class MessageStore {
         this.addSystemMessage(msg, sessionId)
         const timeout = setTimeout(() => {
           this.autoActionHandler?.('continue')
-        })
+        }, AUTO_PROCEED_TIME * 1000)
         this.autoActionHandler = (action) => {
           clearTimeout(timeout)
           this.updateMessages(

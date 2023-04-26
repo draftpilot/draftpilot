@@ -41,8 +41,12 @@ export default async function serve(
 
   app.get('/api/file', async (req, res) => {
     const { path } = req.query
-    const file = fs.readFileSync(path as string, 'utf8')
-    res.json({ file })
+    if (fs.existsSync(path as string)) {
+      const file = fs.readFileSync(path as string, 'utf8')
+      res.json({ file })
+    } else {
+      res.json({ file: '' })
+    }
   })
 
   app.put('/api/file', async (req, res) => {
