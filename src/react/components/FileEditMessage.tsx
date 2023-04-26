@@ -55,8 +55,11 @@ export default function FileEditMessage({ message }: { message: ChatMessage }) {
 
   const allDecided =
     plan &&
+    Object.keys(diffMap).length &&
     Object.values(diffMap).every((v) => v !== undefined) &&
     Object.keys(diffMap).length >= Object.keys(plan).length
+
+  console.l
 
   return (
     <div className="flex flex-col gap-4">
@@ -245,7 +248,7 @@ function Editor({
           className="w-full"
           autoFocus
           value={newCode}
-          highlight={(code) => hljs.highlight(code, { language }).value}
+          highlight={(code) => hljs.highlight(code, { language: language || 'plaintext' }).value}
           padding={10}
           onValueChange={(code) => setNewCode(code)}
         />
@@ -265,7 +268,7 @@ function Editor({
 function Code({ code, language }: { code: string; language: string }) {
   if (!code) return null
 
-  const html = hljs.highlight(code, { language }).value
+  const html = hljs.highlight(code, { language: language || 'plaintext' }).value
   return (
     <span
       dangerouslySetInnerHTML={{

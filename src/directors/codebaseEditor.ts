@@ -160,7 +160,12 @@ export class CodebaseEditor extends IntentHandler {
     }
 
     const results = await Promise.all(promises)
-    console.log(results)
+    const invalidJson = results.find((r) => !r.startsWith('{'))
+    if (invalidJson) {
+      console.log('ERROR: Failed to parse edit results')
+      return results.join('\n\n')
+    }
+
     // fuzzy parse and merge all results
     const merged = results.map((r) => fuzzyParseJSON(r)).reduce((acc, r) => ({ ...acc, ...r }), {})
     return merged
