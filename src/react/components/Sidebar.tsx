@@ -1,7 +1,12 @@
 import { fileStore } from '@/react/stores/fileStore'
 import { messageStore } from '@/react/stores/messageStore'
 import uiStore from '@/react/stores/uiStore'
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import {
+  ChevronDoubleLeftIcon,
+  ChevronLeftIcon,
+  PencilIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline'
 import { useStore } from '@nanostores/react'
 import { useEffect } from 'react'
 
@@ -42,7 +47,13 @@ export default () => {
 
   return (
     <div className="py-6 px-10 flex flex-col gap-2 overflow-y-auto h-full border-r border-gray-200">
-      <h1 className="text-xl font-bold mb-4">Draftpilot</h1>
+      <div className="flex items-center mb-4">
+        <h1 className="flex-1 text-xl font-bold">Draftpilot</h1>
+        <ChevronDoubleLeftIcon
+          className="w-4 h-4 text-gray-500 cursor-pointer"
+          onClick={() => uiStore.toggleSidebar()}
+        />
+      </div>
       <button
         onClick={() => uiStore.toggleProjectContext()}
         className={`p-2 rounded border-2 border-gray-600 cursor-pointer hover:bg-gray-400 

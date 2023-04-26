@@ -9,6 +9,7 @@ import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer'
 import { API } from '@/react/api/api'
 import { applyOps } from '@/utils/editOps'
 import Loader from '@/react/components/Loader'
+import Button from '@/react/components/Button'
 
 export default function FileEditMessage({ message }: { message: ChatMessage }) {
   const content = message.content
@@ -62,18 +63,23 @@ function DiffContent({ file, ops }: { file: string; ops: any[] }) {
   }, [file, ops])
 
   return (
-    <div className="diff-view shadow-md text-xs flex-1 max-w-full overflow-x-auto">
-      {!oldCode || (!newCode && <Loader />)}
-      {oldCode && newCode && (
-        <ReactDiffViewer
-          oldValue={oldCode}
-          newValue={newCode}
-          compareMethod={DiffMethod.LINES}
-          renderContent={HighlightedCode}
-          leftTitle={file}
-          splitView
-        />
-      )}
+    <div>
+      <div className="diff-view shadow-md text-xs flex-1 max-w-full overflow-x-auto">
+        {!oldCode || (!newCode && <Loader />)}
+        {oldCode && newCode && (
+          <ReactDiffViewer
+            oldValue={oldCode}
+            newValue={newCode}
+            compareMethod={DiffMethod.LINES}
+            renderContent={HighlightedCode}
+            leftTitle={file}
+            splitView={false}
+          />
+        )}
+      </div>
+      <div className="flex justify-center my-8 bg-blue-600 mx-auto w-[768px] max-w-full">
+        <Button>Accept Diff</Button>
+      </div>
     </div>
   )
 }

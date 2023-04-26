@@ -64,6 +64,7 @@ class MessageStore {
   }
 
   sendMessage = async (message: ChatMessage, skipHistory?: boolean, sessionId?: string) => {
+    uiStore.sidebarVisible.set(false)
     this.editMessage.set(null)
     const id = generateUUID()
     const payload: MessagePayload = { id, message, history: this.messages.get() }
@@ -225,6 +226,7 @@ class MessageStore {
   loadSession = async (id: string) => {
     const session = await this.sessionDb.sessions.get(id)
     if (!session) return
+    uiStore.sidebarVisible.set(false)
     this.clearData()
     this.session.set(session)
     const messages = await this.sessionDb.messages.get(id)

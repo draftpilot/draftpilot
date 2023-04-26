@@ -7,6 +7,8 @@ class UIStore {
   projectContext = atom<string | undefined>()
   onboarding = atom<boolean>(false)
 
+  sidebarVisible = atom<boolean>(true)
+
   init = () => {
     API.getContext().then((response) => {
       this.projectContext.set(response)
@@ -28,6 +30,10 @@ class UIStore {
     if (this.onboarding.get()) {
       this.onboarding.set(false)
     }
+  }
+
+  toggleSidebar = () => {
+    this.sidebarVisible.set(!this.sidebarVisible.get())
   }
 }
 
