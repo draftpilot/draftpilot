@@ -100,16 +100,17 @@ export class CodebaseEditor extends IntentHandler {
     postMessage: PostMessage
   ) => {
     const similar = await indexer.vectorDB.searchWithScores(plan, 6)
-    const similarFuncs = similar
-      ?.filter((s) => {
-        const [doc, score] = s
-        if (score < 0.15) return false
-        const existing = filesToEdit.find((f) => doc.metadata.path.includes(f))
-        if (existing) return false
-        return true
-      })
-      .map((s) => s[0])
-    const similarFuncText = similarFuncs?.length
+    const similarFuncs =
+      similar
+        ?.filter((s) => {
+          const [doc, score] = s
+          if (score < 0.15) return false
+          const existing = filesToEdit.find((f) => doc.metadata.path.includes(f))
+          if (existing) return false
+          return true
+        })
+        .map((s) => s[0]) || []
+    const similarFuncText = similarFuncs.length
       ? 'Related functions:\n' +
         similarFuncs.map((s) => s.metadata.path + '\n' + s.pageContent).join('\n\n') +
         '------\n\n'

@@ -28,7 +28,7 @@ export class CrashPilot extends IntentHandler {
 
     const prompt = prompts.crashPilot({
       message: message.content,
-      references: similarFuncs?.join('\n\n'),
+      references: similarFuncs.join('\n\n'),
     })
 
     const userMessage: ChatMessage = {

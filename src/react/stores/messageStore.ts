@@ -257,8 +257,13 @@ class MessageStore {
 
   newSession = () => {
     const cwd = this.cwd
-    this.session.set({ id: new Date().toISOString(), name: '', cwd })
+    const newId = new Date().toISOString()
+    this.session.set({ id: newId, name: '', cwd })
     this.clearData()
+
+    const url = new URL(window.location.href)
+    url.searchParams.set('sessionId', newId)
+    window.history.pushState({}, '', url.toString())
   }
 
   deleteSession = async (id: string) => {
