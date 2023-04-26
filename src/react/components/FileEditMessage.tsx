@@ -17,7 +17,7 @@ type DiffState = 'accepted' | 'rejected' | 'edited' | undefined
 type DiffMap = { [file: string]: DiffState }
 type CodeMap = { [file: string]: string }
 
-type EditPlan = { [file: string]: Op[] }
+type EditPlan = { [file: string]: string | Op[] }
 
 export default function FileEditMessage({ message }: { message: ChatMessage }) {
   const content = message.content
@@ -100,7 +100,7 @@ function DiffContent({
   setCode,
 }: {
   file: string
-  ops: Op[]
+  ops: string | Op[]
   stateMap: DiffMap
   setState: (state: DiffState) => void
   setCode: (code: string) => void
@@ -117,7 +117,11 @@ function DiffContent({
       setOldCode(res.file)
 
       try {
-        const applied = stateMap[SAVED_KEY] ? res.file : applyOps(res.file, ops)
+        const applied = stateMap[SAVED_KEY]
+          ? res.file
+          : Array.isArray(ops)
+          ? applyOps(res.file, ops)
+          : ops
         setNewCode(applied)
         setCode(applied)
       } catch (e: any) {
