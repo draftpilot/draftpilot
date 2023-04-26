@@ -19,25 +19,27 @@ export class PostAction {
 
   onMessage = async (data: PostActionData) => {
     const { nextMessage } = data
-    if (nextMessage.intent == Intent.DRAFTPILOT) {
-      if (nextMessage.content.startsWith('PLAN:')) {
-        await this.doNextActionAfterTimeout(
-          'executing plan',
-          DEFAULT_TIME,
-          data,
-          async (postMessage: PostMessage) => {
-            tracker.autoMessage(Intent.EDIT_FILES)
-            const messagePayload = { ...data.payload, message: nextMessage }
-            await this.dispatcher.handleDetectedIntent(
-              Intent.EDIT_FILES,
-              messagePayload,
-              undefined,
-              postMessage
-            )
-          }
-        )
-      }
-    }
+    // TODO - this logic makes sense when the backend drives the entire flow
+
+    // if (nextMessage.intent == Intent.DRAFTPILOT) {
+    //   if (nextMessage.content.startsWith('PLAN:')) {
+    //     await this.doNextActionAfterTimeout(
+    //       'executing plan',
+    //       DEFAULT_TIME,
+    //       data,
+    //       async (postMessage: PostMessage) => {
+    //         tracker.autoMessage(Intent.EDIT_FILES)
+    //         const messagePayload = { ...data.payload, message: nextMessage }
+    //         await this.dispatcher.handleDetectedIntent(
+    //           Intent.EDIT_FILES,
+    //           messagePayload,
+    //           undefined,
+    //           postMessage
+    //         )
+    //       }
+    //     )
+    //   }
+    // }
   }
 
   actions: { [id: string]: (postMessage: PostMessage) => Promise<void> } = {}
@@ -68,6 +70,7 @@ export class PostAction {
     // keep awaiting to keep the HTTP connection open
     this.actions[id] = followup
     this.messageToId[payload.id] = id
+    console.log('saving dude', id)
     await new Promise<void>((res) => {
       const timeout = setTimeout(async () => {
         this.clear(id)
@@ -101,6 +104,7 @@ export class PostAction {
   }
 
   takeAction = async (id: string, action: string, postMessage: PostMessage) => {
+    console.log('take action', id, action)
     if (action == 'continue') {
       const action = this.actions[id]
       this.clear(id)

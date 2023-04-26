@@ -31,6 +31,8 @@ class SessionDatabase extends Dexie {
   }
 }
 
+const AUTO_PROCEED_TIME = 15
+
 class MessageStore {
   sessionDb = new SessionDatabase()
 
@@ -133,17 +135,48 @@ class MessageStore {
         return
       }
       this.updateMessages(sessionId, [...messages, message])
-
-      if (message.intent == Intent.DONE) {
-        fileStore.loadData()
-      }
-
       this.maybeUpdateSessionName(sessionId, message.content)
+      this.autoMessageActions(sessionId, message)
     }
   }
 
   addSystemMessage = (message: ChatMessage, sessionId?: string) => {
     this.updateMessages(sessionId || this.session.get().id, [...this.messages.get(), message])
+  }
+
+  autoActionHandler?: (action: string) => void
+
+  autoMessageActions = (sessionId: string, message: ChatMessage) => {
+    if (message.intent == Intent.DONE) {
+      fileStore.loadData()
+    } else if (message.intent == Intent.DRAFTPILOT) {
+      if (message.content.startsWith('PLAN:')) {
+        const content = `Automatically executing in ${AUTO_PROCEED_TIME} seconds`
+        const msg: ChatMessage = {
+          content,
+          progressDuration: AUTO_PROCEED_TIME * 1000,
+          role: 'system',
+          buttons: [
+            { label: 'Continue', action: 'continue' },
+            { label: 'Cancel', action: 'cancel' },
+          ],
+        }
+        this.addSystemMessage(msg, sessionId)
+        const timeout = setTimeout(() => {
+          this.autoActionHandler?.('continue')
+        })
+        this.autoActionHandler = (action) => {
+          clearTimeout(timeout)
+          this.updateMessages(
+            sessionId,
+            this.messages.get().filter((m) => m != msg)
+          )
+          if (action == 'continue') {
+            this.sendMessage({ role: 'user', content: 'Continue', intent: Intent.EDIT_FILES })
+          }
+        }
+      }
+    }
   }
 
   updateMessages = (sessionId: string, messages: ChatMessage[]) => {
@@ -182,7 +215,7 @@ class MessageStore {
   }
 
   handleMessageButton = (message: ChatMessage, button: MessageButton) => {
-    API.takeAction(message.state, button.action)
+    this.autoActionHandler?.(button.action)
   }
 
   // --- session management
@@ -203,7 +236,7 @@ class MessageStore {
   }
 
   maybeUpdateSessionName = (sessionId: string, content: string) => {
-    const session = this.sessions.get().find((s) => s.id == sessionId)!
+    const session = this.sessions.get().find((s) => s.id == sessionId) || this.session.get()
     const isCurrentSession = sessionId == this.session.get().id
     if (session.name && (!isCurrentSession || !this.sessionAutoNamed)) return
 
@@ -273,12 +306,18 @@ class MessageStore {
   }
 
   renameSession = async (id: string, name: string) => {
-    const session = await this.sessionDb.sessions.get(id)
+    const currentSession = this.session.get()
+    const isCurrentSession = id == currentSession.id
+    const session = isCurrentSession ? currentSession : await this.sessionDb.sessions.get(id)
     if (!session) return
     session.name = name
     await this.sessionDb.sessions.put(session)
-    this.sessions.set(this.sessions.get().map((s) => (s.id === id ? session : s)))
-    if (this.session.get().id == id) this.session.set(session)
+    const sessions = this.sessions.get()
+    const existing = sessions.find((s) => s.id === id)
+    if (existing) existing.name = name
+    else sessions.unshift(session)
+    this.sessions.set([...sessions])
+    if (isCurrentSession) this.session.set(session)
   }
 
   shouldDing = true

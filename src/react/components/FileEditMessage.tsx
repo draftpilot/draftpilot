@@ -17,21 +17,31 @@ type DiffState = 'accepted' | 'rejected' | 'edited' | undefined
 type DiffMap = { [file: string]: DiffState }
 type CodeMap = { [file: string]: string }
 
+type EditPlan = { [file: string]: Op[] }
+
 export default function FileEditMessage({ message }: { message: ChatMessage }) {
   const content = message.content
   const [diffMap, setDiffMap] = useState<DiffMap>(message.state || {})
   const [codeMap, setCodeMap] = useState<CodeMap>({})
 
-  const jsonStart = content.indexOf('{')
-  const preContent = content.slice(0, jsonStart).replace(/```.*/g, '').trim()
-  const jsonEnd = content.lastIndexOf('}')
-  const jsonContent = content.slice(jsonStart, jsonEnd + 1)
-  const postContent = content
-    .slice(jsonEnd + 1)
-    .replace(/```.*/g, '')
-    .trim()
+  let preContent: string | undefined
+  let postContent: string | undefined
+  let plan: EditPlan | null
+  if (typeof content == 'string') {
+    const jsonStart = content.indexOf('{')
+    if (jsonStart == -1) return <TextContent content={content} />
 
-  const json = fuzzyParseJSON(jsonContent)
+    preContent = content.slice(0, jsonStart).replace(/```.*/g, '').trim()
+    const jsonEnd = content.lastIndexOf('}')
+    const jsonContent = content.slice(jsonStart, jsonEnd + 1)
+    postContent = content
+      .slice(jsonEnd + 1)
+      .replace(/```.*/g, '')
+      .trim()
+    plan = fuzzyParseJSON(jsonContent)
+  } else {
+    plan = content
+  }
 
   const onSetState = (file: string, state: DiffState) => {
     const newMap = { ...diffMap, [file]: state }
@@ -41,30 +51,30 @@ export default function FileEditMessage({ message }: { message: ChatMessage }) {
   }
 
   const allDecided =
-    json &&
+    plan &&
     Object.values(diffMap).every((v) => v !== undefined) &&
-    Object.keys(diffMap).length >= Object.keys(json).length
+    Object.keys(diffMap).length >= Object.keys(plan).length
 
   return (
     <div className="flex flex-col gap-4">
-      <TextContent content={preContent} />
-      {!json && (
+      {preContent && <TextContent content={preContent} />}
+      {!plan && (
         <div className="flex-1 bg-red-600 text-white shadow-md rounded message p-4">
           Error parsing JSON content
         </div>
       )}
-      {json &&
-        Object.keys(json).map((key) => (
+      {plan &&
+        Object.keys(plan).map((key) => (
           <DiffContent
             key={key}
             file={key}
-            ops={json[key]}
+            ops={plan![key]}
             stateMap={diffMap}
             setState={(state) => onSetState(key, state)}
             setCode={(code) => setCodeMap({ ...codeMap, [key]: code })}
           />
         ))}
-      <TextContent content={postContent} />
+      {postContent && <TextContent content={postContent} />}
       {allDecided && <PostDiffActions code={codeMap} state={diffMap} setState={onSetState} />}
     </div>
   )
@@ -74,8 +84,8 @@ function TextContent({ content }: { content: string }) {
   if (!content) return null
 
   return (
-    <div className="flex-1 shadow-md rounded message p-4 mx-auto w-[768px] max-w-full">
-      {content}
+    <div className="mx-auto w-[768px] max-w-full">
+      <div className="shadow-md rounded message p-4">{content}</div>
     </div>
   )
 }
