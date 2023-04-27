@@ -1,5 +1,5 @@
-The frontend uses tailwindcss and react and lives in src/react. The backend uses
-nodejs and express and lives in src/server. Database is sqlite3 and hnsw for vectors in src/db.
-AI code is built on openai and called via src/ai. Business logic lives in src/directors.
+This project, named "draftpilot", is an AI-assisted codebase helper built using React for the frontend and Express for the backend. The frontend is styled using Tailwind CSS and can be found in the `src/react` directory, while the backend is powered by Node.js and Express, located in the `src/server` directory. The database used in this project is SQLite3, with its implementation found in the `src/db` directory. The main business logic resides in the `src/directors` folder.
 
-Frontend store logic is using a library called nanostores, which exposes an `atom<type>` helper with .set and .get methods. In the ui components. `useStore(atomVariable)` is used to get access to the variable.
+The frontend state management is handled using a library called Nanostores, which provides an `atom<type>` helper with `.set` and `.get` methods. Within the UI components, the `useStore(atomVariable)` hook is used to access the state variables. This allows for a lightweight and efficient state management solution.
+
+Key libraries used in this project include Axios for making HTTP requests, Chalk for terminal output styling, Commander for CLI commands, Dexie for IndexedDB, and Fast-glob for file system operations. The project also utilizes several AI-related libraries, such as GPT-3-encoder and OpenAI, to enhance its AI capabilities. The build process is managed using Vite and ESBuild, with configurations found in `vite.config.ts` and `esbuild.js` files. The `package.json` file contains various scripts for building, testing, and running the application.

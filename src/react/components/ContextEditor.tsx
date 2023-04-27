@@ -4,7 +4,7 @@ import uiStore from '@/react/stores/uiStore'
 import { ChatMessage, Intent } from '@/types'
 import { generateUUID } from '@/utils/utils'
 import { useStore } from '@nanostores/react'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 const NO_CONTEXT_TEXT = `Please write a few sentences about your project to help your completions be more relevant.
 
@@ -16,34 +16,36 @@ const ContextEditor: React.FC = () => {
   const [inferringContext, setInferringContext] = useState<string | false>(false)
   const onboarding = useStore(uiStore.onboarding)
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     setSaved(true)
     uiStore.saveProjectContext(context)
 
     setTimeout(() => {
-      setSaved(false)
-      if (!onboarding) uiStore.editingProjectContext.set(false)
+      uiStore.editingProjectContext.set(false)
     }, 3000)
-  }
+  }, [context])
 
+  const generatingContext = useRef<boolean>(false)
   useEffect(() => {
-    if (onboarding) {
-      setInferringContext('')
-      const message: ChatMessage = {
-        content: 'infer-project-context',
-        role: 'user',
-        intent: Intent.GEN_CONTEXT,
-      }
-      const payload = { id: generateUUID(), message, history: [] }
-      API.sendMessage(payload, (response) => {
-        if (typeof response == 'string') {
-          setInferringContext((ctx) => (ctx || '') + response)
-        } else {
-          setInferringContext(false)
-          handleSave()
-        }
-      })
+    if (!onboarding || generatingContext.current) return
+    generatingContext.current = true
+    setInferringContext('')
+    const message: ChatMessage = {
+      content: 'infer-project-context',
+      role: 'user',
+      intent: Intent.GEN_CONTEXT,
     }
+    const payload = { id: generateUUID(), message, history: [] }
+    API.sendMessage(payload, (response) => {
+      if (typeof response == 'string') {
+        setInferringContext((ctx) => (ctx || '') + response)
+      } else {
+        setInferringContext(false)
+        setContext(response.content)
+        uiStore.saveProjectContext(response.content)
+        setSaved(true)
+      }
+    })
   }, [onboarding])
 
   return (

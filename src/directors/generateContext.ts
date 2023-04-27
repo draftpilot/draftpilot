@@ -26,7 +26,7 @@ export class GenerateContext extends IntentHandler {
     ]
     for (const contextString of contextStrings) {
       const docs = await findRelevantDocs(contextString, indexer.files, 15)
-      relevantDocs.push(...docs)
+      relevantDocs.push(docs)
 
       const similarCode = await indexer.vectorDB.searchWithScores(contextString, 3)
       const similarFuncs =
