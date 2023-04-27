@@ -4,21 +4,35 @@ import FileTree from '@/react/components/FileTree'
 import { fileStore } from '@/react/stores/fileStore'
 import { useStore } from '@nanostores/react'
 import hljs from 'highlight.js'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function FileBrowser() {
   const selected = useStore(fileStore.selectedFile) || ''
   const [contents, setContents] = useState('')
   const curRequest = useRef<string>('')
 
-  const selectFile = (file: string) => {
+  useEffect(() => {
     setContents('')
+    if (!selected) return
+    curRequest.current = selected
+    API.loadFile(selected)
+      .then((res) => {
+        if (curRequest.current !== selected) return
+        setContents(res.file)
+      })
+      .catch((err) => {
+        setContents(err.message)
+      })
+
+    // expand all file parts
+    const parts = selected.split('/')
+    const expanded = fileStore.expanded.get()
+    parts.forEach((part) => (expanded[part] = true))
+    fileStore.expanded.set({ ...expanded })
+  }, [selected])
+
+  const selectFile = (file: string) => {
     fileStore.selectedFile.set(file)
-    curRequest.current = file
-    API.loadFile(file).then((res) => {
-      if (curRequest.current !== file) return
-      setContents(res.file)
-    })
   }
 
   const extension = selected.split('.').pop() || ''
@@ -33,7 +47,7 @@ export default function FileBrowser() {
       </div>
       <div className="flex-1 editor overflow-scroll ">
         <pre
-          className="hljs rounded-md p-4 text-sm whitespace-pre-wrap"
+          className="h-full hljs rounded-md p-4 text-sm whitespace-pre-wrap"
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>
