@@ -21,7 +21,7 @@
     "watch-fe": "node esbuild.js && node esbuild.js --watch & node --enable-source-maps cli.js --skip-open --dev-server"
   },
   "author": "Tim Su",
-  "license": "LGPL-3.0",
+  "license": "AGPL-3",
   "bin": "./cli.js",
   "files": [
     "cli.js",
