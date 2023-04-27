@@ -71,6 +71,7 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
         component: FileRow,
         output: (entity: string) => {
           filesRef.current.add(entity)
+          fileStore.selectedFile.set(entity)
           return entity
         },
       },

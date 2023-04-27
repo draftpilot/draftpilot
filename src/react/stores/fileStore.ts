@@ -1,6 +1,6 @@
 import { API } from '@/react/api/api'
 import { messageStore } from '@/react/stores/messageStore'
-import { atom } from 'nanostores'
+import { atom, map } from 'nanostores'
 
 type MergeData = {
   file?: string
@@ -15,7 +15,11 @@ class FileStore {
 
   files = atom<string[]>([])
 
+  expanded = map<{ [path: string]: boolean }>({})
+
   mergeInfo = atom<MergeData | null>(null)
+
+  selectedFile = atom<string | null>(null)
 
   // --- actions
 
@@ -63,6 +67,7 @@ class FileStore {
 
   newSession = () => {
     this.mergeInfo.set(null)
+    this.selectedFile.set(null)
   }
 }
 

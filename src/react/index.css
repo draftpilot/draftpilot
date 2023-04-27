@@ -114,3 +114,8 @@ textarea {
 .diff-view .hljs {
   background: none;
 }
+
+.TreeNode {
+  display: flex;
+  align-items: center;
+}

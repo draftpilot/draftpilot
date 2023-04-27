@@ -1,4 +1,5 @@
 export const extToLanguage: { [ext: string]: string } = {
+  '.json': 'json',
   '.py': 'python',
   '.js': 'javascript',
   '.jsx': 'javascript',

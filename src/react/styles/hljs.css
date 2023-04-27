@@ -1,0 +1,6 @@
+/* default hljs style is github light */
+@import './github.css';
+
+@import './github-dark.css';
+.editor {
+}

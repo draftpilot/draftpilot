@@ -42,7 +42,7 @@ export default () => {
   }
 
   return (
-    <div className="py-6 px-10 flex flex-col gap-2 overflow-y-auto h-full border-r border-gray-200">
+    <div className="py-6 px-5 xl:px-10 flex flex-col gap-2 overflow-y-auto h-full border-r border-gray-200">
       <div className="flex items-center mb-4">
         <h1 className="flex-1 text-xl font-bold">Draftpilot</h1>
         <ChevronDoubleLeftIcon
