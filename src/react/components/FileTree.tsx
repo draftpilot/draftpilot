@@ -68,7 +68,7 @@ function FileNode({ indent, node, ...rest }: NodeProps) {
       className={
         (isSelected ? 'bg-blue-200 ' : ' hover:bg-blue-300 ') +
         'text-gray-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md ' +
-        'transition-all overflow-hidden whitespace-nowrap text-ellipsis'
+        'transition-all overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer'
       }
     >
       {node.name}

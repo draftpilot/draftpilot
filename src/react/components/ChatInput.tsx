@@ -10,15 +10,16 @@ import useAutosizeTextArea from '@/react/hooks/useAutosizeTextArea'
 import { Attachment, Intent } from '@/types'
 
 import EncouragingInput from '@/react/components/EncouragingInput'
+import { Attachments } from '@/react/components/Attachments'
 export default ({ initialMessage }: { initialMessage?: boolean }) => {
   const rtaRef = useRef<ReactTextareaAutocomplete<string> | null>(null)
   const ref = useRef<HTMLTextAreaElement | null>(null)
   const inProgress = useStore(messageStore.inProgress)
   const session = useStore(messageStore.session)
   const editMessage = useStore(messageStore.editMessage)
+  const attachments = useStore(messageStore.attachments)
 
   const [value, setValue] = useState('')
-  const filesRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     fileStore.loadData()
@@ -27,8 +28,7 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
   useEffect(() => {
     if (editMessage) {
       setValue(editMessage.content)
-      if (editMessage.attachments)
-        filesRef.current = new Set(editMessage.attachments.map((a) => a.name))
+      messageStore.attachments.set(editMessage.attachments || [])
       ref.current?.focus()
     }
   }, [editMessage])
@@ -46,21 +46,14 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
     const message = ref.current.value
     if (!message) return
 
-    const toAttach: Attachment[] = Array.from(filesRef.current)
-      .filter((f) => message.includes(f))
-      .map((f) => ({
-        type: 'file',
-        name: f,
-      }))
     fileStore.clearMerge()
     messageStore.sendMessage({
       content: ref.current.value,
       role: 'user',
-      attachments: toAttach,
+      attachments,
     })
     setValue('')
-    filesRef.current.clear()
-  }, [inProgress])
+  }, [inProgress, attachments])
 
   const trigger: TriggerType<string> = useMemo(
     () => ({
@@ -70,7 +63,7 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
         },
         component: FileRow,
         output: (entity: string) => {
-          filesRef.current.add(entity)
+          messageStore.attachFile(entity)
           fileStore.selectedFile.set(entity)
           return entity
         },
@@ -132,6 +125,7 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
         </div>
       </div>
       {initialMessage && <EncouragingInput value={value} />}
+      {attachments?.length > 0 && <Attachments attachments={attachments} canDelete />}
       <div className="flex my-2 gap-4 text-sm">
         <span>
           <b>Mode:</b>{' '}
@@ -149,18 +143,13 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
             ? 'Crashpilot'
             : 'Chat'}
         </span>
-        {intent != Intent.DRAFTPILOT && (
+        {intent == Intent.EDIT_FILES && (
           <a
             href="#"
             className="text-blue-600 cursor-pointer"
             onClick={() => messageStore.intent.set(Intent.DRAFTPILOT)}
           >
-            Planning Mode
-          </a>
-        )}
-        {intent && intent != Intent.CHAT && (
-          <a href="#" onClick={() => messageStore.intent.set(Intent.ANSWER)}>
-            Chat Mode
+            Return to Planning Mode
           </a>
         )}
       </div>

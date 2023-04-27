@@ -1,5 +1,5 @@
 import { API, isAxiosError } from '@/react/api/api'
-import { ChatMessage, Intent, MessageButton, MessagePayload } from '@/types'
+import { Attachment, ChatMessage, Intent, MessageButton, MessagePayload } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
@@ -48,6 +48,8 @@ class MessageStore {
 
   editMessage = atom<ChatMessage | null>(null)
 
+  attachments = atom<Attachment[]>([])
+
   intent = atom<string | undefined>(Intent.DRAFTPILOT)
 
   error = atom<string | undefined>()
@@ -61,11 +63,13 @@ class MessageStore {
     this.partialMessage.set(undefined)
     this.editMessage.set(null)
     this.sessionAutoNamed = false
+    this.attachments.set([])
   }
 
   sendMessage = async (message: ChatMessage, skipHistory?: boolean, sessionId?: string) => {
     uiStore.sidebarVisible.set(false)
     this.editMessage.set(null)
+    this.attachments.set([])
     const id = generateUUID()
     const payload: MessagePayload = { id, message, history: this.messages.get() }
     log(payload)
@@ -219,6 +223,22 @@ class MessageStore {
 
   handleMessageButton = (message: ChatMessage, button: MessageButton) => {
     this.autoActionHandler?.(button.action)
+  }
+
+  attachFile = async (file: string) => {
+    const attachments = this.attachments.get()
+    if (!attachments.find((a) => a.name == file)) {
+      attachments.push({
+        name: file,
+        type: 'file',
+      })
+    }
+    this.attachments.set([...attachments])
+  }
+
+  deleteAttachment = (attachment: Attachment) => {
+    const attachments = this.attachments.get()
+    this.attachments.set(attachments.filter((a) => a.name != attachment.name))
   }
 
   // --- session management
