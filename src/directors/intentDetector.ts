@@ -1,4 +1,5 @@
 import { getModel, streamChatWithHistory } from '@/ai/api'
+import { indexer } from '@/db/indexer'
 import { compactMessageHistory, detectTypeFromResponse } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
 import prompts from '@/prompts'
@@ -16,7 +17,23 @@ export class IntentDetector extends IntentHandler {
     const { message, history } = payload
 
     const model = getModel(false)
-    const prompt = prompts.detectIntent({ model })
+
+    const similar = await indexer.vectorDB.searchWithScores(message.content, 6)
+    const similarFuncs =
+      similar
+        ?.filter((s) => {
+          const [doc, score] = s
+          if (score < 0.15) return false
+          return true
+        })
+        .map((s) => s[0]) || []
+    const similarFuncText = similarFuncs.length
+      ? 'Related functions:\n' +
+        similarFuncs.map((s) => s.metadata.path + '\n' + s.pageContent).join('\n\n') +
+        '------\n\n'
+      : ''
+
+    const prompt = prompts.chatPilot({ request: message.content, references: similarFuncText })
     const userMessage: ChatMessage = {
       role: 'user',
       content: prompt + message.content + attachmentBody,
@@ -42,12 +59,3 @@ export class IntentDetector extends IntentHandler {
     return responseMessage
   }
 }
-
-// history.push(responseMessage)
-// postMessage(responseMessage)
-
-// if (type == Intent.ANSWER || (type == Intent.COMPLEX && response.length > 300)) {
-//   // we're done
-// } else {
-//   await this.handleDetectedIntent(type as Intent, payload, attachmentBody, postMessage)
-// }

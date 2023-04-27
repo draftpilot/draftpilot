@@ -9,6 +9,10 @@ import useWindowVisible from '@/react/hooks/useWindowVisible'
 import uiStore from '@/react/stores/uiStore'
 import ContextEditor from '@/react/components/ContextEditor'
 import { ChevronDoubleRightIcon } from '@heroicons/react/24/outline'
+import FileTree from '@/react/components/FileTree'
+import FileBrowser from '@/react/components/FileBrowser'
+
+import '@/react/styles/hljs.css'
 
 function App() {
   const messages = useStore(messageStore.messages)
@@ -27,7 +31,7 @@ function App() {
   return (
     <div className="flex h-full relative">
       {showSidebar && (
-        <div className="fixed bg-white w-72 z-20 sm:relative sm:z-0">
+        <div className="fixed bg-white w-56 xl:w-72 z-20 sm:relative sm:z-0">
           <Sidebar />
         </div>
       )}
@@ -47,11 +51,12 @@ function App() {
           </div>
         </div>
       ) : noMessages ? (
-        <div className="flex-1 overflow-y-auto pt-8 pb-40">
-          <div className="mx-auto w-[768px] max-w-full gap-4 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto pt-8">
+          <div className="mx-auto w-[768px] max-w-full gap-4 flex flex-col mb-4">
             <NoMessages />
             <ChatInput initialMessage />
           </div>
+          <FileBrowser />
         </div>
       ) : (
         <>
