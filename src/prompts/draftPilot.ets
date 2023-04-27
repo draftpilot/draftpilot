@@ -25,21 +25,7 @@ Output Format:
   SUGGESTION: <short summary of request>
   How the user could implement the request themselves, e.g. with unix tools or their IDE
   
-
-3. Direct Code
-Description: Provide small changes that can be output immediately.
-When to use: small changes (e.g. change the color or text of a button)
-Output Format:
-  CODE: <3-6 word summary of the request>
-  JSON object with files as keys and arrays of operations as values:
-  {
-    "path/to/file": [edit operations],
-    "path/to/newfile": "new file as a string",
-    ...
-  }
-This example shows all possible operations and their inputs: <%= props.exampleJson %>
-
-4. Action Plan
+3. Action Plan
 Description: Provide a plan of action for the user's request that will be executed by AI
 When to use: when you know what to do
 Output Format:
