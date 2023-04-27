@@ -25,7 +25,6 @@ class UIStore {
 
   saveProjectContext = (context: string) => {
     this.projectContext.set(context)
-    this.editingProjectContext.set(false)
     API.putContext(context)
     if (this.onboarding.get()) {
       this.onboarding.set(false)

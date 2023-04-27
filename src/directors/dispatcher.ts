@@ -2,6 +2,7 @@ import { indexer } from '@/db/indexer'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
 import { attachmentListToString, detectProjectLanguage } from '@/directors/helpers'
 import { ProductAssistant } from '@/directors/productAssistant'
+import { GenerateContext } from '@/directors/generateContext'
 import { DraftPilot } from '@/directors/draftPilot'
 import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
 import { log } from '@/utils/logger'
@@ -101,6 +102,7 @@ export class Dispatcher {
         [Intent.EDIT_FILES]: this.codeEditor,
         [Intent.DRAFTPILOT]: this.draftPilot,
         [Intent.CRASHPILOT]: this.crashPilot,
+        [Intent.GEN_CONTEXT]: this.generateContext,
         [Intent.TESTPILOT]: this.draftPilot,
 
         // the rest are all passed to the intent detector
@@ -142,5 +144,6 @@ export class Dispatcher {
   draftPilot = new DraftPilot(this.interrupted)
   codeEditor = new CodebaseEditor(this.interrupted)
   productAssistant = new ProductAssistant(this.interrupted)
+  generateContext = new GenerateContext(this.interrupted)
   crashPilot = new CrashPilot(this.interrupted)
 }
