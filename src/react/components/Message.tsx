@@ -21,7 +21,8 @@ const Message = (props: Props) => {
   const { message } = props
   if (!message) return <MessageLoading />
 
-  if (message.intent == Intent.EDIT_FILES) return <FileEditMessage message={message} />
+  if (message.role == 'assistant' && message.intent == Intent.EDIT_FILES)
+    return <FileEditMessage message={message} />
 
   return (
     <>

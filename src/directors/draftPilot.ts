@@ -5,6 +5,7 @@ import { compactMessageHistory } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
 import prompts from '@/prompts'
 import { ChatMessage, Intent, MessagePayload, Model, PostMessage } from '@/types'
+import { EXAMPLE_OPS } from '@/utils/editOps'
 import { encode } from 'gpt-3-encoder'
 
 enum PlanOutcome {
@@ -38,17 +39,16 @@ export class DraftPilot extends IntentHandler {
 
     // TODO: git history, past learnings
 
-    const contexts: string[] = [
-      attachmentBody || '',
-      'Codebase files:',
-      relevantDocs,
-      'Code snippets:',
-      ...similarFuncs,
-    ]
+    const contexts: string[] = ['Codebase files:', relevantDocs, 'Code snippets:', ...similarFuncs]
+    if (attachmentBody) contexts.push('Attached Files:', attachmentBody)
 
     const model = getModel(false)
 
-    const basePrompt = prompts.draftPilot({ message: message.content, references: '' })
+    const basePrompt = prompts.draftPilot({
+      message: message.content,
+      references: '',
+      exampleJson: JSON.stringify(EXAMPLE_OPS),
+    })
 
     let tokenBudget = (model == '4' ? 6000 : 3500) - encode(basePrompt).length
     const references = []
@@ -62,10 +62,7 @@ export class DraftPilot extends IntentHandler {
       references.push(context, '\n')
     }
 
-    const prompt = prompts.draftPilot({
-      message: message.content,
-      references: references.join('\n'),
-    })
+    const prompt = references.length ? references.join('\n') + basePrompt : basePrompt
 
     const messages = compactMessageHistory([...history, { content: prompt, role: 'user' }], model, {
       content: systemMessage,
@@ -100,9 +97,8 @@ export class DraftPilot extends IntentHandler {
     const prompt = prompts.draftPilot({
       message: message.content,
       references: attachmentBody || '',
+      exampleJson: JSON.stringify(EXAMPLE_OPS),
     })
-
-    console.log('attachments', attachmentBody?.length)
 
     const messages = compactMessageHistory([...history, { content: prompt, role: 'user' }], model, {
       content: systemMessage,

@@ -3,7 +3,7 @@ import { ChatMessage, Intent, MessageButton, MessagePayload } from '@/types'
 import { atom } from 'nanostores'
 import Dexie, { Table } from 'dexie'
 import { fileStore } from '@/react/stores/fileStore'
-import { generateUUID, smartTruncate } from '@/utils/utils'
+import { generateUUID, smartTruncate, splitOnce } from '@/utils/utils'
 import { log } from '@/utils/logger'
 import uiStore from '@/react/stores/uiStore'
 
@@ -30,8 +30,6 @@ class SessionDatabase extends Dexie {
     })
   }
 }
-
-const AUTO_PROCEED_TIME = 15
 
 class MessageStore {
   sessionDb = new SessionDatabase()
@@ -135,7 +133,7 @@ class MessageStore {
         return
       }
       this.updateMessages(sessionId, [...messages, message])
-      this.maybeUpdateSessionName(sessionId, message.content)
+      this.maybeUpdateSessionName(sessionId, message)
       this.autoMessageActions(sessionId, message)
     }
   }
@@ -151,10 +149,15 @@ class MessageStore {
       fileStore.loadData()
     } else if (message.intent == Intent.DRAFTPILOT) {
       if (message.content.startsWith('PLAN:')) {
-        const content = `Automatically executing in ${AUTO_PROCEED_TIME} seconds`
+        const highConfidence = message.content.includes('confidence: high')
+        const proceedTime = highConfidence ? 15 : 30
+
+        const content = `${
+          highConfidence ? 'High' : 'Low'
+        } confidence - automatically executing in ${proceedTime} seconds`
         const msg: ChatMessage = {
           content,
-          progressDuration: AUTO_PROCEED_TIME * 1000,
+          progressDuration: proceedTime * 1000,
           role: 'system',
           buttons: [
             { label: 'Continue', action: 'continue' },
@@ -164,7 +167,7 @@ class MessageStore {
         this.addSystemMessage(msg, sessionId)
         const timeout = setTimeout(() => {
           this.autoActionHandler?.('continue')
-        }, AUTO_PROCEED_TIME * 1000)
+        }, proceedTime * 1000)
         this.autoActionHandler = (action) => {
           clearTimeout(timeout)
           this.updateMessages(
@@ -235,22 +238,18 @@ class MessageStore {
     this.renameSession(sessionId, name)
   }
 
-  maybeUpdateSessionName = (sessionId: string, content: string) => {
+  maybeUpdateSessionName = (sessionId: string, message: ChatMessage) => {
     const session = this.sessions.get().find((s) => s.id == sessionId) || this.session.get()
     const isCurrentSession = sessionId == this.session.get().id
     if (session.name && (!isCurrentSession || !this.sessionAutoNamed)) return
 
-    const checkPrefix = (prefix: string) => {
-      if (content.startsWith(prefix)) {
-        const name = content.substring(prefix.length, content.indexOf('\n'))
-        if (name.length > 3) {
-          this.renameSession(sessionId, name)
-          return true
-        }
+    if (message.intent == Intent.DRAFTPILOT) {
+      const firstLine = splitOnce(message.content, '\n')[0]
+      const title = splitOnce(firstLine, ':')[1]?.trim()
+      if (title && title.length > 3) {
+        this.renameSession(sessionId, title)
+        return
       }
-    }
-    for (const prefix of ['PLAN: ', 'SUGGESTION: ', 'RESEARCH: ']) {
-      if (checkPrefix(prefix)) return
     }
     const userMessage = this.messages.get()[0]
     if (!this.sessionAutoNamed && userMessage) this.autoUpdateSessionName(sessionId, userMessage)
