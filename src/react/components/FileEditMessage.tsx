@@ -56,7 +56,7 @@ export default function FileEditMessage({ message }: { message: ChatMessage }) {
   const allDecided =
     plan &&
     Object.keys(diffMap).length &&
-    Object.values(diffMap).every((v) => v !== undefined) &&
+    Object.keys(diffMap).every((k) => k == SAVED_KEY || diffMap[k] !== undefined) &&
     Object.keys(diffMap).length >= Object.keys(plan).length
 
   return (
