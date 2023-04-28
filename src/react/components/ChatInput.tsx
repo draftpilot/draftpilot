@@ -63,8 +63,6 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
         },
         component: FileRow,
         output: (entity: string) => {
-          messageStore.attachFile(entity)
-          fileStore.selectedFile.set(entity)
           return entity
         },
       },
@@ -110,6 +108,10 @@ export default ({ initialMessage }: { initialMessage?: boolean }) => {
           innerRef={(textarea: HTMLTextAreaElement) => (ref.current = textarea)}
           className="p-4 h-14 w-full focus:ring-0 focus-visible:ring-0"
           dropdownClassName="bg-white shadow-md rounded absolute z-10"
+          onItemSelected={(item) => {
+            messageStore.attachFile(item.item)
+            fileStore.selectedFile.set(item.item)
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
