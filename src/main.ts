@@ -1,25 +1,26 @@
 import { program } from 'commander'
+import open from 'open'
 
+import { setFakeMode } from '@/ai/api'
+import index from '@/commands'
+import autopilot from '@/commands/autopilot'
+import chat from '@/commands/chat'
+import codegen from '@/commands/codegen'
+import commit from '@/commands/commit'
+import editOps from '@/commands/editOps'
 import init from '@/commands/init'
+import patch from '@/commands/patch'
+import search from '@/commands/search'
+import tool from '@/commands/tool'
 import config, { overrideGPT4 } from '@/config'
+import { cache } from '@/db/cache'
+import serve from '@/server/server'
+import { updateGitIgnores } from '@/utils/git'
 import { log, setVerbose } from '@/utils/logger'
+import { tracker } from '@/utils/tracker'
 import { fatal } from '@/utils/utils'
 
 import packageJson from '../package.json'
-import chat from '@/commands/chat'
-import index from '@/commands'
-import search from '@/commands/search'
-import codegen from '@/commands/codegen'
-import { cache } from '@/db/cache'
-import patch from '@/commands/patch'
-import tool from '@/commands/tool'
-import commit from '@/commands/commit'
-import serve from '@/server/server'
-import open from 'open'
-import editOps from '@/commands/editOps'
-import { tracker } from '@/utils/tracker'
-import { updateGitIgnores } from '@/utils/git'
-import { setFakeMode } from '@/ai/api'
 
 export default function () {
   if (!process.env.OPENAI_API_KEY) return fatal('env variable OPENAI_API_KEY is not set')
@@ -86,6 +87,13 @@ export default function () {
     .argument('<file>')
     .argument('<ops>')
     .action(actionWrapper(editOps))
+
+  program
+    .command('autopilot')
+    .description('Run autonomously from command line')
+    .argument('<branch>')
+    .argument('<request>')
+    .action(actionWrapper(autopilot))
 
   program
     .command('server', { isDefault: true })
