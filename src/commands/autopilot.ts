@@ -1,20 +1,26 @@
 import fs from 'fs'
 
+import { AutoPilot } from '@/directors/autopilot'
 import { git } from '@/utils/git'
 
-// performs autonomous draftpilot from command like
-export default async function autopilot(branch: string, request: string) {
-  // create a new branch
-  git(['checkout', '-b', branch])
+type Options = {
+  skipGit: boolean
+}
 
-  fs.writeFileSync('autopilot.txt', request)
+// performs autonomous draftpilot from command like
+export default async function autopilot(branch: string, request: string, options: Options) {
+  // create a new branch
+  if (!options.skipGit) git(['checkout', '-b', branch])
+
+  const autopilot = new AutoPilot()
+  await autopilot.plan(request)
 
   // add all files
-  git(['add', '.'])
+  if (!options.skipGit) git(['add', '.'])
 
   // commit
-  git(['commit', '-m', 'autopilot'])
+  if (!options.skipGit) git(['commit', '-m', 'autopilot'])
 
   // push
-  git(['push', 'origin', branch])
+  if (!options.skipGit) git(['push', 'origin', branch])
 }

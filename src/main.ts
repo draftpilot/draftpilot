@@ -93,6 +93,7 @@ export default function () {
     .description('Run autonomously from command line')
     .argument('<branch>')
     .argument('<request>')
+    .option('--skip-git', 'skip git operations')
     .action(actionWrapper(autopilot))
 
   program

@@ -1,13 +1,14 @@
-import { Tool, confirmPrompt } from '@/agent/tool'
-import { readConfig } from '@/context/projectConfig'
-import { log, verboseLog } from '@/utils/logger'
-
 import child_process from 'child_process'
 import FastGlob from 'fast-glob'
 
+import { confirmPrompt, Tool } from '@/agent/tool'
+import { readConfig } from '@/context/projectConfig'
+import { log, verboseLog } from '@/utils/logger'
+
 const grepTool: Tool = {
   name: 'findInsideFiles',
-  description: 'Search inside files print the matching lines. e.g. findAcrossFiles: hello',
+  description:
+    'Search inside files print the matching lines. e.g. { name: findAcrossFiles, input: hello }',
 
   run: (input: string) => {
     const args = stringToArgs(input)
@@ -46,7 +47,8 @@ const grepTool: Tool = {
 
 const findTool: Tool = {
   name: 'findFileNames',
-  description: 'Find file names matching a shell pattern. e.g. findFileNames: *.foo.js',
+  description:
+    'Find file names matching a shell pattern. e.g. { name: "findFileNames", input: "*.foo.js" }',
 
   run: (input: string) => {
     const args = stringToArgs(input)
@@ -61,7 +63,7 @@ const findTool: Tool = {
 
 const lsTool: Tool = {
   name: 'listFiles',
-  description: 'List files in a folder. e.g. listFiles folder1 folder2',
+  description: 'List files in a folder. e.g. { name: "listFiles", input: "folder1 folder2" }',
   run: (input: string) => {
     const args = stringToArgs(input)
     return spawnPromise('ls', args)
@@ -230,4 +232,4 @@ export const unixTools = [grepTool, findTool, lsTool, cpTool, mvTool, rmTool, se
 
 export const unixReadOnlyTools = [grepTool, findTool, lsTool]
 
-export const unixSimpleTools = [findTool]
+export const unixSimpleTools = [findTool, lsTool]
