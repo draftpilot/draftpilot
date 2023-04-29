@@ -18,7 +18,7 @@ export async function findRelevantDocs(query: string, files: string[], count: nu
 
   const exactMatches = await indexer.searchDB.search(query, Math.ceil(count / 2))
   similarDocs.forEach((doc) => {
-    const file = splitOnce(doc.metadata.path, '#')[0]
+    const file = splitOnce(doc.metadata.path, ':')[0]
     fileSet.add(file)
   })
 

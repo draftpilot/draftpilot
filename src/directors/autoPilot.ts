@@ -3,23 +3,13 @@ import path from 'path'
 
 import { getSimpleTools } from '@/agent'
 import { Tool } from '@/agent/tool'
-import { chatWithHistory, getModel, streamChatWithHistory } from '@/ai/api'
+import { getModel, streamChatWithHistory } from '@/ai/api'
 import { readProjectContext } from '@/context/projectContext'
-import { findRelevantDocs, getManifestFiles } from '@/context/relevantFiles'
+import { findRelevantDocs } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
-import { CodebaseEditor } from '@/directors/codebaseEditor'
-import { CrashPilot } from '@/directors/crashPilot'
-import { DraftPilot } from '@/directors/draftPilot'
-import { GenerateContext } from '@/directors/generateContext'
-import { attachmentListToString, detectProjectLanguage } from '@/directors/helpers'
-import { IntentDetector } from '@/directors/intentDetector'
-import { IntentHandler } from '@/directors/intentHandler'
-import { PostAction } from '@/directors/postAction'
-import { ProductAssistant } from '@/directors/productAssistant'
+import { detectProjectLanguage } from '@/directors/helpers'
 import prompts from '@/prompts'
-import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
-import { log } from '@/utils/logger'
-import { tracker } from '@/utils/tracker'
+import { ChatMessage } from '@/types'
 
 export class AutoPilot {
   context: string = ''
@@ -28,7 +18,6 @@ export class AutoPilot {
 
   constructor() {
     this.context = readProjectContext() || ''
-    indexer.loadFilesIntoVectors()
   }
 
   systemMessage = () => {
@@ -55,11 +44,17 @@ export class AutoPilot {
           if (score < 0.15) return false
           return true
         })
+        .sort((a, b) => a[0].metadata.path.localeCompare(b[0].metadata.path))
         .map((s) => s[0].pageContent) || []
 
     // TODO: git history, past learnings
 
-    const contexts: string[] = ['Codebase files:', relevantDocs, 'Code snippets:', ...similarFuncs]
+    const contexts: string[] = [
+      'Codebase files:',
+      relevantDocs,
+      'Code snippets:',
+      similarFuncs.join('\n----------\n'),
+    ]
 
     const model = getModel(false)
 

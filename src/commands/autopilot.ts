@@ -1,7 +1,9 @@
 import fs from 'fs'
 
-import { AutoPilot } from '@/directors/autopilot'
+import { indexer } from '@/db/indexer'
+import { AutoPilot } from '@/directors/autoPilot'
 import { git } from '@/utils/git'
+import { log } from '@/utils/logger'
 
 type Options = {
   skipGit: boolean
@@ -11,6 +13,9 @@ type Options = {
 export default async function autopilot(branch: string, request: string, options: Options) {
   // create a new branch
   if (!options.skipGit) git(['checkout', '-b', branch])
+
+  await indexer.loadFilesIntoVectors()
+  log('indexer has', indexer.files.length, 'files')
 
   const autopilot = new AutoPilot()
   await autopilot.plan(request)

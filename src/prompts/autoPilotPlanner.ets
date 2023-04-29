@@ -18,7 +18,7 @@ Output Format schema - either a list of tools to invoke, if more information is 
   "tools": [ { "name": "name of tool", "input": ["args"] } ]
 }
 
-Or a list of files to edit, if you are certain of how to fulfil the request:
+Or a list of files to edit, if you are certain of how to fulfill the request:
 {
   "plan": [ "array of steps of changes to make" ],
   "edits": {
