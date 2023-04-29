@@ -1,12 +1,12 @@
 ---
 interface Props {
   message: string
-  references: string | undefined
+  references: string[]
   tools: string[]
   exampleJson: any[]
 }
 ---
-<%= props.references %>
+<%= props.references.join('\n\n') %>
 =======
 User's request: <%= props.message %>
 
@@ -24,6 +24,11 @@ Or a list of files to edit, if you are certain of how to fulfill the request:
   "edits": {
     "path/to/file": "changes you want to make to each file"
   }
+}
+
+If you are not able to fulfill the request:
+{
+  "failure": "reason why you cannot fulfill the request"
 }
 
 All tools you can use:
