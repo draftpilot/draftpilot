@@ -1,6 +1,7 @@
 import autoPilotPlanner1 from './autoPilotPlanner1.ets.ts'
 import autoPilotPlanner2 from './autoPilotPlanner2.ets.ts'
 import autoPilotPlanner3 from './autoPilotPlanner3.ets.ts'
+import autoPilotValidator from './autoPilotValidator.ets.ts'
 import chatPilot from './chatPilot.ets.ts'
 import crashPilot from './crashPilot.ets.ts'
 import draftPilot from './draftPilot.ets.ts'
@@ -22,4 +23,5 @@ export default {
   autoPilotPlanner1,
   autoPilotPlanner2,
   autoPilotPlanner3,
+  autoPilotValidator,
 }

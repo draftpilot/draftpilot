@@ -26,13 +26,16 @@ export class AutoPilotPlanner {
   request: string = ''
   systemMessage: string = ''
 
-  plan = async (request: string, systemMessage: string): Promise<PlanResult> => {
+  plan = async (
+    request: string,
+    history: ChatMessage[],
+    systemMessage: string
+  ): Promise<PlanResult> => {
     this.request = request
     this.systemMessage = systemMessage
 
     let toolOutput = await this.getInitialReference()
     let prevPlan: PlanResult = {}
-    const history: ChatMessage[] = []
 
     for (let i = 0; i < PLAN_LOOPS; i++) {
       let output = await this.runPlanner(i, prevPlan.plan || [], toolOutput, history)
@@ -109,7 +112,7 @@ export class AutoPilotPlanner {
     })
 
     const result = await streamChatWithHistory(messages, model, (response) => {
-      process.stdout.write(response)
+      process.stdout.write(typeof response == 'string' ? response : '\n')
     })
 
     history.push({ role: 'assistant', content: result })

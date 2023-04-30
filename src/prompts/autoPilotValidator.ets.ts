@@ -9,7 +9,7 @@
 interface Props {
   request: string;
   diff: string;
-  compilerOutput: string;
+  compilerOutput: string | null;
 }
 
 export default function (props: Props): string {
@@ -18,8 +18,11 @@ export default function (props: Props): string {
   result += props.request;
   result += "\n\nThis was the AI generated diff:\n";
   result += props.diff;
-  result += "\n\nThis was the compiler output:\n";
-  result += props.compilerOutput || "no output (probably successful)";
+  result += "\n\n";
+  result += props.compilerOutput
+    ? "This was the compiler output:\n" +
+      (props.compilerOutput || "no output (probably successful)")
+    : "";
   result +=
     '\n-------\nPoint out any problems with the changes where it doesn\'t do what the user requested or has errors, and suggest any changes to make. Output in the following format:\n\nIf there are no problems:\n{\n  "result": "good",\n  "comments: "Any notes to pass to the user in the pull request description"\n}\n\nIf there are changes to make to fix issues or better match the user\'s request:\n{\n  "result": "rewrite",\n  "path/to/file": "description of how this file should be changed, so an AI can modify it",\n  ... more files ...\n}\n\nYour JSON output:';
   return result;

@@ -2,7 +2,7 @@
 interface Props {
   request: string
   diff: string
-  compilerOutput: string
+  compilerOutput: string | null
 }
 ---
 User's request: <%= props.request %>
@@ -10,8 +10,8 @@ User's request: <%= props.request %>
 This was the AI generated diff:
 <%= props.diff %>
 
-This was the compiler output:
-<%= props.compilerOutput || 'no output (probably successful)' %>
+<%= props.compilerOutput ? 'This was the compiler output:\n' + 
+  (props.compilerOutput|| 'no output (probably successful)') : '' %>
 -------
 Point out any problems with the changes where it doesn't do what the user requested or has errors, and suggest any changes to make. Output in the following format:
 
