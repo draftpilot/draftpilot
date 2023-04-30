@@ -12,13 +12,13 @@ User's request: <%= props.message %>
 
 Think step by step to come up with a plan of action. 
 
-Output Format schema - either a list of tools to invoke, if more information is needed:
+Output Format schema - either a list of tools to invoke and files to read:
 {
   "plan": [ "your best guess on what to do next" ],
   "tools": [ { "name": "name of tool", "input": ["args"] } ]
 }
 
-Or a list of files to edit, if you are certain of how to fulfill the request:
+Or a list of files to edit, if you have all the context you need to fulfill the request:
 {
   "plan": [ "array of steps of changes to make" ],
   "edits": {

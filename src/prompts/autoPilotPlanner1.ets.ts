@@ -19,7 +19,7 @@ export default function (props: Props): string {
   result += "\n=======\nUser's request: ";
   result += props.message;
   result +=
-    '\n\nThink step by step to come up with a plan of action. \n\nOutput Format schema - either a list of tools to invoke, if more information is needed:\n{\n  "plan": [ "your best guess on what to do next" ],\n  "tools": [ { "name": "name of tool", "input": ["args"] } ]\n}\n\nOr a list of files to edit, if you are certain of how to fulfill the request:\n{\n  "plan": [ "array of steps of changes to make" ],\n  "edits": {\n    "path/to/file": "changes you want to make to each file"\n  }\n}\n\nIf you are not able to fulfill the request:\n{\n  "failure": "reason why you cannot fulfill the request"\n}\n\nAll tools you can use:\n';
+    '\n\nThink step by step to come up with a plan of action. \n\nOutput Format schema - either a list of tools to invoke and files to read:\n{\n  "plan": [ "your best guess on what to do next" ],\n  "tools": [ { "name": "name of tool", "input": ["args"] } ]\n}\n\nOr a list of files to edit, if you have all the context you need to fulfill the request:\n{\n  "plan": [ "array of steps of changes to make" ],\n  "edits": {\n    "path/to/file": "changes you want to make to each file"\n  }\n}\n\nIf you are not able to fulfill the request:\n{\n  "failure": "reason why you cannot fulfill the request"\n}\n\nAll tools you can use:\n';
   result += props.tools.join("\n");
   result += "\n\nSome example plans based on the request provided:\n";
   result += props.exampleJson.map((obj) => JSON.stringify(obj)).join("\n\n");

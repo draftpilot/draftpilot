@@ -94,6 +94,8 @@ export default function () {
     .argument('<branch>')
     .argument('<request>')
     .option('--skip-git', 'skip git operations')
+    .option('--plan-file <file>', 'use the plan file output')
+    .option('--edit-file <file>', 'use the edit file output')
     .action(actionWrapper(autopilot))
 
   program

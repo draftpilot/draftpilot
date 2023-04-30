@@ -10,9 +10,9 @@ import { indexer } from '@/db/indexer'
 import { compactMessageHistory, detectProjectLanguage } from '@/directors/helpers'
 import prompts from '@/prompts'
 import { ChatMessage } from '@/types'
-import { fuzzyParseJSON } from '@/utils/utils'
+import { fuzzyParseJSON, splitOnce } from '@/utils/utils'
 
-type PlanResult = {
+export type PlanResult = {
   plan?: string[]
   failure?: string
   edits?: { [key: string]: string }
@@ -21,18 +21,21 @@ type PlanResult = {
 
 const PLAN_LOOPS = 3
 
-export class AutoPilot {
+export class AutoPilotPlanner {
   tools: Tool[] = getSimpleTools()
   request: string = ''
+  systemMessage: string = ''
 
-  plan = async (request: string): Promise<PlanResult> => {
+  plan = async (request: string, systemMessage: string): Promise<PlanResult> => {
     this.request = request
+    this.systemMessage = systemMessage
 
     let toolOutput = await this.getInitialReference()
     let prevPlan: PlanResult = {}
+    const history: ChatMessage[] = []
 
     for (let i = 0; i < PLAN_LOOPS; i++) {
-      let output = await this.runPlanner(i, prevPlan.plan || [], toolOutput)
+      let output = await this.runPlanner(i, prevPlan.plan || [], toolOutput, history)
       const result = await this.parsePlanResult(output)
 
       if (result.failure) {
@@ -50,15 +53,6 @@ export class AutoPilot {
     return { failure: 'Unable to generate a plan' }
   }
 
-  systemMessage = () => {
-    const project = path.basename(process.cwd())
-    return prompts.systemMessage({
-      language: detectProjectLanguage() || 'unknown',
-      project,
-      context: readProjectContext() || '',
-    })
-  }
-
   parsePlanResult = async (plan: string): Promise<PlanResult> => {
     let parsed: PlanResult | null = fuzzyParseJSON(plan)
     if (!parsed) {
@@ -73,7 +67,12 @@ export class AutoPilot {
     return parsed
   }
 
-  runPlanner = async (iteration: number, plan: string[], toolOutput: string[]) => {
+  runPlanner = async (
+    iteration: number,
+    plan: string[],
+    toolOutput: string[],
+    history: ChatMessage[]
+  ) => {
     const message: ChatMessage = {
       role: 'user',
       content: this.request,
@@ -103,18 +102,17 @@ export class AutoPilot {
             toolResults: toolOutput,
           })
 
-    const messages: ChatMessage[] = compactMessageHistory(
-      [{ role: 'user', content: prompt }],
-      model,
-      {
-        content: this.systemMessage(),
-        role: 'system',
-      }
-    )
+    history.push({ role: 'user', content: prompt })
+    const messages: ChatMessage[] = compactMessageHistory(history, model, {
+      content: this.systemMessage,
+      role: 'system',
+    })
 
     const result = await streamChatWithHistory(messages, model, (response) => {
       process.stdout.write(response)
     })
+
+    history.push({ role: 'assistant', content: result })
 
     fs.writeFileSync(`/tmp/plan${iteration}.txt`, result)
     return result
@@ -148,14 +146,32 @@ export class AutoPilot {
           return true
         })
         .sort((a, b) => a[0].metadata.path.localeCompare(b[0].metadata.path))
-        .map((s) => s[0].pageContent) || []
+        .map((s) => s[0]) || []
+
+    // read entire top file
+    const similarFiles = similarFuncs.map((s) => splitOnce(s.metadata.path, '#')[0])
+    const similarFileCount = new Map<string, number>()
+    for (const file of similarFiles) {
+      similarFileCount.set(file, (similarFileCount.get(file) || 0) + 1)
+    }
+    const topFile = [...similarFileCount.entries()].sort((a, b) => b[1] - a[1])[0][0]
+    const topFileContent = fs.existsSync(topFile) ? fs.readFileSync(topFile, 'utf8') : null
+
+    // remove top file from similarFuncs
+    const funcsToRead = topFileContent
+      ? similarFuncs.filter((s) => !s.metadata.path.startsWith(topFile))
+      : similarFuncs
 
     const contexts: string[] = [
       'Codebase files:',
       relevantDocs,
       'Code snippets:',
-      similarFuncs.join('\n----------\n'),
+      funcsToRead.map((f) => f.pageContent).join('\n----------\n'),
     ]
+    if (topFileContent) {
+      contexts.push('\n\n', topFile, topFileContent)
+    }
+
     return contexts
   }
 }

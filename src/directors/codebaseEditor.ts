@@ -1,16 +1,17 @@
+import chalk from 'chalk'
+import fs from 'fs'
+import { encode } from 'gpt-3-encoder'
+import path from 'path'
+
 import { getModel, streamChatWithHistory } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
+import { IntentHandler } from '@/directors/intentHandler'
+import prompts from '@/prompts'
 import { ChatMessage, Intent, MessagePayload, Model, PostMessage } from '@/types'
+import { EXAMPLE_OPS } from '@/utils/editOps'
 import { log } from '@/utils/logger'
 import { fuzzyParseJSON, pluralize } from '@/utils/utils'
-import fs from 'fs'
-import path from 'path'
-import { encode } from 'gpt-3-encoder'
-import prompts from '@/prompts'
-import { IntentHandler } from '@/directors/intentHandler'
-import chalk from 'chalk'
-import { EXAMPLE_OPS } from '@/utils/editOps'
 
 type EditPlan = { context: string; [path: string]: string }
 
@@ -168,7 +169,7 @@ export class CodebaseEditor extends IntentHandler {
 
     // fuzzy parse and merge all results
     const merged = results.map((r) => fuzzyParseJSON(r)).reduce((acc, r) => ({ ...acc, ...r }), {})
-    return merged
+    return JSON.stringify(merged)
   }
 
   followupRun = async (

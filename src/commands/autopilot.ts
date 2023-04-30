@@ -6,7 +6,9 @@ import { git } from '@/utils/git'
 import { log } from '@/utils/logger'
 
 type Options = {
-  skipGit: boolean
+  skipGit?: boolean
+  planFile?: string
+  editFile?: string
 }
 
 // performs autonomous draftpilot from command like
@@ -15,10 +17,9 @@ export default async function autopilot(branch: string, request: string, options
   if (!options.skipGit) git(['checkout', '-b', branch])
 
   await indexer.loadFilesIntoVectors()
-  log('indexer has', indexer.files.length, 'files')
 
   const autopilot = new AutoPilot()
-  await autopilot.plan(request)
+  await autopilot.run(request, options)
 
   // add all files
   if (!options.skipGit) git(['add', '.'])

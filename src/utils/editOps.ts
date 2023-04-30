@@ -87,13 +87,21 @@ const findLineIndex = (lines: string[], op: OpWithLine) => {
   const { line, startLine } = op
   if (!line) return -1
   if (!startLine) return line
-  const trimmed = startLine.trim()
+  const startLineSplit = startLine.split('\n').map((l) => l.trim())
+
+  const matches = (line: number) => {
+    for (let i = 0; i < startLineSplit.length; i++) {
+      if (startLineSplit[i] != lines[line + i]?.trim()) return false
+    }
+    return true
+  }
+
   // do a search starting from the provided line number
   // GPT is real bad with line numbers so it could be anywhere though
   const maxSearch = Math.max(line, lines.length - line)
   for (let i = 0; i < maxSearch; i++) {
-    if (i < lines.length && lines[line + i]?.trim() == trimmed) return line + i
-    if (i >= 0 && lines[line - i]?.trim() == trimmed) return line - i
+    if (i < lines.length && matches(line + i)) return line + i
+    if (i >= 0 && matches(line - i)) return line - i
   }
   log('could not find starting line for op, searched', maxSearch, op)
   if (line > lines.length - 1) return lines.length - 1
