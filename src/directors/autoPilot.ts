@@ -66,7 +66,7 @@ export class AutoPilot {
       fs.writeFileSync(config.configFolder + '/edit.txt', JSON.stringify(edits, null, 2))
     }
 
-    const baseCommit = '156d3e0' // git(['rev-parse', 'HEAD']).trim()
+    const baseCommit = git(['rev-parse', 'HEAD']).trim()
 
     if (!opts.validationFile) {
       await this.editor.applyEdits(edits)
