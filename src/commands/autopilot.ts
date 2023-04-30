@@ -2,7 +2,7 @@ import fs from 'fs'
 
 import { indexer } from '@/db/indexer'
 import { AutoPilot } from '@/directors/autoPilot'
-import { git } from '@/utils/git'
+import { git, updateGitIgnores } from '@/utils/git'
 import { log } from '@/utils/logger'
 
 // performs autonomous draftpilot from command like
@@ -14,4 +14,8 @@ export default async function autopilot(branch: string, request: string, options
 
   const autopilot = new AutoPilot()
   await autopilot.run(request, options)
+
+  updateGitIgnores()
+  git(['add', '.draftpilot', '.gitignore'])
+  git(['commit', '-m', 'draftpilot metadata'])
 }

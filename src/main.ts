@@ -104,7 +104,7 @@ export default function () {
     .description('Server mode (runs when no command is specified))')
     .action(
       actionWrapper(async (opts) => {
-        updateGitIgnores([config.configFolder])
+        updateGitIgnores()
         const url = await serve(
           opts.port ? parseInt(opts.port) : undefined,
           opts.devServer ? 'development' : 'production'

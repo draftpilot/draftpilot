@@ -51,7 +51,8 @@ export function gitStatus(cwd?: string): GitStatusData {
   return data
 }
 
-export function updateGitIgnores(files: string[]) {
+const DEFAULT_GIT_IGNORES = ['.draftpilot']
+export function updateGitIgnores(files: string[] = DEFAULT_GIT_IGNORES) {
   const gitRoot = findGitRoot()
   if (!gitRoot) return
 

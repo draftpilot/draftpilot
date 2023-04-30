@@ -6,8 +6,9 @@ import { compactMessageHistory } from '@/directors/helpers'
 import prompts from '@/prompts'
 import { ChatMessage, Intent, PostMessage } from '@/types'
 import { applyOps, Op } from '@/utils/editOps'
+import { git } from '@/utils/git'
 import { log } from '@/utils/logger'
-import { fuzzyParseJSON } from '@/utils/utils'
+import { fuzzyParseJSON, spawn } from '@/utils/utils'
 
 export type EditOps = {
   [file: string]: string | Op[]
@@ -64,6 +65,22 @@ ${Object.keys(editPlan.edits!)
         const contents = fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : ''
         const newContents = applyOps(contents, ops)
         fs.writeFileSync(file, newContents)
+      }
+    }
+
+    if (edits['package.json']) {
+      const packageManager = fs.existsSync('yarn.lock')
+        ? 'yarn'
+        : fs.existsSync('pnpm-lock.yaml')
+        ? 'pnpm'
+        : 'npm'
+      log(`running ${packageManager} install`)
+
+      try {
+        await spawn(packageManager, ['install'])
+        git(['add', 'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'])
+      } catch (e) {
+        log('warning: failed to run package manager', e)
       }
     }
 

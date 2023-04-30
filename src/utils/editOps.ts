@@ -12,6 +12,10 @@ export const applyOps = (contents: string, ops: Op[]) => {
       lines = lines.map((l) => l.replaceAll(search, replace))
       continue
     }
+    if (op.op == 'new') {
+      lines = op.insert.split('\n').concat(lines)
+      continue
+    }
 
     const line = findLineIndex(lines, op)
     const updateLines = (delta: number) => {
@@ -133,6 +137,11 @@ type EditOp = {
   insert: string
 }
 
+type NewOp = {
+  op: 'new'
+  insert: string
+}
+
 type InsertOp = {
   op: 'insert'
   line: number
@@ -166,7 +175,7 @@ type PasteOp = {
   line: number
 }
 
-export type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp
+export type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp | NewOp
 
 export const EXAMPLE_OPS: Op[] = [
   // not sure if this is a good idea.
@@ -175,6 +184,7 @@ export const EXAMPLE_OPS: Op[] = [
   //   search: 'text to search (case sensitive)',
   //   replace: 'global file text replacement',
   // },
+  { op: 'new', insert: 'text to insert in new file' },
   { op: 'edit', line: 1, delLines: 1, startLine: 'first line to alter', insert: 'goodbye' },
   { op: 'insert', insert: 'hello', line: 3, startLine: 'existing line to insert below' },
   { op: 'delete', line: 1, startLine: 'first line to delete', delLines: 5 },
