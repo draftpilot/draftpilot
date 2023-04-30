@@ -4,12 +4,14 @@ import path from 'path'
 import { getSimpleTools } from '@/agent'
 import { Tool } from '@/agent/tool'
 import { chatCompletion, getModel, streamChatWithHistory } from '@/ai/api'
+import config from '@/config'
 import { readProjectContext } from '@/context/projectContext'
 import { findRelevantDocs } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory, detectProjectLanguage } from '@/directors/helpers'
 import prompts from '@/prompts'
 import { ChatMessage } from '@/types'
+import { log } from '@/utils/logger'
 import { fuzzyParseJSON, splitOnce } from '@/utils/utils'
 
 export type PlanResult = {
@@ -59,6 +61,7 @@ export class AutoPilotPlanner {
   parsePlanResult = async (plan: string): Promise<PlanResult> => {
     let parsed: PlanResult | null = fuzzyParseJSON(plan)
     if (!parsed) {
+      log('warning: received invalid json, attempting fix')
       const response = await chatCompletion(prompts.jsonFixer({ input: plan, schema }), '3.5')
       parsed = fuzzyParseJSON(response)
     }
@@ -117,7 +120,7 @@ export class AutoPilotPlanner {
 
     history.push({ role: 'assistant', content: result })
 
-    fs.writeFileSync(`/tmp/plan${iteration}.txt`, result)
+    fs.writeFileSync(`${config.configFolder}/plan${iteration}.txt`, result)
     return result
   }
 

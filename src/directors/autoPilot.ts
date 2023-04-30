@@ -1,17 +1,21 @@
 import fs from 'fs'
 import path from 'path'
 
+import config from '@/config'
 import { readProjectContext } from '@/context/projectContext'
 import { AutoPilotEditor, EditOps } from '@/directors/autoPilotEditor'
 import { AutoPilotPlanner, PlanResult } from '@/directors/autoPilotPlanner'
-import { AutoPilotValidator } from '@/directors/autoPilotValidator'
+import { AutoPilotValidator, ValidatorOutput } from '@/directors/autoPilotValidator'
 import { detectProjectLanguage } from '@/directors/helpers'
 import prompts from '@/prompts'
 import { ChatMessage } from '@/types'
+import { git } from '@/utils/git'
 
-type Opts = {
+export type AutopilotOpts = {
   editFile?: string
   planFile?: string
+  validationFile?: string
+  skipGit?: boolean
 }
 
 export class AutoPilot {
@@ -31,11 +35,15 @@ export class AutoPilot {
     })
   }
 
-  run = async (request: string, opts: Opts) => {
+  run = async (request: string, opts: AutopilotOpts) => {
     const systemMessage = this.systemMessage()
 
     let plan: PlanResult
     const history: ChatMessage[] = [
+      {
+        role: 'system',
+        content: systemMessage,
+      },
       {
         role: 'user',
         content: request,
@@ -54,11 +62,38 @@ export class AutoPilot {
     if (opts.editFile) {
       edits = JSON.parse(fs.readFileSync(opts.editFile, 'utf8'))
     } else {
-      edits = await this.editor.generateEdits(request, plan, systemMessage)
+      edits = await this.editor.generateEdits(request, history, plan)
+      fs.writeFileSync(config.configFolder + '/edit.txt', JSON.stringify(edits, null, 2))
     }
-    await this.editor.applyEdits(edits)
 
-    await this.validator.validate(request, history, edits)
+    const baseCommit = '156d3e0' // git(['rev-parse', 'HEAD']).trim()
+
+    if (!opts.validationFile) {
+      await this.editor.applyEdits(edits)
+    }
+
+    // add all files
+    if (!opts.skipGit) {
+      git(['add', ...Object.keys(edits)])
+      git(['commit', '-m', request])
+    }
+
+    for (let i = 0; i < 2; i++) {
+      let validatedResult: ValidatorOutput
+      if (opts.validationFile) {
+        validatedResult = JSON.parse(fs.readFileSync(opts.validationFile, 'utf8'))
+        opts.validationFile = undefined
+      } else {
+        const diff = git(['diff', baseCommit])
+        validatedResult = await this.validator.validate(request, history, edits, diff)
+      }
+
+      if (validatedResult.result == 'good') {
+        fs.writeFileSync(config.configFolder + '/followup.txt', validatedResult.comments)
+        return
+      }
+      await this.validator.fixResults(request, history, validatedResult, this.editor)
+    }
   }
 
   planner = new AutoPilotPlanner()

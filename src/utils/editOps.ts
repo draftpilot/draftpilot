@@ -75,11 +75,12 @@ export const applyOps = (contents: string, ops: Op[]) => {
 const matchIndent = (line: string, lines: string[]) => {
   // try to match previous indent
   const indent = line?.match(/^\s*/)?.[0] || ''
-  const changedIndent = lines[0].match(/^\s*/)?.[0] || ''
-  const indentDiff = indent.slice(changedIndent.length)
 
   for (let i = 0; i < lines.length; i++) {
-    lines[i] = indentDiff + lines[i]
+    const newLine = lines[i]
+    const changedIndent = newLine.match(/^\s*/)?.[0] || ''
+    const indentDiff = indent.slice(changedIndent.length)
+    lines[i] = indentDiff + newLine
   }
 }
 

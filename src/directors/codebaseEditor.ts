@@ -31,16 +31,15 @@ export class CodebaseEditor extends IntentHandler {
     const recentHistory = history.slice(planMessageIndex - 1)
 
     const model = getModel(true)
-    const basePrompt = prompts.editPilot({
-      message: message.content,
-      files: '',
-      exampleJson: JSON.stringify(EXAMPLE_OPS),
-    })
-    const baseMessage = { role: 'user', content: basePrompt } as ChatMessage
-    const messages = compactMessageHistory([...recentHistory, baseMessage], model, {
-      role: 'system',
-      content: systemMessage,
-    })
+    const messages = compactMessageHistory(
+      recentHistory,
+      model,
+      {
+        role: 'system',
+        content: systemMessage,
+      },
+      500
+    )
 
     const { filesToEdit, fileBodies } = this.readFilesToEdit(payload, planMessage.content)
 
@@ -77,17 +76,7 @@ export class CodebaseEditor extends IntentHandler {
       // it's possible that code snippets are enough to make edits
     }
 
-    let fileBodies = []
-    for (const file of filesToEdit) {
-      if (fs.existsSync(file)) {
-        const contents = fs.readFileSync(file, 'utf-8')
-        const fileLines = contents.split('\n')
-        const decorated = fileLines.map((line, i) => `${i + 1}: ${line}`).join('\n')
-        fileBodies.push(file + '\n' + decorated)
-      } else {
-        fileBodies.push(file + '\nNew File')
-      }
-    }
+    let fileBodies = this.getFileBodies(filesToEdit)
 
     return { filesToEdit, fileBodies }
   }
@@ -112,9 +101,7 @@ export class CodebaseEditor extends IntentHandler {
         })
         .map((s) => s[0]) || []
     const similarFuncText = similarFuncs.length
-      ? 'Related functions:\n' +
-        similarFuncs.map((s) => s.metadata.path + '\n' + s.pageContent).join('\n\n') +
-        '------\n\n'
+      ? 'Related functions:\n' + similarFuncs.map((s) => s.pageContent).join('\n\n') + '------\n\n'
       : ''
 
     const messageTokenCount = messages.reduce((acc, m) => acc + encode(m.content).length, 0)
@@ -126,16 +113,15 @@ export class CodebaseEditor extends IntentHandler {
     const allFileBodies = fileBodies.join('\n\n')
     const fileBodyTokens = encode(allFileBodies).length
 
-    const editorPrompt = messages[messages.length - 1]
-    const baseEditorContent = '\n\n' + editorPrompt.content
     const editFileHelper = async (fileContent: string) => {
-      editorPrompt.content =
-        similarFuncText +
-        'Files to edit (only edit these files):\n' +
-        fileContent +
-        baseEditorContent
+      const fileData = similarFuncText + 'Files to edit (only edit these files):\n' + fileContent
+      const editorPrompt = prompts.editPilot({
+        files: fileData,
+        exampleJson: JSON.stringify(EXAMPLE_OPS),
+      })
 
-      const response = await streamChatWithHistory(messages, model, postMessage)
+      const editMessage = { role: 'user', content: editorPrompt } as ChatMessage
+      const response = await streamChatWithHistory([...messages, editMessage], model, postMessage)
       return response
     }
 
@@ -230,5 +216,23 @@ export class CodebaseEditor extends IntentHandler {
     }
 
     return []
+  }
+
+  getFileBodies(filesToEdit: string[]) {
+    let fileBodies = []
+    for (let file of filesToEdit) {
+      // strip leading and trailing special characters from file name
+      file = file.replace(/^[`'"]+/, '').replace(/[`'"]+$/, '')
+
+      if (fs.existsSync(file)) {
+        const contents = fs.readFileSync(file, 'utf-8')
+        const fileLines = contents.split('\n')
+        const decorated = fileLines.map((line, i) => `${i + 1}: ${line}`).join('\n')
+        fileBodies.push(file + '\n' + decorated)
+      } else {
+        fileBodies.push(file + '\nNew File')
+      }
+    }
+    return fileBodies
   }
 }

@@ -1,9 +1,10 @@
 import fs from 'fs'
 
-import { chatCompletion } from '@/ai/api'
+import { chatCompletion, getModel } from '@/ai/api'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
+import { compactMessageHistory } from '@/directors/helpers'
 import prompts from '@/prompts'
-import { ChatMessage, Intent } from '@/types'
+import { ChatMessage, Intent, PostMessage } from '@/types'
 import { applyOps, Op } from '@/utils/editOps'
 import { log } from '@/utils/logger'
 import { fuzzyParseJSON } from '@/utils/utils'
@@ -17,27 +18,39 @@ export class AutoPilotEditor {
 
   generateEdits = async (
     request: string,
-    result: { plan?: string[]; edits?: any },
-    systemMessage: string
+    history: ChatMessage[],
+    editPlan: { plan?: string[]; edits?: any }
   ) => {
-    const editMessage: ChatMessage = {
-      role: 'assistant',
-      intent: Intent.DRAFTPILOT,
-      content: `User request: ${request}\n\nPlan: ${result.plan?.join(
-        '\n'
-      )}\n\nEdits:\n${JSON.stringify(result.edits, null, 2)}`,
-    }
+    const model = getModel(true)
+    const plan = `Request: ${request}
 
-    const output = await this.editor.initialRun(
-      { message: { role: 'user', content: 'Do it' }, history: [editMessage], id: 'autopilot' },
-      undefined,
-      systemMessage,
-      (msg) => process.stdout.write(typeof msg === 'string' ? msg : '\n')
+Plan:
+${editPlan.plan!.join('\n')}
+
+Files to edit:
+${Object.keys(editPlan.edits!)
+  .map((f) => `- ${f} - ${editPlan.edits![f]}`)
+  .join('\n')}`
+
+    const filesToEdit = Object.keys(editPlan.edits || {})
+    const fileBodies = this.editor.getFileBodies(filesToEdit)
+
+    const postMessage: PostMessage = (msg) =>
+      process.stdout.write(typeof msg === 'string' ? msg : '\n')
+
+    const message: ChatMessage = { role: 'assistant', content: plan }
+    const messages = compactMessageHistory([...history, message], model)
+
+    const output = await this.editor.editFiles(
+      model,
+      plan,
+      filesToEdit,
+      fileBodies,
+      messages,
+      postMessage
     )
 
-    fs.writeFileSync('/tmp/edit.txt', output.content)
-
-    const parsed: EditOps = await this.parseOutput(output.content)
+    const parsed: EditOps = await this.parseOutput(output)
     return parsed
   }
 
@@ -60,6 +73,7 @@ export class AutoPilotEditor {
   parseOutput = async (output: string): Promise<EditOps> => {
     let parsed = fuzzyParseJSON(output)
     if (!parsed) {
+      log('warning: received invalid json, attempting fix')
       const fixer = prompts.jsonFixer({ input: output, schema })
       const response = await chatCompletion(fixer, '3.5')
       parsed = fuzzyParseJSON(response)
