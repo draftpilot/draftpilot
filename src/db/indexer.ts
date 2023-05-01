@@ -1,30 +1,36 @@
-import FileDB from '@/db/docsDb'
-import { VectorDB } from '@/db/vectorDb'
-import { verboseLog } from '@/utils/logger'
-import { CodeDoc, ProjectConfig } from '@/types'
-import { findRoot } from '@/utils/utils'
 import chalk from 'chalk'
 import FastGlob from 'fast-glob'
-import SearchDB from '@/db/searchDb'
+
 import { readConfig } from '@/context/projectConfig'
+import FileDB from '@/db/docsDb'
+import SearchDB from '@/db/searchDb'
+import { VectorDB } from '@/db/vectorDb'
+import { CodeDoc, ProjectConfig } from '@/types'
+import { verboseLog } from '@/utils/logger'
+import { findRoot } from '@/utils/utils'
 
 // things that glob should never return
-export const GLOB_EXCLUSIONS = ['!**/node_modules/**', '!**/dist/**', '!**/build/**', '!**/venv/**']
-
-export const DEFAULT_GLOB = [
-  '**/*.js',
-  '**/*.ts',
-  '**/*.jsx',
-  '**/*.tsx',
-  '**/*.css',
-  'api/**/*.*',
-  'client/**/*.*',
-  'server/**/*.*',
-  'src/**/*.*',
-  'package.json',
-  'README*',
-  ...GLOB_EXCLUSIONS,
+export const GLOB_EXCLUSIONS = [
+  '!**/node_modules/**',
+  '!**/dist/**',
+  '!**/build/**',
+  '!**/venv/**',
+  '!**/.*/**',
+  '!**/*.jp*',
+  '!**/*.pn*',
+  '!**/*.gif',
+  '!**/*.ico',
+  '!**/*.wo*',
+  '!**/*.mp*',
+  '!**/*.web*',
+  '!**/*.zip',
+  '!**/*.gz',
+  '!**/*.tar',
+  '!**/*.tgz',
+  '!**/*.pdf',
 ]
+
+export const DEFAULT_GLOB = ['**/*', ...GLOB_EXCLUSIONS]
 
 export const GLOB_WITHOUT_TESTS = [
   ...DEFAULT_GLOB,

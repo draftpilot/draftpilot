@@ -1,20 +1,20 @@
+import bodyParser from 'body-parser'
+import express from 'express'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+import { readProjectContext, writeProjectContext } from '@/context/projectContext'
 import { indexer } from '@/db/indexer'
 import { Messenger } from '@/server/messenger'
 import { log } from '@/utils/logger'
-import bodyParser from 'body-parser'
-import express from 'express'
-import ViteExpress from './vite-express'
-import fs from 'fs'
-
-import { fileURLToPath } from 'url'
-import path from 'path'
-import { readProjectContext, writeProjectContext } from '@/context/projectContext'
 import { tracker } from '@/utils/tracker'
+
+import ViteExpress from './vite-express'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // usually dist/
 const assetRoot = path.dirname(__dirname) // usually draftpilot/
-log('my asset root', assetRoot)
 
 const PORT = 3080
 

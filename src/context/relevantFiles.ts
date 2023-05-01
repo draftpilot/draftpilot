@@ -1,3 +1,5 @@
+import fs from 'fs'
+
 import { Indexer, indexer } from '@/db/indexer'
 import { findSimilarDocuments } from '@/utils/similarity'
 import { splitOnce } from '@/utils/utils'
@@ -16,7 +18,7 @@ export async function findRelevantDocs(query: string, files: string[], count: nu
 
   const exactMatches = await indexer.searchDB.search(query, Math.ceil(count / 2))
   similarDocs.forEach((doc) => {
-    const file = splitOnce(doc.metadata.path, '#')[0]
+    const file = splitOnce(doc.metadata.path, ':')[0]
     fileSet.add(file)
   })
 
@@ -34,4 +36,23 @@ function filterFiles(files: string[], query: string, limit: number) {
   const similar = findSimilarDocuments(query, files)
 
   return similar.slice(0, limit)
+}
+
+export function getManifestFiles() {
+  const manifestFiles = []
+  for (const manifestFile of [
+    'package.json',
+    'requirements.txt',
+    'Gemfile',
+    'pom.xml',
+    'Gemfile',
+    'go.mod',
+    'Cargo.toml',
+  ]) {
+    if (fs.existsSync(manifestFile)) {
+      const contents = fs.readFileSync(manifestFile, 'utf8')
+      manifestFiles.push(manifestFile + '\n' + contents)
+    }
+  }
+  return manifestFiles
 }

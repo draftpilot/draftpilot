@@ -1,19 +1,12 @@
 import { spawnSync } from 'child_process'
-
-import { verboseLog } from '@/utils/logger'
 import fs from 'fs'
 import path from 'path'
-import { splitOnce } from '@/utils/utils'
+
+import { verboseLog } from '@/utils/logger'
+import { spawn, splitOnce } from '@/utils/utils'
 
 export function git(args: string[], cwd?: string) {
-  verboseLog('git', ...args)
-  const result = spawnSync(`git`, args, {
-    cwd,
-    encoding: 'utf-8',
-  })
-
-  if (result.error) throw result.error
-  return result.stdout
+  return spawn('git', args, cwd)
 }
 
 // walk up the tree until we find the .git folder
@@ -58,7 +51,8 @@ export function gitStatus(cwd?: string): GitStatusData {
   return data
 }
 
-export function updateGitIgnores(files: string[]) {
+const DEFAULT_GIT_IGNORES = ['.draftpilot']
+export function updateGitIgnores(files: string[] = DEFAULT_GIT_IGNORES) {
   const gitRoot = findGitRoot()
   if (!gitRoot) return
 

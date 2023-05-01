@@ -1,11 +1,12 @@
+import fs from 'fs'
+
 import { getModel, streamChatWithHistory } from '@/ai/api'
-import { findRelevantDocs } from '@/context/relevantFiles'
+import { findRelevantDocs, getManifestFiles } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
 import prompts from '@/prompts'
 import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
-import fs from 'fs'
 
 // product manager bot
 export class GenerateContext extends IntentHandler {
@@ -40,21 +41,7 @@ export class GenerateContext extends IntentHandler {
       relevantCode.push(...similarFuncs)
     }
 
-    const manifestFiles = []
-    for (const manifestFile of [
-      'package.json',
-      'requirements.txt',
-      'Gemfile',
-      'pom.xml',
-      'Gemfile',
-      'go.mod',
-      'Cargo.toml',
-    ]) {
-      if (fs.existsSync(manifestFile)) {
-        const contents = fs.readFileSync(manifestFile, 'utf8')
-        manifestFiles.push(manifestFile + '\n' + contents)
-      }
-    }
+    const manifestFiles = getManifestFiles()
 
     const prompt = prompts.genContext({
       folders: relevantDocs.join('\n'),

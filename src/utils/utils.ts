@@ -1,9 +1,11 @@
 import chalk from 'chalk'
+import child_process from 'child_process'
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
 
 import config from '@/config'
+import { verboseLog } from '@/utils/logger'
 
 // walk up the tree until we find the .draftpilot folder
 let root: string | null = null
@@ -133,4 +135,15 @@ export function smartTruncate(input: string, truncationPoint: number) {
   })
 
   return filesShortened.join(' ')
+}
+
+export function spawn(proc: string, args: string[], cwd?: string) {
+  verboseLog('spawn', proc, ...args)
+  const result = child_process.spawnSync(proc, args, {
+    cwd,
+    encoding: 'utf-8',
+  })
+
+  if (result.error) throw result.error
+  return result.stdout
 }

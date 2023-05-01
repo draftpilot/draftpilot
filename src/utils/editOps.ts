@@ -12,6 +12,10 @@ export const applyOps = (contents: string, ops: Op[]) => {
       lines = lines.map((l) => l.replaceAll(search, replace))
       continue
     }
+    if (op.op == 'new') {
+      lines = op.insert.split('\n').concat(lines)
+      continue
+    }
 
     const line = findLineIndex(lines, op)
     const updateLines = (delta: number) => {
@@ -75,11 +79,12 @@ export const applyOps = (contents: string, ops: Op[]) => {
 const matchIndent = (line: string, lines: string[]) => {
   // try to match previous indent
   const indent = line?.match(/^\s*/)?.[0] || ''
-  const changedIndent = lines[0].match(/^\s*/)?.[0] || ''
-  const indentDiff = indent.slice(changedIndent.length)
 
   for (let i = 0; i < lines.length; i++) {
-    lines[i] = indentDiff + lines[i]
+    const newLine = lines[i]
+    const changedIndent = newLine.match(/^\s*/)?.[0] || ''
+    const indentDiff = indent.slice(changedIndent.length)
+    lines[i] = indentDiff + newLine
   }
 }
 
@@ -87,13 +92,21 @@ const findLineIndex = (lines: string[], op: OpWithLine) => {
   const { line, startLine } = op
   if (!line) return -1
   if (!startLine) return line
-  const trimmed = startLine.trim()
+  const startLineSplit = startLine.split('\n').map((l) => l.trim())
+
+  const matches = (line: number) => {
+    for (let i = 0; i < startLineSplit.length; i++) {
+      if (startLineSplit[i] != lines[line + i]?.trim()) return false
+    }
+    return true
+  }
+
   // do a search starting from the provided line number
   // GPT is real bad with line numbers so it could be anywhere though
   const maxSearch = Math.max(line, lines.length - line)
   for (let i = 0; i < maxSearch; i++) {
-    if (i < lines.length && lines[line + i]?.trim() == trimmed) return line + i
-    if (i >= 0 && lines[line - i]?.trim() == trimmed) return line - i
+    if (i < lines.length && matches(line + i)) return line + i
+    if (i >= 0 && matches(line - i)) return line - i
   }
   log('could not find starting line for op, searched', maxSearch, op)
   if (line > lines.length - 1) return lines.length - 1
@@ -121,6 +134,11 @@ type EditOp = {
   line: number
   startLine: string
   delLines: number
+  insert: string
+}
+
+type NewOp = {
+  op: 'new'
   insert: string
 }
 
@@ -157,7 +175,7 @@ type PasteOp = {
   line: number
 }
 
-export type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp
+export type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp | NewOp
 
 export const EXAMPLE_OPS: Op[] = [
   // not sure if this is a good idea.
@@ -166,6 +184,7 @@ export const EXAMPLE_OPS: Op[] = [
   //   search: 'text to search (case sensitive)',
   //   replace: 'global file text replacement',
   // },
+  { op: 'new', insert: 'text to insert in new file' },
   { op: 'edit', line: 1, delLines: 1, startLine: 'first line to alter', insert: 'goodbye' },
   { op: 'insert', insert: 'hello', line: 3, startLine: 'existing line to insert below' },
   { op: 'delete', line: 1, startLine: 'first line to delete', delLines: 5 },

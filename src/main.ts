@@ -1,25 +1,26 @@
 import { program } from 'commander'
+import open from 'open'
 
+import { setFakeMode } from '@/ai/api'
+import index from '@/commands'
+import autopilot from '@/commands/autopilot'
+import chat from '@/commands/chat'
+import codegen from '@/commands/codegen'
+import commit from '@/commands/commit'
+import editOps from '@/commands/editOps'
 import init from '@/commands/init'
+import patch from '@/commands/patch'
+import search from '@/commands/search'
+import tool from '@/commands/tool'
 import config, { overrideGPT4 } from '@/config'
+import { cache } from '@/db/cache'
+import serve from '@/server/server'
+import { updateGitIgnores } from '@/utils/git'
 import { log, setVerbose } from '@/utils/logger'
+import { tracker } from '@/utils/tracker'
 import { fatal } from '@/utils/utils'
 
 import packageJson from '../package.json'
-import chat from '@/commands/chat'
-import index from '@/commands'
-import search from '@/commands/search'
-import codegen from '@/commands/codegen'
-import { cache } from '@/db/cache'
-import patch from '@/commands/patch'
-import tool from '@/commands/tool'
-import commit from '@/commands/commit'
-import serve from '@/server/server'
-import open from 'open'
-import editOps from '@/commands/editOps'
-import { tracker } from '@/utils/tracker'
-import { updateGitIgnores } from '@/utils/git'
-import { setFakeMode } from '@/ai/api'
 
 export default function () {
   if (!process.env.OPENAI_API_KEY) return fatal('env variable OPENAI_API_KEY is not set')
@@ -88,12 +89,22 @@ export default function () {
     .action(actionWrapper(editOps))
 
   program
+    .command('autopilot')
+    .description('Run autonomously from command line')
+    .argument('<branch>')
+    .argument('<request>')
+    .option('--skip-git', 'skip git operations')
+    .option('--plan-file <file>', 'use the plan file output')
+    .option('--edit-file <file>', 'use the edit file output')
+    .option('--validation-file <file>', 'use the validation file output')
+    .action(actionWrapper(autopilot))
+
+  program
     .command('server', { isDefault: true })
     .description('Server mode (runs when no command is specified))')
     .action(
-      actionWrapper(async (workingDir: string, opts) => {
-        updateGitIgnores([config.configFolder])
-        if (workingDir) process.chdir(workingDir)
+      actionWrapper(async (opts) => {
+        updateGitIgnores()
         const url = await serve(
           opts.port ? parseInt(opts.port) : undefined,
           opts.devServer ? 'development' : 'production'
@@ -101,7 +112,6 @@ export default function () {
         if (!opts.skipOpen) open(url)
       })
     )
-    .argument('[workingdir]', 'Working directory (defaults to current directory)')
     .option('--skip-open', 'Skip opening the browser')
     .option('--port <port>', 'Listen on specific port')
     .option('--dev-server', 'Use dev server (for development)')

@@ -1,4 +1,4 @@
-import { generateCodeTools } from '@/agent/code'
+import { codeTools } from '@/agent/code'
 import { testTools } from '@/agent/commands'
 import { generateEditingTools } from '@/agent/editing'
 import { systemTools } from '@/agent/system'
@@ -11,15 +11,15 @@ export function getAllTools() {
     ...systemTools,
     ...testTools,
     ...webTools,
-    ...generateCodeTools(),
+    ...codeTools,
     ...generateEditingTools(),
   ]
 }
 
 export function getReadOnlyTools() {
-  return [...unixReadOnlyTools, ...generateCodeTools(), ...webTools]
+  return [...unixReadOnlyTools, ...codeTools, ...webTools]
 }
 
 export function getSimpleTools() {
-  return [...unixSimpleTools, ...generateCodeTools(), ...webTools]
+  return [...unixSimpleTools, ...codeTools, ...webTools]
 }

@@ -7,7 +7,6 @@
 /* eslint-disable */
 
 interface Props {
-  message: string;
   files: string;
   exampleJson: string;
 }
