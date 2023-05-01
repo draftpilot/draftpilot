@@ -54,7 +54,7 @@ export function gitStatus(cwd?: string): GitStatusData {
 const DEFAULT_GIT_IGNORES = ['.draftpilot']
 export function updateGitIgnores(files: string[] = DEFAULT_GIT_IGNORES) {
   const gitRoot = findGitRoot()
-  if (!gitRoot) return
+  if (!gitRoot) return false
 
   const gitIgnore = path.join(gitRoot, '.gitignore')
   const existing = fs.existsSync(gitIgnore)
@@ -66,10 +66,11 @@ export function updateGitIgnores(files: string[] = DEFAULT_GIT_IGNORES) {
     if (linesToAdd.has(line)) linesToAdd.delete(line)
   })
 
-  if (linesToAdd.size === 0) return
+  if (linesToAdd.size === 0) return false
   Array.from(linesToAdd).forEach((line) => lines.push(line))
 
   fs.writeFileSync(gitIgnore, lines.join('\n'), 'utf-8')
+  return true
 }
 
 export function getUnstagedFiles() {

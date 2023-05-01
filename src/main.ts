@@ -97,6 +97,7 @@ export default function () {
     .option('--plan-file <file>', 'use the plan file output')
     .option('--edit-file <file>', 'use the edit file output')
     .option('--validation-file <file>', 'use the validation file output')
+    .option('--validate <git branch or hash>', 'validate the code output against given branch')
     .action(actionWrapper(autopilot))
 
   program

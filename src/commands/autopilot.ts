@@ -15,7 +15,8 @@ export default async function autopilot(branch: string, request: string, options
   const autopilot = new AutoPilot()
   await autopilot.run(request, options)
 
-  updateGitIgnores()
-  git(['add', '.draftpilot', '.gitignore'])
-  git(['commit', '-m', 'draftpilot metadata'])
+  if (updateGitIgnores()) {
+    git(['add', '.gitignore'])
+    git(['commit', '-m', 'draftpilot metadata'])
+  }
 }
