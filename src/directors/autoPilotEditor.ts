@@ -69,6 +69,8 @@ ${Object.keys(editPlan.edits!)
     }
 
     if (edits['package.json']) {
+      
+      require('child_process').execSync('npx -y prettier -w ' + Object.keys(edits).join(' '));
       const packageManager = fs.existsSync('yarn.lock')
         ? 'yarn'
         : fs.existsSync('pnpm-lock.yaml')
