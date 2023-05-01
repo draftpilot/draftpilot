@@ -91,7 +91,6 @@ export default function () {
   program
     .command('autopilot')
     .description('Run autonomously from command line')
-    .argument('<branch>')
     .argument('<request>')
     .option('--skip-git', 'skip git operations')
     .option('--plan-file <file>', 'use the plan file output')
