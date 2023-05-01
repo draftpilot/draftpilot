@@ -16,6 +16,7 @@ export type AutopilotOpts = {
   planFile?: string
   validationFile?: string
   skipGit?: boolean
+  validate?: string
 }
 
 export class AutoPilot {
@@ -66,7 +67,7 @@ export class AutoPilot {
       fs.writeFileSync(config.configFolder + '/edit.txt', JSON.stringify(edits, null, 2))
     }
 
-    const baseCommit = git(['rev-parse', 'HEAD']).trim()
+    const baseCommit = opts.validate || git(['rev-parse', 'HEAD']).trim()
 
     if (!opts.validationFile) {
       await this.editor.applyEdits(edits)

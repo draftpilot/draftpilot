@@ -6,16 +6,19 @@ import { git, updateGitIgnores } from '@/utils/git'
 import { log } from '@/utils/logger'
 
 // performs autonomous draftpilot from command like
-export default async function autopilot(branch: string, request: string, options: any) {
-  // create a new branch
-  if (!options.skipGit) git(['checkout', '-b', branch])
+export default async function autopilot(request: string, options: any) {
+  try {
+    await indexer.loadFilesIntoVectors()
 
-  await indexer.loadFilesIntoVectors()
+    const autopilot = new AutoPilot()
+    await autopilot.run(request, options)
 
-  const autopilot = new AutoPilot()
-  await autopilot.run(request, options)
-
-  updateGitIgnores()
-  git(['add', '.draftpilot', '.gitignore'])
-  git(['commit', '-m', 'draftpilot metadata'])
+    if (updateGitIgnores()) {
+      git(['add', '.gitignore'])
+      git(['commit', '-m', 'draftpilot metadata'])
+    }
+  } catch (e: any) {
+    log('error', e)
+    fs.writeFileSync('.draftpilot/error.txt', e.toString())
+  }
 }
