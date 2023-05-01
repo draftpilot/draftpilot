@@ -17,6 +17,7 @@ export type AutopilotOpts = {
   validationFile?: string
   skipGit?: boolean
   validate?: string
+  diff?: string
 }
 
 export class AutoPilot {
@@ -54,7 +55,7 @@ export class AutoPilot {
     if (opts.planFile) {
       plan = JSON.parse(fs.readFileSync(opts.planFile, 'utf8'))
     } else {
-      plan = await this.planner.plan(request, history, systemMessage)
+      plan = await this.planner.plan(request, history, systemMessage, opts.diff)
       if (plan.failure) throw new Error('Planner error: ' + plan.failure)
       if (!plan.edits) throw new Error('Planner error: no edits')
     }

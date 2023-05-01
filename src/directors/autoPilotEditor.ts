@@ -87,6 +87,13 @@ ${Object.keys(editPlan.edits!)
       }
     }
 
+    if (fs.existsSync('package.json')) {
+      const packageJson = fs.readFileSync('package.json', 'utf8')
+      if (packageJson.includes('prettier')) {
+        spawn('npx', ['-y', 'prettier', ...Object.keys(edits)])
+      }
+    }
+
     return edits
   }
 
