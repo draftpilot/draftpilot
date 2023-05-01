@@ -10,13 +10,18 @@ export default async function autopilot(branch: string, request: string, options
   // create a new branch
   if (!options.skipGit) git(['checkout', '-b', branch])
 
-  await indexer.loadFilesIntoVectors()
+  try {
+    await indexer.loadFilesIntoVectors()
 
-  const autopilot = new AutoPilot()
-  await autopilot.run(request, options)
+    const autopilot = new AutoPilot()
+    await autopilot.run(request, options)
 
-  if (updateGitIgnores()) {
-    git(['add', '.gitignore'])
-    git(['commit', '-m', 'draftpilot metadata'])
+    if (updateGitIgnores()) {
+      git(['add', '.gitignore'])
+      git(['commit', '-m', 'draftpilot metadata'])
+    }
+  } catch (e: any) {
+    log('error', e)
+    fs.writeFileSync('.draftpilot/error.txt', e.toString())
   }
 }
