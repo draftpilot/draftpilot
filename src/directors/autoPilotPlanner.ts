@@ -108,8 +108,8 @@ export class AutoPilotPlanner {
             toolResults: toolOutput,
           })
 
-    history.push({ role: 'user', content: prompt })
-    const messages: ChatMessage[] = compactMessageHistory(history, model, {
+    const userMessage: ChatMessage = { role: 'user', content: prompt }
+    const messages: ChatMessage[] = compactMessageHistory([...history, userMessage], model, {
       content: this.systemMessage,
       role: 'system',
     })
