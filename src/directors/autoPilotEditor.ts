@@ -1,4 +1,5 @@
 import fs from 'fs'
+import path from 'path'
 
 import { chatCompletion, getModel } from '@/ai/api'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
@@ -58,6 +59,8 @@ ${Object.keys(editPlan.edits!)
   applyEdits = async (edits: EditOps) => {
     for (const file of Object.keys(edits)) {
       log('writing to', file)
+      const baseDir = path.dirname(file)
+      if (baseDir) fs.mkdirSync(baseDir, { recursive: true })
       const ops = edits[file]
       if (typeof ops == 'string') {
         fs.writeFileSync(file, ops)
