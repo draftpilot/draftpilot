@@ -15,7 +15,7 @@ Here are the results of the tools you invoked:
 <%= props.toolResults.join('\n\n') %>
 
 ------------
-Think step by step to come up with a plan of action. 
+Think step by step to come up with a plan of action. ALWAYS follow this JSON schema. 
 
 Output Format schema - list of files to edit:
 {

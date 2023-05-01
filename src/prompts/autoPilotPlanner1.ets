@@ -10,7 +10,7 @@ interface Props {
 =======
 User's request: <%= props.message %>
 
-Think step by step to come up with a plan of action. 
+Think step by step to come up with a plan of action. ALWAYS follow this JSON schema.
 
 Output Format schema - either a list of tools to invoke and files to read:
 {

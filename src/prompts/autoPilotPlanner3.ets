@@ -14,7 +14,7 @@ Here are the results of the tools you invoked:
 <%= props.toolResults.join('\n\n') %>
 
 ------------
-Think step by step to come up with a plan of action. 
+Think step by step to come up with a plan of action. ALWAYS follow this JSON schema.
 
 Output Format schema - list of files to edit:
 {
@@ -24,7 +24,7 @@ Output Format schema - list of files to edit:
   }
 }
 
-If you are not able to fulfill the request, return:
+OR if you are not able to fulfill the request, return:
 {
   "failure": "reason why you cannot fulfill the request"
 }

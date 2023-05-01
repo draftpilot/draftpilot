@@ -10,7 +10,7 @@ Here is a list of files.
 <%= props.files %>
 
 ---
-This example shows all possible operations & thier inputs: <%= props.exampleJson %>
+This example shows all possible operations & thier inputs. Do NOT make up new ops. <%= props.exampleJson %>
 
 Your return format is a JSON object with files as keys and arrays of operations as values. If the edit operations are long or require many changes, you can return the entire file as a string.  
 {
