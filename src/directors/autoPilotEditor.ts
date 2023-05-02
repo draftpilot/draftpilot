@@ -67,8 +67,7 @@ ${Object.keys(editPlan.edits!)
         fs.writeFileSync(file, ops)
       } else {
         const contents = fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : ''
-        const newContents = applyOps(contents, ops)
-        fs.writeFileSync(file, newContents)
+        applyOps(contents, ops, file)
       }
     }
 
@@ -90,7 +89,7 @@ ${Object.keys(editPlan.edits!)
 
       const packageJson = fs.readFileSync('package.json', 'utf8')
       if (packageJson.includes('prettier')) {
-        spawn('npx', ['-y', 'prettier', ...Object.keys(edits)])
+        spawn('npx', ['-y', 'prettier', '-w', ...Object.keys(edits)])
       }
     }
 

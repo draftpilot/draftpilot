@@ -1,8 +1,12 @@
+import fs from 'fs'
+
 import { log } from '@/utils/logger'
 
-export const applyOps = (contents: string, ops: Op[]) => {
+export const applyOps = (contents: string, ops: Op[], writeToFile: string | null): string => {
   let lines = contents.split('\n')
   let clipboard: string[] = []
+
+  let outputFileName = writeToFile
 
   // for ops, line numbers apply to the initial contents, so they need to be offset
   for (let i = 0; i < ops.length; i++) {
@@ -68,12 +72,23 @@ export const applyOps = (contents: string, ops: Op[]) => {
         updateLines(-cutLines)
         break
       }
+      case 'renameFile': {
+        outputFileName = op.newFile
+        if (writeToFile) fs.unlinkSync(writeToFile)
+        break
+      }
+      case 'deleteFile': {
+        outputFileName = null
+        if (writeToFile) fs.unlinkSync(writeToFile)
+      }
       default:
         log('unknown op', op)
     }
   }
 
-  return lines.join('\n')
+  const result = lines.join('\n')
+  if (outputFileName) fs.writeFileSync(outputFileName, result)
+  return result
 }
 
 const matchIndent = (line: string, lines: string[]) => {
@@ -175,7 +190,26 @@ type PasteOp = {
   line: number
 }
 
-export type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp | NewOp
+type RenameFile = {
+  op: 'renameFile'
+  newFile: string
+}
+
+type DeleteFile = {
+  op: 'deleteFile'
+}
+
+export type Op =
+  | ReplaceOp
+  | InsertOp
+  | DeleteOp
+  | EditOp
+  | CopyOp
+  | CutOp
+  | PasteOp
+  | NewOp
+  | RenameFile
+  | DeleteFile
 
 export const EXAMPLE_OPS: Op[] = [
   // not sure if this is a good idea.
@@ -202,4 +236,6 @@ export const EXAMPLE_OPS: Op[] = [
   { op: 'copy', line: 1, curLine: 'first line to copy', copyLines: 5 },
   { op: 'cut', line: 1, curLine: 'first line to cut', cutLines: 5 },
   { op: 'paste', line: 1 },
+  { op: 'renameFile', newFile: 'newName.ext' },
+  { op: 'deleteFile' },
 ]

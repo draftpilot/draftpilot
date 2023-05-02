@@ -1,14 +1,16 @@
-import { ChatMessage } from '@/types'
-import { fuzzyParseJSON } from '@/utils/utils'
 import hljs from 'highlight.js/lib/common'
 import { useEffect, useState } from 'react'
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer'
-import { API } from '@/react/api/api'
-import { Op, applyOps } from '@/utils/editOps'
-import Loader from '@/react/components/Loader'
-import Button from '@/react/components/Button'
-import { messageStore } from '@/react/stores/messageStore'
+
 import { extToLanguage } from '@/context/language'
+import { API } from '@/react/api/api'
+import Button from '@/react/components/Button'
+import Loader from '@/react/components/Loader'
+import { messageStore } from '@/react/stores/messageStore'
+import { ChatMessage } from '@/types'
+import { applyOps, Op } from '@/utils/editOps'
+import { fuzzyParseJSON } from '@/utils/utils'
+
 import FileEditor from './FileEditor'
 
 type DiffState = 'accepted' | 'rejected' | 'edited' | undefined
@@ -124,7 +126,7 @@ function DiffContent({
       const applied = stateMap[SAVED_KEY]
         ? oldCode
         : Array.isArray(ops)
-        ? applyOps(oldCode, ops)
+        ? applyOps(oldCode, ops, null)
         : ops
       setNewCode(applied)
       setCode(applied)
