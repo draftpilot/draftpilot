@@ -1,13 +1,17 @@
 ---
 interface Props {
   request: string
+  plan: string
   diff: string
   compilerOutput: string | null
 }
 ---
 User's request: <%= props.request %>
 
-The AI generated this diff in response:
+AI Plan:
+<%= props.plan %>
+
+AI generated changes:
 <%= props.diff %>
 
 <%= props.compilerOutput ? 'This was the compiler output:\n' + 

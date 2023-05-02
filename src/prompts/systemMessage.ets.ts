@@ -21,6 +21,8 @@ export default function (props: Props): string {
   result += props.project;
   result += "\n- platform = ";
   result += process.platform;
+  result += "\n- date: ";
+  result += new Date().toISOString();
   result += "\n\n";
   result += props.context;
   result +=

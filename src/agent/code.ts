@@ -51,7 +51,7 @@ const searchCodeTool: Tool = {
     const output = await Promise.all(
       queries.map(async (query) => {
         const results = await indexer.vectorAndCodeSearch(query.trim(), 4)
-        return results?.map((r) => r.pageContent).join('\n') || ''
+        return results?.map((r) => r.pageContent).join('\n\n') || ''
       })
     )
     return output.join('\n\n')

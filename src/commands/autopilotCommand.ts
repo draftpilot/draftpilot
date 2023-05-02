@@ -6,7 +6,7 @@ import { git, updateGitIgnores } from '@/utils/git'
 import { log } from '@/utils/logger'
 
 // performs autonomous draftpilot from command like
-export default async function autopilot(request: string, options: any) {
+export default async function autopilotCommand(request: string, options: any) {
   try {
     await indexer.loadFilesIntoVectors()
 

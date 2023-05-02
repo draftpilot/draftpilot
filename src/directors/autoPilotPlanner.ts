@@ -16,36 +16,42 @@ import { log } from '@/utils/logger'
 import { fuzzyParseJSON, splitOnce } from '@/utils/utils'
 
 export type PlanResult = {
-  plan?: string[]
-  failure?: string
+  request: string
+  plan: string[]
   edits?: { [key: string]: string }
   tools?: { name: string; input: string }[]
 }
+
+type FailedPlan = { failure: string }
+
+type PlanOrFailure = PlanResult | FailedPlan
+
+export const isFailedPlan = (result: PlanOrFailure): result is FailedPlan => 'failure' in result
 
 const PLAN_LOOPS = 3
 
 export class AutoPilotPlanner {
   tools: Tool[] = getSimpleTools()
   request: string = ''
-  systemMessage: string = ''
+  systemMessage?: ChatMessage
 
   plan = async (
     request: string,
     history: ChatMessage[],
-    systemMessage: string,
+    systemMessage: ChatMessage,
     diff?: string
-  ): Promise<PlanResult> => {
+  ): Promise<PlanOrFailure> => {
     this.request = request
     this.systemMessage = systemMessage
 
     let toolOutput = await this.getInitialReference(diff)
-    let prevPlan: PlanResult = {}
+    let prevPlan: string[] = []
 
     for (let i = 0; i < PLAN_LOOPS; i++) {
-      let output = await this.runPlanner(i, prevPlan.plan || [], toolOutput, history)
+      let output = await this.runPlanner(i, prevPlan || [], toolOutput, history)
       const result = await this.parsePlanResult(output)
 
-      if (result.failure) {
+      if (isFailedPlan(result)) {
         return result
       }
 
@@ -54,13 +60,13 @@ export class AutoPilotPlanner {
       } else if (result.edits) {
         return result
       }
-      prevPlan = result
+      prevPlan = result.plan
     }
 
     return { failure: 'Unable to generate a plan' }
   }
 
-  parsePlanResult = async (plan: string): Promise<PlanResult> => {
+  parsePlanResult = async (plan: string): Promise<PlanOrFailure> => {
     let parsed: PlanResult | null = fuzzyParseJSON(plan)
     if (!parsed) {
       log('warning: received invalid json, attempting fix')
@@ -69,9 +75,6 @@ export class AutoPilotPlanner {
     }
 
     if (!parsed) return { failure: 'Unable to parse JSON response: ' + plan }
-
-    if (parsed.failure) return parsed
-
     return parsed
   }
 
@@ -111,10 +114,11 @@ export class AutoPilotPlanner {
           })
 
     const userMessage: ChatMessage = { role: 'user', content: prompt }
-    const messages: ChatMessage[] = compactMessageHistory([...history, userMessage], model, {
-      content: this.systemMessage,
-      role: 'system',
-    })
+    const messages: ChatMessage[] = compactMessageHistory(
+      [...history, userMessage],
+      model,
+      this.systemMessage
+    )
 
     const result = await streamChatWithHistory(messages, model, (response) => {
       process.stdout.write(typeof response == 'string' ? response : '\n')

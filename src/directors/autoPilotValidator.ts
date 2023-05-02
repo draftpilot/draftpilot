@@ -22,7 +22,13 @@ export type ValidatorOutput = {
 export class AutoPilotValidator {
   interrupted = new Set<string>()
 
-  validate = async (request: string, history: ChatMessage[], edits: EditOps, diff: string) => {
+  validate = async (
+    plan: PlanResult,
+    history: ChatMessage[],
+    edits: EditOps,
+    diff: string,
+    systemMessage: ChatMessage
+  ) => {
     let compilerOutput: string | null = null
     try {
       if (fs.existsSync('tsconfig.json')) {
@@ -35,7 +41,8 @@ export class AutoPilotValidator {
 
     const validatePrompt = prompts.autoPilotValidator({
       diff,
-      request,
+      request: plan.request!,
+      plan: plan.plan!.map((p) => '- ' + p).join('\n'),
       compilerOutput,
     })
 
@@ -47,7 +54,7 @@ export class AutoPilotValidator {
 
     const model = getModel(true)
 
-    const messages = compactMessageHistory(history, model)
+    const messages = compactMessageHistory(history, model, systemMessage)
     const result = await streamChatWithHistory(messages, model, (response) => {
       process.stdout.write(typeof response == 'string' ? response : '\n')
     })
@@ -75,19 +82,20 @@ export class AutoPilotValidator {
   }
 
   fixResults = async (
-    request: string,
-    history: ChatMessage[],
+    plan: PlanResult,
     output: ValidatorOutput,
-    editor: AutoPilotEditor
+    editor: AutoPilotEditor,
+    systemMessage: ChatMessage
   ) => {
     const validationEdit: PlanResult['edits'] = output
     delete validationEdit.result
 
     const validationPlan: PlanResult = {
+      request: plan.request,
       plan: ['fix the validation result'],
       edits: validationEdit,
     }
-    const edits = await editor.generateEdits(request, history, validationPlan)
+    const edits = await editor.generateEdits(plan.request, validationPlan, systemMessage)
     await editor.applyEdits(edits)
 
     const commitMessage = 'fixing output: ' + Object.values(validationEdit).join(', ')

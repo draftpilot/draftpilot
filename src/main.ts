@@ -3,13 +3,10 @@ import open from 'open'
 
 import { setFakeMode } from '@/ai/api'
 import index from '@/commands'
-import autopilot from '@/commands/autopilot'
-import chat from '@/commands/chat'
-import codegen from '@/commands/codegen'
-import commit from '@/commands/commit'
+import autopilot from '@/commands/autopilotCommand'
+import edit from '@/commands/editCommand'
 import editOps from '@/commands/editOps'
 import init from '@/commands/init'
-import patch from '@/commands/patch'
 import search from '@/commands/search'
 import tool from '@/commands/tool'
 import config, { overrideGPT4 } from '@/config'
@@ -41,13 +38,12 @@ export default function () {
 
   program
     .command('init')
-    .description('Initialize draftpilot. Can be called again later to update the manifest.')
+    .description('Initialize draftpilot and generate a config file.')
     .action(actionWrapper(init))
-    .option('--glob <glob>', 'Custom glob to use for finding files.')
 
   program
     .command('index')
-    .description("Index your project's code")
+    .description('Manually run file indexing')
     .action(actionWrapper(index))
     .option('--reindex', 'Re-build index from scratch')
 
@@ -60,26 +56,9 @@ export default function () {
     .option('--reindex', 'Re-index the project before searching')
 
   program
-    .command('codegen')
-    .description('Generate code from a request (without editing any files)')
-    .action(actionWrapper(codegen))
-    .argument('<request>', 'The request to make.')
-    .option('--k <k>', '# of relevant functions to include in context (default 4)')
-    .option('--reindex', 'Re-index the project before codegen')
-
-  program.command('patch').argument('<file>').description('Applies a /tmp patch file').action(patch)
-
-  program.command('chat').description('Talk directly to chatGPT').action(actionWrapper(chat))
-
-  program
     .command('tool [command]')
     .description('Tester for agent tools')
     .action(actionWrapper(tool))
-
-  program
-    .command('commit')
-    .description('Commit code with a magic commit message')
-    .action(actionWrapper(commit))
 
   program
     .command('ops')
@@ -116,6 +95,12 @@ export default function () {
     .option('--skip-open', 'Skip opening the browser')
     .option('--port <port>', 'Listen on specific port')
     .option('--dev-server', 'Use dev server (for development)')
+
+  program
+    .command('edit')
+    .description('Perform autopilot editing')
+    .argument('<planFile>')
+    .action(actionWrapper(edit))
 
   const options = program.parse()
   config.options = options

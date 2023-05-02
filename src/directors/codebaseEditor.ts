@@ -101,7 +101,9 @@ export class CodebaseEditor extends IntentHandler {
         })
         .map((s) => s[0]) || []
     const similarFuncText = similarFuncs.length
-      ? 'Related functions:\n' + similarFuncs.map((s) => s.pageContent).join('\n\n') + '------\n\n'
+      ? 'Related functions:\n' +
+        similarFuncs.map((s) => s.pageContent).join('\n\n') +
+        '\n\n------\n\n'
       : ''
 
     const messageTokenCount = messages.reduce((acc, m) => acc + encode(m.content).length, 0)
