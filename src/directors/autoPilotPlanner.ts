@@ -151,11 +151,6 @@ export class AutoPilotPlanner {
   }
 
   getInitialReference = async (diff?: string) => {
-    if (diff) {
-      const diffData = git(['diff', diff])
-      return [diffData]
-    }
-
     const relevantDocs = await findRelevantDocs(this.request, indexer.files, 50)
     const similarCode = await indexer.vectorDB.searchWithScores(this.request, 6)
     const similarFuncs =
@@ -190,6 +185,11 @@ export class AutoPilotPlanner {
     ]
     if (topFileContent) {
       contexts.push('\n\n', topFile, topFileContent)
+    }
+
+    if (diff) {
+      const diffData = git(['diff', diff])
+      return ['n\nYou are working with this diff that the AI generated:', diffData]
     }
 
     return contexts

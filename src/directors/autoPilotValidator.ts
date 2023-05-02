@@ -4,11 +4,9 @@ import openAIApi, { getModel } from '@/ai/api'
 import config from '@/config'
 import { AutoPilotEditor, EditOps } from '@/directors/autoPilotEditor'
 import { PlanResult } from '@/directors/autoPilotPlanner'
-import { CodebaseEditor } from '@/directors/codebaseEditor'
 import { compactMessageHistory } from '@/directors/helpers'
 import prompts from '@/prompts'
-import { ChatMessage, Intent } from '@/types'
-import { applyOps, Op } from '@/utils/editOps'
+import { ChatMessage } from '@/types'
 import { git } from '@/utils/git'
 import { log } from '@/utils/logger'
 import { fuzzyParseJSON, spawn } from '@/utils/utils'
@@ -88,6 +86,7 @@ export class AutoPilotValidator {
     plan: PlanResult,
     output: ValidatorOutput,
     editor: AutoPilotEditor,
+    history: ChatMessage[],
     systemMessage: ChatMessage
   ) => {
     const validationEdit: PlanResult['edits'] = output
@@ -98,7 +97,7 @@ export class AutoPilotValidator {
       plan: ['fix the validation result'],
       edits: validationEdit,
     }
-    const edits = await editor.generateEdits(plan.request, validationPlan, systemMessage)
+    const edits = await editor.generateEdits(plan.request, validationPlan, history, systemMessage)
     await editor.applyEdits(edits)
 
     const commitMessage = 'fixing output: ' + Object.values(validationEdit).join(', ')

@@ -25,7 +25,7 @@ class OpenAI {
 
     this.openai = new OpenAIApi(configuration)
 
-    if (process.cwd().startsWith('/tmp')) this.logFolder = config.configFolder
+    if (process.cwd().includes('/tmp')) this.logFolder = config.configFolder
     else this.logFolder = '/tmp'
   }
 

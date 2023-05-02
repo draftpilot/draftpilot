@@ -19,7 +19,12 @@ export type EditOps = {
 export class AutoPilotEditor {
   interrupted = new Set<string>()
 
-  generateEdits = async (request: string, editPlan: PlanResult, systemMessage: ChatMessage) => {
+  generateEdits = async (
+    request: string,
+    editPlan: PlanResult,
+    history: ChatMessage[],
+    systemMessage: ChatMessage
+  ) => {
     const model = getModel(true)
     const plan = `Request: ${request}
 
@@ -39,7 +44,7 @@ ${Object.keys(editPlan.edits!)
 
     // in order to have full room for edits, truncate history
     const message: ChatMessage = { role: 'assistant', content: plan }
-    const messages = compactMessageHistory([message], model, systemMessage)
+    const messages = compactMessageHistory([...history, message], model, systemMessage)
 
     const output = await this.editor.editFiles(
       model,

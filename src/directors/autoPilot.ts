@@ -83,6 +83,7 @@ export class AutoPilot {
       edits = await this.editor.generateEdits(
         plan.request || 'follow the plan',
         plan,
+        [],
         this.systemMessage
       )
       fs.writeFileSync(config.configFolder + '/edit.txt', JSON.stringify(edits, null, 2))
@@ -125,7 +126,14 @@ export class AutoPilot {
         fs.writeFileSync(config.configFolder + '/followup.txt', validatedResult.comments)
         return
       }
-      await this.validator.fixResults(plan, validatedResult, this.editor, this.systemMessage)
+      const fixHistory = history.slice(history.length - 2)
+      await this.validator.fixResults(
+        plan,
+        validatedResult,
+        this.editor,
+        fixHistory,
+        this.systemMessage
+      )
       history.push({ role: 'user', content: 'files edited' })
     }
   }
