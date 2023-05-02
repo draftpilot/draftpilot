@@ -7,47 +7,50 @@ export const applyOps = (contents: string, ops: Op[]) => {
   // for ops, line numbers apply to the initial contents, so they need to be offset
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i]
-    if (op.op == 'replace') {
-      const { search, replace } = op
-      lines = lines.map((l) => l.replaceAll(search, replace))
-      continue
-    }
-    if (op.op == 'new') {
-      lines = op.insert.split('\n').concat(lines)
-      continue
-    }
 
-    const line = findLineIndex(lines, op)
+    const line = isOpWithLine(op) ? findLineIndex(lines, op) : 0
     const updateLines = (delta: number) => {
       ops.slice(i + 1).forEach((op2) => {
-        if (isOpWithLine(op2) && op2.line > line) op2.line += delta
+        if (isOpWithLine(op2) && op2.lineNumber > line) op2.lineNumber += delta
       })
     }
 
     switch (op.op) {
+      case 'replace': {
+        const { search, replace } = op
+        lines = lines.map((l) => l.replaceAll(search, replace))
+        break
+      }
+      case 'new': {
+        lines = op.content.split('\n').concat(lines)
+        break
+      }
       case 'edit': {
-        const { delLines, insert } = op
-        const insertLines = insert.split('\n')
+        const { deleteLines, newText } = op
+        const insertLines = newText.split('\n')
         matchIndent(lines[line], insertLines)
         lines = lines
           .slice(0, line)
           .concat(insertLines)
-          .concat(lines.slice(line + delLines))
-        updateLines(insertLines.length - delLines)
+          .concat(lines.slice(line + deleteLines))
+        updateLines(insertLines.length - deleteLines)
         break
       }
       case 'insert': {
-        const { insert } = op
-        const insertLines = insert.split('\n')
+        const { content } = op
+        const insertLines = content.split('\n')
         matchIndent(lines[line], insertLines)
-        lines = lines.slice(0, line).concat(insertLines).concat(lines.slice(line))
+        lines = lines
+          .slice(0, line + 1)
+          .concat(insertLines)
+          .concat(lines.slice(line + 1))
         updateLines(insertLines.length)
         break
       }
       case 'delete': {
-        const { delLines } = op
-        lines.splice(line, delLines)
-        updateLines(-delLines)
+        const { deleteLines } = op
+        lines.splice(line, deleteLines)
+        updateLines(-deleteLines)
         break
       }
       case 'copy': {
@@ -89,10 +92,13 @@ const matchIndent = (line: string, lines: string[]) => {
 }
 
 const findLineIndex = (lines: string[], op: OpWithLine) => {
-  const { line, startLine } = op
-  if (!line) return -1
-  if (!startLine) return line
-  const startLineSplit = startLine.split('\n').map((l) => l.trim())
+  const { lineNumber, startingLineContent, insertAfterLineContent, pasteAfterLineContent } = op
+  const line = lineNumber - 1
+  const lineRef = startingLineContent || insertAfterLineContent || pasteAfterLineContent
+
+  if (!line) return 0
+  if (!lineRef) return line
+  const startLineSplit = lineRef.split('\n').map((l) => l.trim())
 
   const matches = (line: number) => {
     for (let i = 0; i < startLineSplit.length; i++) {
@@ -121,74 +127,104 @@ type ReplaceOp = {
 
 type OpWithLine = {
   op: string
-  line: number
-  startLine?: string
+  lineNumber: number
+  startingLineContent?: string
+  insertAfterLineContent?: string
+  pasteAfterLineContent?: string
 }
 
 function isOpWithLine(op: any): op is OpWithLine {
-  return !!(op as OpWithLine).line
+  return !!(op as OpWithLine).lineNumber
 }
 
 type EditOp = {
   op: 'edit'
-  line: number
-  startLine: string
-  delLines: number
-  insert: string
+  lineNumber: number
+  startingLineContent: string
+  deleteLines: number
+  newText: string
 }
 
 type NewOp = {
   op: 'new'
-  insert: string
+  content: string
 }
 
 type InsertOp = {
   op: 'insert'
-  line: number
-  startLine: string
-  insert: string
+  lineNumber: number
+  insertAfterLineContent: string
+  content: string
 }
 
 type DeleteOp = {
   op: 'delete'
-  line: number
-  startLine: string
-  delLines: number
+  lineNumber: number
+  startingLineContent: string
+  deleteLines: number
 }
 
 type CopyOp = {
   op: 'copy'
-  line: number
-  startLine: string
+  lineNumber: number
+  startingLineContent: string
   copyLines: number
 }
 
 type CutOp = {
   op: 'cut'
-  line: number
-  startLine: string
+  lineNumber: number
+  startingLineContent: string
   cutLines: number
 }
 
 type PasteOp = {
   op: 'paste'
-  line: number
+  lineNumber: number
+  pasteAfterLineContent: string
 }
 
 export type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp | NewOp
 
 export const EXAMPLE_OPS: Op[] = [
-  // not sure if this is a good idea.
-  // {
-  //   op: 'replace',
-  //   search: 'text to search (case sensitive)',
-  //   replace: 'global file text replacement',
-  // },
-  { op: 'new', insert: 'text to insert in new file' },
-  { op: 'edit', line: 1, delLines: 1, startLine: 'first line to alter', insert: 'goodbye' },
-  { op: 'insert', insert: 'hello', line: 3, startLine: 'existing line to insert below' },
-  { op: 'delete', line: 1, startLine: 'first line to delete', delLines: 5 },
-  { op: 'copy', line: 1, startLine: 'first line to copy', copyLines: 5 },
-  { op: 'cut', line: 1, startLine: 'first line to cut', cutLines: 5 },
-  { op: 'paste', line: 1 },
+  {
+    op: 'new',
+    content: 'text to insert in new file',
+  },
+  {
+    op: 'edit',
+    lineNumber: 1,
+    deleteLines: 1,
+    startingLineContent: 'first line to alter',
+    newText: 'goodbye',
+  },
+  {
+    op: 'insert',
+    content: 'hello',
+    lineNumber: 3,
+    insertAfterLineContent: 'existing line to insert below',
+  },
+  {
+    op: 'delete',
+    lineNumber: 1,
+    startingLineContent: 'first line to delete',
+    deleteLines: 5,
+  },
+  {
+    op: 'copy',
+    lineNumber: 1,
+    startingLineContent: 'first line to copy',
+    copyLines: 5,
+  },
+  {
+    op: 'cut',
+    lineNumber: 1,
+    startingLineContent: 'first line to cut',
+    cutLines: 5,
+  },
+  {
+    op: 'paste',
+    lineNumber: 1,
+    pasteAfterLineContent: 'line content to paste after',
+  },
 ]
