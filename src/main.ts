@@ -102,6 +102,7 @@ export default function () {
     .argument('<planFile>')
     .action(actionWrapper(edit))
     .option('--edit-file <file>')
+    .option('--validate <git branch or hash>', 'validate the code output against given branch')
 
   const options = program.parse()
   config.options = options

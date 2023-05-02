@@ -37,6 +37,9 @@ export const applyOps = async (
     }
 
     if (isVerbose()) {
+      const result = lines.join('\n')
+      if (outputFileName) fs.writeFileSync(outputFileName, result)
+
       log('op:', { ...op, line })
       await inquirer.prompt({ type: 'input', name: 'continue', message: 'Press enter to continue' })
     }
@@ -61,6 +64,18 @@ export const applyOps = async (
           .concat(insertLines)
           .concat(lines.slice(line + deleteLines.length))
         updateLines(insertLines.length - deleteLines.length)
+        break
+      }
+      case 'shift': {
+        const { content, moveLines } = op
+        const contentLines = content ? content.split('\n') : []
+        lines = lines.slice(0, line).concat(lines.slice(line + content.length))
+        const dest = line + moveLines
+        matchIndent(lines[dest], contentLines)
+        lines = lines
+          .slice(0, dest)
+          .concat(contentLines)
+          .concat(lines.slice(dest + contentLines.length))
         break
       }
       case 'renameFile': {
@@ -103,10 +118,12 @@ const matchIndent = (line: string, lines: string[]) => {
 }
 
 const findLineIndex = (lines: string[], op: OpWithLine) => {
-  const { line, before } = op
+  const { op: opName, line } = op
   if (!line) return -1
-  if (!before) return line
-  const startLineSplit = before.split('\n').map((l) => l.trim())
+
+  const lineRef = opName == 'edit' ? op.before : opName == 'shift' ? op.content : null
+  if (!lineRef) return line
+  const startLineSplit = lineRef.split('\n').map((l) => l.trim())
 
   const matches = (line: number) => {
     for (let i = 0; i < startLineSplit.length; i++) {
@@ -137,6 +154,7 @@ type OpWithLine = {
   op: string
   line: number
   before?: string
+  content?: string
 }
 
 function isOpWithLine(op: any): op is OpWithLine {
@@ -148,6 +166,13 @@ type EditOp = {
   line: number
   before: string
   after: string
+}
+
+type ShiftOp = {
+  op: 'shift'
+  line: number
+  content: string
+  moveLines: number
 }
 
 type NewOp = {
@@ -172,7 +197,7 @@ type ImportOp = {
   content: string
 }
 
-export type Op = GlobalReplaceOp | EditOp | NewOp | RenameFile | DeleteFile | ImportOp
+export type Op = GlobalReplaceOp | EditOp | ShiftOp | NewOp | RenameFile | DeleteFile | ImportOp
 
 export const EXAMPLE_OPS: Op[] = [
   {
@@ -192,6 +217,12 @@ export const EXAMPLE_OPS: Op[] = [
     line: 10,
     before: 'prev content',
     after: 'also use "edit" for inserting\nprev content',
+  },
+  {
+    op: 'shift',
+    line: 3,
+    content: 'use shift op to move\blines up and down',
+    moveLines: -1,
   },
   { op: 'renameFile', newFile: 'newName.ext' },
   { op: 'deleteFile' },

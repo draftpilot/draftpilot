@@ -32,7 +32,7 @@ is the change to make to that file. Every file to change must be in the list.
 When requesting changes, you need to specify exactly how to change the file. Don't say "fix the import", say "import x from y". Don't say "pass the correct options object", say "pass {x: 1, y: 2}".
 {
   "result": "rewrite",
-  "path/to/file": "detailed summary of changes the AI should make",
+  "path/to/file": "detailed summary of changes the AI should make, e.g. change the call() on line 5 to callMe()",
   ... more files ...
 }
 
