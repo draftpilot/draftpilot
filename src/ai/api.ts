@@ -16,6 +16,7 @@ const tokenCount = (messages: ChatMessage[]) => {
 }
 class OpenAI {
   openai: OpenAIApi
+  logFolder: string
 
   constructor() {
     const configuration = new Configuration({
@@ -23,6 +24,9 @@ class OpenAI {
     })
 
     this.openai = new OpenAIApi(configuration)
+
+    if (process.cwd().startsWith('/tmp')) this.logFolder = config.configFolder
+    else this.logFolder = '/tmp'
   }
 
   // --- completion api
@@ -142,7 +146,7 @@ class OpenAI {
   }
 
   writeTempFile(data: ChatMessage[], requestNote: string, existingFile?: string) {
-    const file = existingFile || '/tmp/' + Math.random().toString(36).substring(7) + '.txt'
+    const file = existingFile || this.logFolder + '/request-' + new Date().toISOString() + '.txt'
     const output = data.map((d) => d.role + ':\n' + d.content).join('\n---\n')
     fs.writeFileSync(file, output)
     if (!existingFile) log('wrote', requestNote, 'request to', file)
