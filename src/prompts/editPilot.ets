@@ -11,7 +11,8 @@ Here is a list of files.
 
 ---
 This example shows all possible operations & thier inputs. ALWAYS follow this exact 
-format of operation names and input args. <%= props.exampleJson %>
+format of operation names and input args. Both line # and startLine should refer to the same line.
+ <%= props.exampleJson %>
 
 Your return format is a JSON object with files as keys and arrays of operations as values. If the edit operations are long or require many changes, you can return the entire file as a string instead of array of operations.  
 {

@@ -11,7 +11,7 @@ export const applyOps = (contents: string, ops: Op[]) => {
     const line = isOpWithLine(op) ? findLineIndex(lines, op) : 0
     const updateLines = (delta: number) => {
       ops.slice(i + 1).forEach((op2) => {
-        if (isOpWithLine(op2) && op2.lineNumber > line) op2.lineNumber += delta
+        if (isOpWithLine(op2) && op2.line > line) op2.line += delta
       })
     }
 
@@ -26,31 +26,28 @@ export const applyOps = (contents: string, ops: Op[]) => {
         break
       }
       case 'edit': {
-        const { deleteLines, newText } = op
-        const insertLines = newText.split('\n')
+        const { delLines, content } = op
+        const insertLines = content ? content.split('\n') : []
         matchIndent(lines[line], insertLines)
         lines = lines
           .slice(0, line)
           .concat(insertLines)
-          .concat(lines.slice(line + deleteLines))
-        updateLines(insertLines.length - deleteLines)
+          .concat(lines.slice(line + delLines))
+        updateLines(insertLines.length - delLines)
         break
       }
       case 'insert': {
         const { content } = op
         const insertLines = content.split('\n')
         matchIndent(lines[line], insertLines)
-        lines = lines
-          .slice(0, line + 1)
-          .concat(insertLines)
-          .concat(lines.slice(line + 1))
+        lines = lines.slice(0, line).concat(insertLines).concat(lines.slice(line))
         updateLines(insertLines.length)
         break
       }
       case 'delete': {
-        const { deleteLines } = op
-        lines.splice(line, deleteLines)
-        updateLines(-deleteLines)
+        const { delLines } = op
+        lines.splice(line, delLines)
+        updateLines(-delLines)
         break
       }
       case 'copy': {
@@ -92,13 +89,10 @@ const matchIndent = (line: string, lines: string[]) => {
 }
 
 const findLineIndex = (lines: string[], op: OpWithLine) => {
-  const { lineNumber, startingLineContent, insertAfterLineContent, pasteAfterLineContent } = op
-  const line = lineNumber - 1
-  const lineRef = startingLineContent || insertAfterLineContent || pasteAfterLineContent
-
-  if (!line) return 0
-  if (!lineRef) return line
-  const startLineSplit = lineRef.split('\n').map((l) => l.trim())
+  const { line, curLine } = op
+  if (!line) return -1
+  if (!curLine) return line
+  const startLineSplit = curLine.split('\n').map((l) => l.trim())
 
   const matches = (line: number) => {
     for (let i = 0; i < startLineSplit.length; i++) {
@@ -127,22 +121,20 @@ type ReplaceOp = {
 
 type OpWithLine = {
   op: string
-  lineNumber: number
-  startingLineContent?: string
-  insertAfterLineContent?: string
-  pasteAfterLineContent?: string
+  line: number
+  curLine?: string
 }
 
 function isOpWithLine(op: any): op is OpWithLine {
-  return !!(op as OpWithLine).lineNumber
+  return !!(op as OpWithLine).line
 }
 
 type EditOp = {
   op: 'edit'
-  lineNumber: number
-  startingLineContent: string
-  deleteLines: number
-  newText: string
+  line: number
+  curLine: string
+  delLines: number
+  content: string
 }
 
 type NewOp = {
@@ -152,79 +144,62 @@ type NewOp = {
 
 type InsertOp = {
   op: 'insert'
-  lineNumber: number
-  insertAfterLineContent: string
+  line: number
+  curLine: string
   content: string
 }
 
 type DeleteOp = {
   op: 'delete'
-  lineNumber: number
-  startingLineContent: string
-  deleteLines: number
+  line: number
+  curLine: string
+  delLines: number
 }
 
 type CopyOp = {
   op: 'copy'
-  lineNumber: number
-  startingLineContent: string
+  line: number
+  curLine: string
   copyLines: number
 }
 
 type CutOp = {
   op: 'cut'
-  lineNumber: number
-  startingLineContent: string
+  line: number
+  curLine: string
   cutLines: number
 }
 
 type PasteOp = {
   op: 'paste'
-  lineNumber: number
-  pasteAfterLineContent: string
+  line: number
 }
 
 export type Op = ReplaceOp | InsertOp | DeleteOp | EditOp | CopyOp | CutOp | PasteOp | NewOp
 
 export const EXAMPLE_OPS: Op[] = [
-  {
-    op: 'new',
-    content: 'text to insert in new file',
-  },
+  // not sure if this is a good idea.
+  // {
+  //   op: 'replace',
+  //   search: 'text to search (case sensitive)',
+  //   replace: 'global file text replacement',
+  // },
+  { op: 'new', content: 'text to insert in new file' },
   {
     op: 'edit',
-    lineNumber: 1,
-    deleteLines: 1,
-    startingLineContent: 'first line to alter',
-    newText: 'goodbye',
+    line: 1,
+    delLines: 1,
+    curLine: 'first line to alter',
+    content: 'new content to insert',
   },
   {
     op: 'insert',
     content: 'hello',
-    lineNumber: 3,
-    insertAfterLineContent: 'existing line to insert below',
+    line: 3,
+    curLine: 'content will be inserted ABOVE this line',
   },
-  {
-    op: 'delete',
-    lineNumber: 1,
-    startingLineContent: 'first line to delete',
-    deleteLines: 5,
-  },
-  {
-    op: 'copy',
-    lineNumber: 1,
-    startingLineContent: 'first line to copy',
-    copyLines: 5,
-  },
-  {
-    op: 'cut',
-    lineNumber: 1,
-    startingLineContent: 'first line to cut',
-    cutLines: 5,
-  },
-  {
-    op: 'paste',
-    lineNumber: 1,
-    pasteAfterLineContent: 'line content to paste after',
-  },
+  { op: 'delete', line: 1, curLine: 'first line to delete', delLines: 5 },
+  { op: 'copy', line: 1, curLine: 'first line to copy', copyLines: 5 },
+  { op: 'cut', line: 1, curLine: 'first line to cut', cutLines: 5 },
+  { op: 'paste', line: 1 },
 ]
