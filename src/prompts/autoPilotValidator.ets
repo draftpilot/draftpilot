@@ -28,6 +28,8 @@ If there are no problems:
 If there are changes to make to fix issues or better match the user's request, use this format.
 The keys are each file that you want to change (on top of the existing diff above), the value
 is the change to make to that file. Every file to change must be in the list.
+
+When requesting changes, you need to specify exactly how to change the file. Don't say "fix the import", say "import x from y". Don't say "pass the correct options object", say "pass {x: 1, y: 2}".
 {
   "result": "rewrite",
   "path/to/file": "detailed summary of changes the AI should make",
