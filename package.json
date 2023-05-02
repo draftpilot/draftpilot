@@ -48,6 +48,7 @@
     "highlight.js": "^11.7.0",
     "hnswlib-node": "^1.4.2",
     "html-to-text": "^9.0.5",
+    "husky": "^8.0.3",
     "ini": "^3.0.1",
     "inquirer": "^9.1.4",
     "isbinaryfile": "^5.0.0",
