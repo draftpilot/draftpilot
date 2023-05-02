@@ -80,6 +80,14 @@ export const applyOps = (contents: string, ops: Op[], writeToFile: string | null
       case 'deleteFile': {
         outputFileName = null
         if (writeToFile) fs.unlinkSync(writeToFile)
+        break
+      }
+      case 'import': {
+        const { content } = op
+        const insertLines = content.split('\n')
+        lines = insertLines.concat(lines)
+        updateLines(insertLines.length)
+        break
       }
       default:
         log('unknown op', op)
@@ -199,6 +207,13 @@ type DeleteFile = {
   op: 'deleteFile'
 }
 
+// the following are ops taht gpt-4 tends to hallucinate
+
+type ImportOp = {
+  op: 'import'
+  content: string
+}
+
 export type Op =
   | ReplaceOp
   | InsertOp
@@ -210,6 +225,7 @@ export type Op =
   | NewOp
   | RenameFile
   | DeleteFile
+  | ImportOp
 
 export const EXAMPLE_OPS: Op[] = [
   // not sure if this is a good idea.
