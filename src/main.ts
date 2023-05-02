@@ -101,6 +101,7 @@ export default function () {
     .description('Perform autopilot editing')
     .argument('<planFile>')
     .action(actionWrapper(edit))
+    .option('--edit-file <file>')
 
   const options = program.parse()
   config.options = options

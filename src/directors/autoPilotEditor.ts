@@ -65,7 +65,7 @@ ${Object.keys(editPlan.edits!)
         fs.writeFileSync(file, ops)
       } else {
         const contents = fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : ''
-        applyOps(contents, ops, file)
+        await applyOps(contents, ops, file)
       }
     }
 

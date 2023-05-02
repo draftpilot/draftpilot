@@ -18,7 +18,7 @@ export default async function (file: string, ops: string, options: Options) {
   ops = ops.replace(/\\n/g, '')
   const opsJson = JSON.parse(ops)
 
-  applyOps(fileContents, opsJson, file)
+  await applyOps(fileContents, opsJson, file)
 
   log(chalk.green(`Successfully applied patch to ${file}`))
 }
