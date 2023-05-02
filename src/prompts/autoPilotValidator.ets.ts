@@ -8,6 +8,7 @@
 
 interface Props {
   request: string;
+  plan: string;
   diff: string;
   compilerOutput: string | null;
 }
@@ -16,7 +17,9 @@ export default function (props: Props): string {
   let result = "";
   result += "User's request: ";
   result += props.request;
-  result += "\n\nThe AI generated this diff in response:\n";
+  result += "\n\nAI Plan:\n";
+  result += props.plan;
+  result += "\n\nAI generated changes:\n";
   result += props.diff;
   result += "\n\n";
   result += props.compilerOutput
