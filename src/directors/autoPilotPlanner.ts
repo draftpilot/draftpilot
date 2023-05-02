@@ -11,6 +11,7 @@ import { indexer } from '@/db/indexer'
 import { compactMessageHistory, detectProjectLanguage } from '@/directors/helpers'
 import prompts from '@/prompts'
 import { ChatMessage } from '@/types'
+import { git } from '@/utils/git'
 import { log } from '@/utils/logger'
 import { fuzzyParseJSON, splitOnce } from '@/utils/utils'
 
@@ -31,12 +32,13 @@ export class AutoPilotPlanner {
   plan = async (
     request: string,
     history: ChatMessage[],
-    systemMessage: string
+    systemMessage: string,
+    diff?: string
   ): Promise<PlanResult> => {
     this.request = request
     this.systemMessage = systemMessage
 
-    let toolOutput = await this.getInitialReference()
+    let toolOutput = await this.getInitialReference(diff)
     let prevPlan: PlanResult = {}
 
     for (let i = 0; i < PLAN_LOOPS; i++) {
@@ -108,8 +110,8 @@ export class AutoPilotPlanner {
             toolResults: toolOutput,
           })
 
-    history.push({ role: 'user', content: prompt })
-    const messages: ChatMessage[] = compactMessageHistory(history, model, {
+    const userMessage: ChatMessage = { role: 'user', content: prompt }
+    const messages: ChatMessage[] = compactMessageHistory([...history, userMessage], model, {
       content: this.systemMessage,
       role: 'system',
     })
@@ -141,7 +143,12 @@ export class AutoPilotPlanner {
     return output
   }
 
-  getInitialReference = async () => {
+  getInitialReference = async (diff?: string) => {
+    if (diff) {
+      const diffData = git(['diff', diff])
+      return [diffData]
+    }
+
     const relevantDocs = await findRelevantDocs(this.request, indexer.files, 50)
     const similarCode = await indexer.vectorDB.searchWithScores(this.request, 6)
     const similarFuncs =

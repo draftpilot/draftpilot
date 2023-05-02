@@ -1,13 +1,22 @@
 import { EventEmitter } from 'events'
-import { init, track, identify, Identify } from '@amplitude/analytics-node'
+import fs from 'fs'
 import path from 'path'
+
+import { identify, Identify, init, track } from '@amplitude/analytics-node'
+
 class Tracker extends EventEmitter {
   project: string
   user_id: string
 
   constructor() {
     super()
-    this.project = path.basename(process.cwd())
+
+    if (fs.existsSync('package.json')) {
+      const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+      this.project = pkg.name
+    } else {
+      this.project = path.basename(process.cwd())
+    }
 
     const username = process.env.USER || process.env.USERNAME || 'unknown'
     const hostname = process.env.HOSTNAME || 'unknown'

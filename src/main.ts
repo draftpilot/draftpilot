@@ -97,6 +97,7 @@ export default function () {
     .option('--edit-file <file>', 'use the edit file output')
     .option('--validation-file <file>', 'use the validation file output')
     .option('--validate <git branch or hash>', 'validate the code output against given branch')
+    .option('--diff <git branch or hash>', 'in initial planning, use the diff as context')
     .action(actionWrapper(autopilot))
 
   program

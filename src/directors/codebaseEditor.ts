@@ -140,6 +140,7 @@ export class CodebaseEditor extends IntentHandler {
           promises.push(editFileHelper(currentFileBodies.join('\n\n')))
           currentFileBodies = []
         }
+        currentFileBodies.push(nextFile)
       }
       if (currentFileBodies.length) {
         promises.push(editFileHelper(currentFileBodies.join('\n\n')))

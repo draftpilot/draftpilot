@@ -1,4 +1,5 @@
 import fs from 'fs'
+import path from 'path'
 
 import { chatCompletion, getModel } from '@/ai/api'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
@@ -58,6 +59,8 @@ ${Object.keys(editPlan.edits!)
   applyEdits = async (edits: EditOps) => {
     for (const file of Object.keys(edits)) {
       log('writing to', file)
+      const baseDir = path.dirname(file)
+      if (baseDir) fs.mkdirSync(baseDir, { recursive: true })
       const ops = edits[file]
       if (typeof ops == 'string') {
         fs.writeFileSync(file, ops)
@@ -81,6 +84,13 @@ ${Object.keys(editPlan.edits!)
         git(['add', 'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'])
       } catch (e) {
         log('warning: failed to run package manager', e)
+      }
+    }
+
+    if (fs.existsSync('package.json')) {
+      const packageJson = fs.readFileSync('package.json', 'utf8')
+      if (packageJson.includes('prettier')) {
+        spawn('npx', ['-y', 'prettier', ...Object.keys(edits)])
       }
     }
 
