@@ -33,7 +33,7 @@ export class AutoPilotValidator {
     try {
       if (fs.existsSync('tsconfig.json')) {
         const fullCompilerOutput = spawn('npx', ['tsc', '--noEmit']).split('\n').filter(Boolean)
-        compilerOutput = fullCompilerOutput.slice(fullCompilerOutput.length - 100).join('\n')
+        compilerOutput = fullCompilerOutput.slice(fullCompilerOutput.length - 200).join('\n')
       }
     } catch (e: any) {
       compilerOutput = 'Error running tsc: ' + e.toString()
@@ -42,7 +42,7 @@ export class AutoPilotValidator {
     const validatePrompt = prompts.autoPilotValidator({
       diff,
       request: plan.request!,
-      plan: plan.plan!.map((p) => '- ' + p).join('\n'),
+      plan: JSON.stringify(plan),
       compilerOutput,
     })
 

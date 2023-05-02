@@ -104,6 +104,7 @@ export class AutoPilot {
   }
 
   validate = async (plan: PlanResult, baseCommit: string, edits: EditOps, opts: AutopilotOpts) => {
+    const history: ChatMessage[] = []
     for (let i = 0; i < 2; i++) {
       let validatedResult: ValidatorOutput
       if (opts.validationFile) {
@@ -111,7 +112,13 @@ export class AutoPilot {
         opts.validationFile = undefined
       } else {
         const diff = git(['diff', baseCommit])
-        validatedResult = await this.validator.validate(plan, [], edits, diff, this.systemMessage)
+        validatedResult = await this.validator.validate(
+          plan,
+          history,
+          edits,
+          diff,
+          this.systemMessage
+        )
       }
 
       if (validatedResult.result == 'good') {
@@ -119,6 +126,7 @@ export class AutoPilot {
         return
       }
       await this.validator.fixResults(plan, validatedResult, this.editor, this.systemMessage)
+      history.push({ role: 'user', content: 'files edited' })
     }
   }
 
