@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-import { chatCompletion, getModel } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import { PlanResult } from '@/directors/autoPilotPlanner'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
 import { compactMessageHistory } from '@/directors/helpers'
@@ -49,6 +49,7 @@ ${Object.keys(editPlan.edits!)
       messages,
       postMessage
     )
+    process.stdout.write('\n')
 
     const parsed: EditOps = await this.parseOutput(output)
     return parsed
@@ -98,7 +99,7 @@ ${Object.keys(editPlan.edits!)
     if (!parsed) {
       log('warning: received invalid json, attempting fix')
       const fixer = prompts.jsonFixer({ input: output, schema })
-      const response = await chatCompletion(fixer, '3.5')
+      const response = await openAIApi.chatCompletion(fixer, '3.5')
       parsed = fuzzyParseJSON(response)
     }
 

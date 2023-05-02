@@ -1,4 +1,6 @@
-import { chatWithHistory, getModel, setFakeModeResponse, streamChatWithHistory } from '@/ai/api'
+import { encode } from 'gpt-3-encoder'
+
+import openAIApi, { getModel } from '@/ai/api'
 import { findRelevantDocs } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
@@ -6,7 +8,6 @@ import { IntentHandler } from '@/directors/intentHandler'
 import prompts from '@/prompts'
 import { ChatMessage, Intent, MessagePayload, Model, PostMessage } from '@/types'
 import { EXAMPLE_OPS } from '@/utils/editOps'
-import { encode } from 'gpt-3-encoder'
 
 enum PlanOutcome {
   CONFIRM = 'CONFIRM:',
@@ -69,10 +70,10 @@ export class DraftPilot extends IntentHandler {
       role: 'system',
     })
 
-    setFakeModeResponse(
+    openAIApi.setFakeModeResponse(
       'PLAN: fake plan 123\n1. create draftpilot\n2. ???\n3. profit\n---\n- README.md - take over the world\n---\nconfidence: high'
     )
-    const result = await streamChatWithHistory(messages, model, (response) => {
+    const result = await openAIApi.streamChatWithHistory(messages, model, (response) => {
       postMessage(response)
     })
 
@@ -105,7 +106,7 @@ export class DraftPilot extends IntentHandler {
       role: 'system',
     })
 
-    const result = await streamChatWithHistory(messages, model, (response) => {
+    const result = await openAIApi.streamChatWithHistory(messages, model, (response) => {
       postMessage(response)
     })
 

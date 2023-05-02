@@ -1,6 +1,6 @@
 import fs from 'fs'
 
-import { chatCompletion, getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import config from '@/config'
 import { AutoPilotEditor, EditOps } from '@/directors/autoPilotEditor'
 import { PlanResult } from '@/directors/autoPilotPlanner'
@@ -55,7 +55,7 @@ export class AutoPilotValidator {
     const model = getModel(true)
 
     const messages = compactMessageHistory(history, model, systemMessage)
-    const result = await streamChatWithHistory(messages, model, (response) => {
+    const result = await openAIApi.streamChatWithHistory(messages, model, (response) => {
       process.stdout.write(typeof response == 'string' ? response : '\n')
     })
 
@@ -72,7 +72,10 @@ export class AutoPilotValidator {
     let parsed: ValidatorOutput | null = fuzzyParseJSON(output)
     if (!parsed) {
       log('warning: received invalid json, attempting fix')
-      const response = await chatCompletion(prompts.jsonFixer({ input: output, schema }), '3.5')
+      const response = await openAIApi.chatCompletion(
+        prompts.jsonFixer({ input: output, schema }),
+        '3.5'
+      )
       parsed = fuzzyParseJSON(response)
     }
 

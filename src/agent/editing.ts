@@ -1,12 +1,13 @@
-import { chatCompletion } from '@/ai/api'
-import config from '@/config'
-import { Tool } from '@/agent/tool'
-import { fuzzyMatchingFile, splitOnce } from '@/utils/utils'
-import fs from 'fs'
-import { basename } from 'path'
 import * as Diff from 'diff'
+import fs from 'fs'
 import { oraPromise } from 'ora'
+import { basename } from 'path'
+
+import { Tool } from '@/agent/tool'
+import openAIApi from '@/ai/api'
+import config from '@/config'
 import { indexer } from '@/db/indexer'
+import { fuzzyMatchingFile, splitOnce } from '@/utils/utils'
 
 export const generateEditingTools = (): Tool[] => {
   const createFileTool: Tool = {
@@ -102,7 +103,7 @@ If you are unable to make the changes or need more information, respond HELP: <d
   const tempInput = '/tmp/' + basename(outputFile) + '.prompt'
   fs.writeFileSync(tempInput, systemMessage + '\n\n' + prompt)
 
-  const promise = chatCompletion(prompt, model, systemMessage)
+  const promise = openAIApi.chatCompletion(prompt, model, systemMessage)
   const text =
     model == '3.5' ? 'Executing...' : 'Executing (GPT-4 is slow so this may take a while)...'
   const result = await oraPromise(promise, { text })

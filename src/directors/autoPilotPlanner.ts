@@ -3,7 +3,7 @@ import path from 'path'
 
 import { getSimpleTools } from '@/agent'
 import { Tool } from '@/agent/tool'
-import { chatCompletion, getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import config from '@/config'
 import { readProjectContext } from '@/context/projectContext'
 import { findRelevantDocs } from '@/context/relevantFiles'
@@ -70,7 +70,10 @@ export class AutoPilotPlanner {
     let parsed: PlanResult | null = fuzzyParseJSON(plan)
     if (!parsed) {
       log('warning: received invalid json, attempting fix')
-      const response = await chatCompletion(prompts.jsonFixer({ input: plan, schema }), '3.5')
+      const response = await openAIApi.chatCompletion(
+        prompts.jsonFixer({ input: plan, schema }),
+        '3.5'
+      )
       parsed = fuzzyParseJSON(response)
     }
 
@@ -120,7 +123,7 @@ export class AutoPilotPlanner {
       this.systemMessage
     )
 
-    const result = await streamChatWithHistory(messages, model, (response) => {
+    const result = await openAIApi.streamChatWithHistory(messages, model, (response) => {
       process.stdout.write(typeof response == 'string' ? response : '\n')
     })
 
