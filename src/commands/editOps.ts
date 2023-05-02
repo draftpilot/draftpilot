@@ -1,11 +1,12 @@
-import { log } from '@/utils/logger'
 import chalk from 'chalk'
-import fs from 'fs'
-import * as Diff from 'diff'
-import { splitOnce } from '@/utils/utils'
 import child_process from 'child_process'
+import * as Diff from 'diff'
+import fs from 'fs'
+
 import { CodebaseEditor } from '@/directors/codebaseEditor'
 import { applyOps } from '@/utils/editOps'
+import { log } from '@/utils/logger'
+import { splitOnce } from '@/utils/utils'
 
 type Options = {}
 
@@ -17,9 +18,7 @@ export default async function (file: string, ops: string, options: Options) {
   ops = ops.replace(/\\n/g, '')
   const opsJson = JSON.parse(ops)
 
-  const output = applyOps(fileContents, opsJson)
-
-  fs.writeFileSync(file, output)
+  applyOps(fileContents, opsJson, file)
 
   log(chalk.green(`Successfully applied patch to ${file}`))
 }

@@ -21,7 +21,7 @@ Output Format schema - list of files to edit:
 {
   "plan": [ "array of steps of changes to make" ],
   "edits": {
-    "path/to/file": "changes you want to make to each file"
+    "path/to/file": "detailed summary of changes the AI should make"
   }
 }
 

@@ -25,7 +25,7 @@ Or a list of files to edit, if you have all the context you need to fulfill the 
 {
   "plan": [ "array of steps of changes to make" ],
   "edits": {
-    "path/to/file": "changes you want to make to each file"
+    "path/to/file": "detailed summary of changes the AI should make"
   }
 }
 

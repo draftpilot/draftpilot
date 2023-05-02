@@ -40,8 +40,9 @@ ${Object.keys(editPlan.edits!)
     const postMessage: PostMessage = (msg) =>
       process.stdout.write(typeof msg === 'string' ? msg : '\n')
 
+    // in order to have full room for edits, truncate history
     const message: ChatMessage = { role: 'assistant', content: plan }
-    const messages = compactMessageHistory([...history, message], model)
+    const messages = compactMessageHistory([message], model)
 
     const output = await this.editor.editFiles(
       model,
@@ -66,12 +67,11 @@ ${Object.keys(editPlan.edits!)
         fs.writeFileSync(file, ops)
       } else {
         const contents = fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : ''
-        const newContents = applyOps(contents, ops)
-        fs.writeFileSync(file, newContents)
+        applyOps(contents, ops, file)
       }
     }
 
-    if (edits['package.json']) {
+    if (fs.existsSync('package.json')) {
       const packageManager = fs.existsSync('yarn.lock')
         ? 'yarn'
         : fs.existsSync('pnpm-lock.yaml')
@@ -79,18 +79,17 @@ ${Object.keys(editPlan.edits!)
         : 'npm'
       log(`running ${packageManager} install`)
 
+      // always run package manager to install deps, even if package.json didn't change
       try {
         await spawn(packageManager, ['install'])
         git(['add', 'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'])
       } catch (e) {
         log('warning: failed to run package manager', e)
       }
-    }
 
-    if (fs.existsSync('package.json')) {
       const packageJson = fs.readFileSync('package.json', 'utf8')
       if (packageJson.includes('prettier')) {
-        spawn('npx', ['-y', 'prettier', ...Object.keys(edits)])
+        spawn('npx', ['-y', 'prettier', '-w', ...Object.keys(edits)])
       }
     }
 

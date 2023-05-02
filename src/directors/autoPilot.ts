@@ -70,7 +70,7 @@ export class AutoPilot {
 
     const baseCommit = opts.validate || git(['rev-parse', 'HEAD']).trim()
 
-    if (!opts.validationFile) {
+    if (!opts.validate && !opts.validationFile) {
       await this.editor.applyEdits(edits)
     }
 
@@ -87,7 +87,7 @@ export class AutoPilot {
         opts.validationFile = undefined
       } else {
         const diff = git(['diff', baseCommit])
-        validatedResult = await this.validator.validate(request, history, edits, diff)
+        validatedResult = await this.validator.validate(request, [], edits, diff)
       }
 
       if (validatedResult.result == 'good') {
