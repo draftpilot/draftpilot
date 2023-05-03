@@ -1,8 +1,6 @@
 import { fatal } from '@/utils/utils'
 
 type Config = {
-  customServer: boolean
-  server: string
   options: any | undefined
   configFolder: string
   gpt4: 'always' | 'code-only' | 'never'
@@ -12,8 +10,6 @@ type Config = {
 }
 
 const config: Config = {
-  customServer: false,
-  server: '',
   options: undefined,
   configFolder: '.draftpilot',
   gpt4: 'always',
@@ -22,14 +18,6 @@ const config: Config = {
 }
 
 export default config
-
-export function overrideServer(server: string) {
-  if (server.startsWith('localhost')) server = 'http://' + server
-  else if (!server.startsWith('http')) server = 'https://' + server
-
-  config.customServer = true
-  config.server = server
-}
 
 export function overrideGPT4(command: string) {
   if (command === 'always') config.gpt4 = 'always'

@@ -1,4 +1,4 @@
-import { getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { attachmentListToString, compactMessageHistory } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
@@ -40,7 +40,7 @@ export class CrashPilot extends IntentHandler {
       content: systemMessage,
     })
 
-    const response = await streamChatWithHistory(messages, model, postMessage)
+    const response = await openAIApi.streamChatWithHistory(messages, model, postMessage)
 
     const responseMessage: ChatMessage = {
       role: 'assistant',

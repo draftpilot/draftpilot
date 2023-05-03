@@ -3,9 +3,8 @@ import path from 'path'
 
 import { getSimpleTools } from '@/agent'
 import { Tool } from '@/agent/tool'
-import { chatCompletion, getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import config from '@/config'
-import { readProjectContext } from '@/context/projectContext'
 import { findRelevantDocs } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory, detectProjectLanguage } from '@/directors/helpers'
@@ -70,7 +69,10 @@ export class AutoPilotPlanner {
     let parsed: PlanResult | null = fuzzyParseJSON(plan)
     if (!parsed) {
       log('warning: received invalid json, attempting fix')
-      const response = await chatCompletion(prompts.jsonFixer({ input: plan, schema }), '3.5')
+      const response = await openAIApi.chatCompletion(
+        prompts.jsonFixer({ input: plan, schema }),
+        '3.5'
+      )
       parsed = fuzzyParseJSON(response)
     }
 
@@ -120,9 +122,10 @@ export class AutoPilotPlanner {
       this.systemMessage
     )
 
-    const result = await streamChatWithHistory(messages, model, (response) => {
+    const result = await openAIApi.streamChatWithHistory(messages, model, (response) => {
       process.stdout.write(typeof response == 'string' ? response : '\n')
     })
+    process.stdout.write('\n')
 
     history.push({ role: 'assistant', content: result })
 
@@ -148,11 +151,6 @@ export class AutoPilotPlanner {
   }
 
   getInitialReference = async (diff?: string) => {
-    if (diff) {
-      const diffData = git(['diff', diff])
-      return [diffData]
-    }
-
     const relevantDocs = await findRelevantDocs(this.request, indexer.files, 50)
     const similarCode = await indexer.vectorDB.searchWithScores(this.request, 6)
     const similarFuncs =
@@ -187,6 +185,11 @@ export class AutoPilotPlanner {
     ]
     if (topFileContent) {
       contexts.push('\n\n', topFile, topFileContent)
+    }
+
+    if (diff) {
+      const diffData = git(['diff', diff])
+      return ['n\nYou are working with this diff that the AI generated:', diffData]
     }
 
     return contexts

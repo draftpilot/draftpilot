@@ -1,6 +1,6 @@
 import fs from 'fs'
 
-import { getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import { findRelevantDocs, getManifestFiles } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
@@ -16,6 +16,10 @@ export class GenerateContext extends IntentHandler {
     systemMessage: string,
     postMessage: PostMessage
   ) => {
+    return await this.generate(postMessage)
+  }
+
+  generate = async (postMessage: PostMessage) => {
     const model = getModel(false)
 
     const relevantDocs: string[] = [],
@@ -49,7 +53,7 @@ export class GenerateContext extends IntentHandler {
       referenceCode: relevantCode.join('\n\n'),
     })
 
-    const response = await streamChatWithHistory(
+    const response = await openAIApi.streamChatWithHistory(
       [
         {
           role: 'user',

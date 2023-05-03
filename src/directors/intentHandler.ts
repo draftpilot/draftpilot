@@ -1,4 +1,4 @@
-import { getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import { compactMessageHistory } from '@/directors/helpers'
 import { ChatMessage, MessagePayload, PostMessage } from '@/types'
 
@@ -28,7 +28,7 @@ export abstract class IntentHandler {
       content: message.content + attachmentBody,
     }
     const messages = compactMessageHistory([...history, userMessage], model)
-    const response = await streamChatWithHistory(messages, model, postMessage)
+    const response = await openAIApi.streamChatWithHistory(messages, model, postMessage)
 
     const responseMessage: ChatMessage = {
       role: 'assistant',

@@ -1,14 +1,12 @@
 import fs from 'fs'
 
-import { chatCompletion, getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import config from '@/config'
 import { AutoPilotEditor, EditOps } from '@/directors/autoPilotEditor'
 import { PlanResult } from '@/directors/autoPilotPlanner'
-import { CodebaseEditor } from '@/directors/codebaseEditor'
 import { compactMessageHistory } from '@/directors/helpers'
 import prompts from '@/prompts'
-import { ChatMessage, Intent } from '@/types'
-import { applyOps, Op } from '@/utils/editOps'
+import { ChatMessage } from '@/types'
 import { git } from '@/utils/git'
 import { log } from '@/utils/logger'
 import { fuzzyParseJSON, spawn } from '@/utils/utils'
@@ -33,7 +31,7 @@ export class AutoPilotValidator {
     try {
       if (fs.existsSync('tsconfig.json')) {
         const fullCompilerOutput = spawn('npx', ['tsc', '--noEmit']).split('\n').filter(Boolean)
-        compilerOutput = fullCompilerOutput.slice(fullCompilerOutput.length - 100).join('\n')
+        compilerOutput = fullCompilerOutput.slice(fullCompilerOutput.length - 200).join('\n')
       }
     } catch (e: any) {
       compilerOutput = 'Error running tsc: ' + e.toString()
@@ -42,7 +40,7 @@ export class AutoPilotValidator {
     const validatePrompt = prompts.autoPilotValidator({
       diff,
       request: plan.request!,
-      plan: plan.plan!.map((p) => '- ' + p).join('\n'),
+      plan: JSON.stringify(plan),
       compilerOutput,
     })
 
@@ -55,7 +53,7 @@ export class AutoPilotValidator {
     const model = getModel(true)
 
     const messages = compactMessageHistory(history, model, systemMessage)
-    const result = await streamChatWithHistory(messages, model, (response) => {
+    const result = await openAIApi.streamChatWithHistory(messages, model, (response) => {
       process.stdout.write(typeof response == 'string' ? response : '\n')
     })
 
@@ -72,7 +70,10 @@ export class AutoPilotValidator {
     let parsed: ValidatorOutput | null = fuzzyParseJSON(output)
     if (!parsed) {
       log('warning: received invalid json, attempting fix')
-      const response = await chatCompletion(prompts.jsonFixer({ input: output, schema }), '3.5')
+      const response = await openAIApi.chatCompletion(
+        prompts.jsonFixer({ input: output, schema }),
+        '3.5'
+      )
       parsed = fuzzyParseJSON(response)
     }
 
@@ -85,6 +86,7 @@ export class AutoPilotValidator {
     plan: PlanResult,
     output: ValidatorOutput,
     editor: AutoPilotEditor,
+    history: ChatMessage[],
     systemMessage: ChatMessage
   ) => {
     const validationEdit: PlanResult['edits'] = output
@@ -95,7 +97,7 @@ export class AutoPilotValidator {
       plan: ['fix the validation result'],
       edits: validationEdit,
     }
-    const edits = await editor.generateEdits(plan.request, validationPlan, systemMessage)
+    const edits = await editor.generateEdits(plan.request, validationPlan, history, systemMessage)
     await editor.applyEdits(edits)
 
     const commitMessage = 'fixing output: ' + Object.values(validationEdit).join(', ')

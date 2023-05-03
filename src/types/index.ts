@@ -1,9 +1,8 @@
 export type ProjectConfig = {
-  server?: string
-  glob?: string
-  testDir?: string
-  excludeDir?: string
-  packageManager?: 'npm' | 'yarn' | 'pnpm' | 'none'
+  postEditCommands?: string
+  excludeDirs?: string
+  description?: string
+  files?: string[]
 }
 
 export type SourceFile = {

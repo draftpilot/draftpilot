@@ -3,7 +3,7 @@ import fs from 'fs'
 import { encode } from 'gpt-3-encoder'
 import path from 'path'
 
-import { getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
@@ -123,7 +123,11 @@ export class CodebaseEditor extends IntentHandler {
       })
 
       const editMessage = { role: 'user', content: editorPrompt } as ChatMessage
-      const response = await streamChatWithHistory([...messages, editMessage], model, postMessage)
+      const response = await openAIApi.streamChatWithHistory(
+        [...messages, editMessage],
+        model,
+        postMessage
+      )
       return response
     }
 
@@ -185,7 +189,7 @@ export class CodebaseEditor extends IntentHandler {
       content: systemMessage,
     })
 
-    const response = await streamChatWithHistory(messages, model, postMessage)
+    const response = await openAIApi.streamChatWithHistory(messages, model, postMessage)
 
     return {
       role: 'assistant',

@@ -122,17 +122,19 @@ function DiffContent({
 
   useEffect(() => {
     if (oldCode == null) return
-    try {
-      const applied = stateMap[SAVED_KEY]
-        ? oldCode
-        : Array.isArray(ops)
-        ? applyOps(oldCode, ops, null)
-        : ops
-      setNewCode(applied)
-      setCode(applied)
-    } catch (e: any) {
-      setNewCode(e.message || e.toString())
-    }
+    ;(async () => {
+      try {
+        const applied = stateMap[SAVED_KEY]
+          ? oldCode
+          : Array.isArray(ops)
+          ? await applyOps(oldCode, ops, null)
+          : ops
+        setNewCode(applied)
+        setCode(applied)
+      } catch (e: any) {
+        setNewCode(e.message || e.toString())
+      }
+    })()
   }, [oldCode, ops])
 
   const ext = file.split('.').pop()

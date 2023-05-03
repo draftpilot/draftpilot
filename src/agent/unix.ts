@@ -3,6 +3,7 @@ import FastGlob from 'fast-glob'
 
 import { confirmPrompt, Tool } from '@/agent/tool'
 import { readConfig } from '@/context/projectConfig'
+import { findRelevantDocs } from '@/context/relevantFiles'
 import { log, verboseLog } from '@/utils/logger'
 
 const grepTool: Tool = {
@@ -10,7 +11,7 @@ const grepTool: Tool = {
   description:
     'Search inside files print the matching lines. e.g. { name: findAcrossFiles, input: hello }',
 
-  run: (input: string) => {
+  run: async (input: string) => {
     const args = stringToArgs(input)
 
     // grep defaults:
@@ -37,27 +38,28 @@ const grepTool: Tool = {
       '--exclude-dir=venv'
     )
     const config = readConfig()
-    if (config && config.excludeDir) {
-      config.excludeDir.split(',').forEach((dir) => args.push(`--exclude-dir=${dir}`))
+    if (config && config.excludeDirs) {
+      config.excludeDirs.split(',').forEach((dir) => args.push(`--exclude-dir=${dir}`))
     }
 
-    return spawnPromise('grep', args)
+    try {
+      return await spawnPromise('grep', args)
+    } catch (e: any) {
+      return 'Error invoking grep: ' + e.message
+    }
   },
 }
 
 const findTool: Tool = {
   name: 'findFileNames',
   description:
-    'Find file names matching a shell pattern. e.g. { name: "findFileNames", input: "*.foo.js" }',
+    'Find file names matching a name or pattern. e.g. { name: "findFileNames", input: "*.foo.js" }',
 
-  run: (input: string) => {
-    const args = stringToArgs(input)
-    if (input.includes('/')) {
-      // if it's a path, use ls instead
-      return spawnPromise('ls', args)
-    }
-    if (!input.includes('-name')) args.unshift('.', '-name')
-    return spawnPromise('find', args)
+  run: async (input: string) => {
+    const results = await Promise.all(
+      input.split(',').map((pattern) => FastGlob('**/' + pattern + '*'))
+    )
+    return results.flat().join('\n')
   },
 }
 

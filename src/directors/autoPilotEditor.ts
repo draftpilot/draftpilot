@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-import { chatCompletion, getModel } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import { PlanResult } from '@/directors/autoPilotPlanner'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
 import { compactMessageHistory } from '@/directors/helpers'
@@ -19,7 +19,12 @@ export type EditOps = {
 export class AutoPilotEditor {
   interrupted = new Set<string>()
 
-  generateEdits = async (request: string, editPlan: PlanResult, systemMessage: ChatMessage) => {
+  generateEdits = async (
+    request: string,
+    editPlan: PlanResult,
+    history: ChatMessage[],
+    systemMessage: ChatMessage
+  ) => {
     const model = getModel(true)
     const plan = `Request: ${request}
 
@@ -39,7 +44,7 @@ ${Object.keys(editPlan.edits!)
 
     // in order to have full room for edits, truncate history
     const message: ChatMessage = { role: 'assistant', content: plan }
-    const messages = compactMessageHistory([message], model, systemMessage)
+    const messages = compactMessageHistory([...history, message], model, systemMessage)
 
     const output = await this.editor.editFiles(
       model,
@@ -49,6 +54,7 @@ ${Object.keys(editPlan.edits!)
       messages,
       postMessage
     )
+    process.stdout.write('\n')
 
     const parsed: EditOps = await this.parseOutput(output)
     return parsed
@@ -64,7 +70,7 @@ ${Object.keys(editPlan.edits!)
         fs.writeFileSync(file, ops)
       } else {
         const contents = fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : ''
-        applyOps(contents, ops, file)
+        await applyOps(contents, ops, file)
       }
     }
 
@@ -98,7 +104,7 @@ ${Object.keys(editPlan.edits!)
     if (!parsed) {
       log('warning: received invalid json, attempting fix')
       const fixer = prompts.jsonFixer({ input: output, schema })
-      const response = await chatCompletion(fixer, '3.5')
+      const response = await openAIApi.chatCompletion(fixer, '3.5')
       parsed = fuzzyParseJSON(response)
     }
 

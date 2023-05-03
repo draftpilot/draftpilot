@@ -1,4 +1,4 @@
-import { getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import { compactMessageHistory } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
 import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
@@ -23,7 +23,7 @@ export class ProductAssistant extends IntentHandler {
       role: 'system',
     })
 
-    const response = await streamChatWithHistory(messages, model, (response) => {
+    const response = await openAIApi.streamChatWithHistory(messages, model, (response) => {
       postMessage(response)
     })
 

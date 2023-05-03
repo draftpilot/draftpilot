@@ -1,2 +1,0 @@
-# manifest format: folder: description. lines beginning in ! will be excluded
-!src/prompts

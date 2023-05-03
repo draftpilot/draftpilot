@@ -1,4 +1,4 @@
-import { getModel, streamChatWithHistory } from '@/ai/api'
+import openAIApi, { getModel } from '@/ai/api'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory, detectTypeFromResponse } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
@@ -43,7 +43,7 @@ export class IntentDetector extends IntentHandler {
       content: systemMessage,
     })
 
-    const answer = await streamChatWithHistory(messages, model, postMessage)
+    const answer = await openAIApi.streamChatWithHistory(messages, model, postMessage)
     const types = Object.values(Intent)
 
     const { type, response } = detectTypeFromResponse(answer, types, Intent.ANSWER)

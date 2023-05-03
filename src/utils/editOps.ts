@@ -1,16 +1,33 @@
 import fs from 'fs'
+import inquirer from 'inquirer'
 
-import { log } from '@/utils/logger'
+import { isVerbose, log } from '@/utils/logger'
 
-export const applyOps = (contents: string, ops: Op[], writeToFile: string | null): string => {
+// in debug mode, the editor stops between ops and waits for user input
+export const applyOps = async (
+  contents: string,
+  ops: Op[],
+  writeToFile: string | null
+): Promise<string> => {
   let lines = contents.split('\n')
-  let clipboard: string[] = []
 
   let outputFileName = writeToFile
 
   // for ops, line numbers apply to the initial contents, so they need to be offset
   for (let i = 0; i < ops.length; i++) {
-    const op = ops[i]
+    let op = ops[i]
+
+    if (op.op == 'new' && lines.length) {
+      // sometimes chatgpt will use 'new' when it wants to add lines somewhere
+      if (op.line)
+        op = {
+          op: 'edit',
+          line: op.line,
+          before: '',
+          after: op.content,
+        }
+      else op = { op: 'edit', line: lines.length - 1, before: '}', after: (op as NewOp).content }
+    }
 
     const line = isOpWithLine(op) ? findLineIndex(lines, op) : 0
     const updateLines = (delta: number) => {
@@ -19,8 +36,16 @@ export const applyOps = (contents: string, ops: Op[], writeToFile: string | null
       })
     }
 
+    if (isVerbose()) {
+      const result = lines.join('\n')
+      if (outputFileName) fs.writeFileSync(outputFileName, result)
+
+      log('op:', { ...op, line })
+      await inquirer.prompt({ type: 'input', name: 'continue', message: 'Press enter to continue' })
+    }
+
     switch (op.op) {
-      case 'replace': {
+      case 'globalReplace': {
         const { search, replace } = op
         lines = lines.map((l) => l.replaceAll(search, replace))
         break
@@ -30,46 +55,27 @@ export const applyOps = (contents: string, ops: Op[], writeToFile: string | null
         break
       }
       case 'edit': {
-        const { delLines, content } = op
-        const insertLines = content ? content.split('\n') : []
+        const { before, after } = op
+        const deleteLines = before ? before.split('\n') : []
+        const insertLines = after ? after.split('\n') : []
         matchIndent(lines[line], insertLines)
         lines = lines
           .slice(0, line)
           .concat(insertLines)
-          .concat(lines.slice(line + delLines))
-        updateLines(insertLines.length - delLines)
+          .concat(lines.slice(line + deleteLines.length))
+        updateLines(insertLines.length - deleteLines.length)
         break
       }
-      case 'insert': {
-        const { content } = op
-        const insertLines = content.split('\n')
-        matchIndent(lines[line], insertLines)
-        lines = lines.slice(0, line).concat(insertLines).concat(lines.slice(line))
-        updateLines(insertLines.length)
-        break
-      }
-      case 'delete': {
-        const { delLines } = op
-        lines.splice(line, delLines)
-        updateLines(-delLines)
-        break
-      }
-      case 'copy': {
-        const { copyLines } = op
-        clipboard = lines.slice(line, line + copyLines)
-        break
-      }
-      case 'paste': {
-        matchIndent(lines[line], clipboard)
-        lines = lines.slice(0, line).concat(clipboard).concat(lines.slice(line))
-        updateLines(clipboard.length)
-        break
-      }
-      case 'cut': {
-        const { cutLines } = op
-        clipboard = lines.splice(line, cutLines)
-        lines = lines.slice(0, line).concat(lines.slice(line + cutLines))
-        updateLines(-cutLines)
+      case 'shift': {
+        const { content, moveLines } = op
+        const contentLines = content ? content.split('\n') : []
+        lines = lines.slice(0, line).concat(lines.slice(line + content.length))
+        const dest = line + moveLines
+        matchIndent(lines[dest], contentLines)
+        lines = lines
+          .slice(0, dest)
+          .concat(contentLines)
+          .concat(lines.slice(dest + contentLines.length))
         break
       }
       case 'renameFile': {
@@ -80,6 +86,14 @@ export const applyOps = (contents: string, ops: Op[], writeToFile: string | null
       case 'deleteFile': {
         outputFileName = null
         if (writeToFile) fs.unlinkSync(writeToFile)
+        break
+      }
+      case 'import': {
+        const { content } = op
+        const insertLines = content.split('\n')
+        lines = insertLines.concat(lines)
+        updateLines(insertLines.length)
+        break
       }
       default:
         log('unknown op', op)
@@ -104,10 +118,12 @@ const matchIndent = (line: string, lines: string[]) => {
 }
 
 const findLineIndex = (lines: string[], op: OpWithLine) => {
-  const { line, curLine } = op
+  const { op: opName, line } = op
   if (!line) return -1
-  if (!curLine) return line
-  const startLineSplit = curLine.split('\n').map((l) => l.trim())
+
+  const lineRef = opName == 'edit' ? op.before : opName == 'shift' ? op.content : null
+  if (!lineRef) return line
+  const startLineSplit = lineRef.split('\n').map((l) => l.trim())
 
   const matches = (line: number) => {
     for (let i = 0; i < startLineSplit.length; i++) {
@@ -128,8 +144,8 @@ const findLineIndex = (lines: string[], op: OpWithLine) => {
   return line
 }
 
-type ReplaceOp = {
-  op: 'replace'
+type GlobalReplaceOp = {
+  op: 'globalReplace'
   search: string
   replace: string
 }
@@ -137,7 +153,8 @@ type ReplaceOp = {
 type OpWithLine = {
   op: string
   line: number
-  curLine?: string
+  before?: string
+  content?: string
 }
 
 function isOpWithLine(op: any): op is OpWithLine {
@@ -147,46 +164,20 @@ function isOpWithLine(op: any): op is OpWithLine {
 type EditOp = {
   op: 'edit'
   line: number
-  curLine: string
-  delLines: number
+  before: string
+  after: string
+}
+
+type ShiftOp = {
+  op: 'shift'
+  line: number
   content: string
+  moveLines: number
 }
 
 type NewOp = {
   op: 'new'
   content: string
-}
-
-type InsertOp = {
-  op: 'insert'
-  line: number
-  curLine: string
-  content: string
-}
-
-type DeleteOp = {
-  op: 'delete'
-  line: number
-  curLine: string
-  delLines: number
-}
-
-type CopyOp = {
-  op: 'copy'
-  line: number
-  curLine: string
-  copyLines: number
-}
-
-type CutOp = {
-  op: 'cut'
-  line: number
-  curLine: string
-  cutLines: number
-}
-
-type PasteOp = {
-  op: 'paste'
   line: number
 }
 
@@ -199,43 +190,40 @@ type DeleteFile = {
   op: 'deleteFile'
 }
 
-export type Op =
-  | ReplaceOp
-  | InsertOp
-  | DeleteOp
-  | EditOp
-  | CopyOp
-  | CutOp
-  | PasteOp
-  | NewOp
-  | RenameFile
-  | DeleteFile
+// the following are ops taht gpt-4 tends to hallucinate
+
+type ImportOp = {
+  op: 'import'
+  content: string
+}
+
+export type Op = GlobalReplaceOp | EditOp | ShiftOp | NewOp | RenameFile | DeleteFile | ImportOp
 
 export const EXAMPLE_OPS: Op[] = [
-  // not sure if this is a good idea.
-  // {
-  //   op: 'replace',
-  //   search: 'text to search (case sensitive)',
-  //   replace: 'global file text replacement',
-  // },
-  { op: 'new', content: 'text to insert in new file' },
+  {
+    op: 'globalReplace',
+    search: 'text to search (case sensitive)',
+    replace: 'global file text replacement',
+  },
+  { op: 'new', content: 'text to insert in new file. use this for brand new files', line: 1 },
   {
     op: 'edit',
-    line: 1,
-    delLines: 1,
-    curLine: 'first line to alter',
-    content: 'new content to insert',
+    line: 5,
+    before: 'previous\ncontent',
+    after: 'new\ncontent',
   },
   {
-    op: 'insert',
-    content: 'hello',
-    line: 3,
-    curLine: 'content will be inserted ABOVE this line',
+    op: 'edit',
+    line: 10,
+    before: 'prev content',
+    after: 'also use "edit" for inserting\nprev content',
   },
-  { op: 'delete', line: 1, curLine: 'first line to delete', delLines: 5 },
-  { op: 'copy', line: 1, curLine: 'first line to copy', copyLines: 5 },
-  { op: 'cut', line: 1, curLine: 'first line to cut', cutLines: 5 },
-  { op: 'paste', line: 1 },
+  {
+    op: 'shift',
+    line: 3,
+    content: 'use shift op to move\blines up and down',
+    moveLines: -1,
+  },
   { op: 'renameFile', newFile: 'newName.ext' },
   { op: 'deleteFile' },
 ]

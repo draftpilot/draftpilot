@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 
 import config from '@/config'
-import { readProjectContext } from '@/context/projectContext'
+import { readConfig } from '@/context/projectConfig'
 import { AutoPilotEditor, EditOps } from '@/directors/autoPilotEditor'
 import { AutoPilotPlanner, isFailedPlan, PlanResult } from '@/directors/autoPilotPlanner'
 import { AutoPilotValidator, ValidatorOutput } from '@/directors/autoPilotValidator'
@@ -27,13 +27,13 @@ export class AutoPilot {
   systemMessage: ChatMessage
 
   constructor() {
-    this.context = readProjectContext() || ''
+    this.context = readConfig()?.description || ''
 
     const project = path.basename(process.cwd())
     const systemMessage = prompts.systemMessage({
       language: detectProjectLanguage() || 'unknown',
       project,
-      context: readProjectContext() || '',
+      context: this.context,
     })
     this.systemMessage = {
       role: 'system',
@@ -83,6 +83,7 @@ export class AutoPilot {
       edits = await this.editor.generateEdits(
         plan.request || 'follow the plan',
         plan,
+        [],
         this.systemMessage
       )
       fs.writeFileSync(config.configFolder + '/edit.txt', JSON.stringify(edits, null, 2))
@@ -104,6 +105,7 @@ export class AutoPilot {
   }
 
   validate = async (plan: PlanResult, baseCommit: string, edits: EditOps, opts: AutopilotOpts) => {
+    const history: ChatMessage[] = []
     for (let i = 0; i < 2; i++) {
       let validatedResult: ValidatorOutput
       if (opts.validationFile) {
@@ -111,14 +113,28 @@ export class AutoPilot {
         opts.validationFile = undefined
       } else {
         const diff = git(['diff', baseCommit])
-        validatedResult = await this.validator.validate(plan, [], edits, diff, this.systemMessage)
+        validatedResult = await this.validator.validate(
+          plan,
+          history,
+          edits,
+          diff,
+          this.systemMessage
+        )
       }
 
       if (validatedResult.result == 'good') {
         fs.writeFileSync(config.configFolder + '/followup.txt', validatedResult.comments)
         return
       }
-      await this.validator.fixResults(plan, validatedResult, this.editor, this.systemMessage)
+      const fixHistory = history.slice(history.length - 2)
+      await this.validator.fixResults(
+        plan,
+        validatedResult,
+        this.editor,
+        fixHistory,
+        this.systemMessage
+      )
+      history.push({ role: 'user', content: 'files edited' })
     }
   }
 

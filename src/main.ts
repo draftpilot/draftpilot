@@ -1,7 +1,7 @@
 import { program } from 'commander'
 import open from 'open'
 
-import { setFakeMode } from '@/ai/api'
+import openAIApi from '@/ai/api'
 import index from '@/commands'
 import autopilot from '@/commands/autopilotCommand'
 import edit from '@/commands/editCommand'
@@ -26,7 +26,7 @@ export default function () {
     .description('AI-assisted coding')
     .option('-v, --verbose', 'verbose logging', () => setVerbose(1))
     .option('--skip-cache', 'skip cache for all requests', cache.skipCache)
-    .option('--fake', 'use fake api requests', () => setFakeMode())
+    .option('--fake', 'use fake api requests', () => openAIApi.setFakeMode())
     .option('--gpt4 <policy>', 'usage of gpt-4 (always, code-only, never)', overrideGPT4)
     .option('--temperature <number>', 'temperature for AI generations', (temperature) => {
       config.temperature = parseFloat(temperature)
@@ -101,6 +101,8 @@ export default function () {
     .description('Perform autopilot editing')
     .argument('<planFile>')
     .action(actionWrapper(edit))
+    .option('--edit-file <file>')
+    .option('--validate <git branch or hash>', 'validate the code output against given branch')
 
   const options = program.parse()
   config.options = options
