@@ -1,26 +1,27 @@
+import path from 'path'
+
+import { readConfig } from '@/context/projectConfig'
 import { indexer } from '@/db/indexer'
 import { CodebaseEditor } from '@/directors/codebaseEditor'
-import { attachmentListToString, detectProjectLanguage } from '@/directors/helpers'
-import { ProductAssistant } from '@/directors/productAssistant'
-import { GenerateContext } from '@/directors/generateContext'
-import { DraftPilot } from '@/directors/draftPilot'
-import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
-import { log } from '@/utils/logger'
-import path from 'path'
-import { readProjectContext } from '@/context/projectContext'
 import { CrashPilot } from '@/directors/crashPilot'
-import { tracker } from '@/utils/tracker'
-import prompts from '@/prompts'
+import { DraftPilot } from '@/directors/draftPilot'
+import { GenerateContext } from '@/directors/generateContext'
+import { attachmentListToString, detectProjectLanguage } from '@/directors/helpers'
 import { IntentDetector } from '@/directors/intentDetector'
 import { IntentHandler } from '@/directors/intentHandler'
 import { PostAction } from '@/directors/postAction'
+import { ProductAssistant } from '@/directors/productAssistant'
+import prompts from '@/prompts'
+import { ChatMessage, Intent, MessagePayload, PostMessage } from '@/types'
+import { log } from '@/utils/logger'
+import { tracker } from '@/utils/tracker'
 
 export class Dispatcher {
   interrupted = new Set<string>()
   context: string = ''
 
   init = async () => {
-    this.context = readProjectContext() || ''
+    this.context = readConfig()?.description || ''
   }
 
   onMessage = async (payload: MessagePayload, origPostMessage: PostMessage) => {

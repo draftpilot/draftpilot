@@ -16,6 +16,10 @@ export class GenerateContext extends IntentHandler {
     systemMessage: string,
     postMessage: PostMessage
   ) => {
+    return await this.generate(postMessage)
+  }
+
+  generate = async (postMessage: PostMessage) => {
     const model = getModel(false)
 
     const relevantDocs: string[] = [],

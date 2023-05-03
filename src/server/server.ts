@@ -4,7 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import { readProjectContext, writeProjectContext } from '@/context/projectContext'
+import { readConfig, writeConfig } from '@/context/projectConfig'
 import { indexer } from '@/db/indexer'
 import { Messenger } from '@/server/messenger'
 import { log } from '@/utils/logger'
@@ -83,13 +83,15 @@ export default async function serve(
 
   app.get('/api/context', async (_, res) => {
     tracker.webGetContext()
-    const context = readProjectContext()
+    const context = readConfig()?.description || ''
     res.json({ context })
   })
 
   app.put('/api/context', async (req, res) => {
     const context = req.body
-    writeProjectContext(context)
+    const config = readConfig() || {}
+    config.description = context
+    writeConfig(config)
     messenger.dispatcher.context = context
     res.json({ success: true })
   })

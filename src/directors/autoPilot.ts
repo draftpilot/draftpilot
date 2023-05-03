@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 
 import config from '@/config'
-import { readProjectContext } from '@/context/projectContext'
+import { readConfig } from '@/context/projectConfig'
 import { AutoPilotEditor, EditOps } from '@/directors/autoPilotEditor'
 import { AutoPilotPlanner, isFailedPlan, PlanResult } from '@/directors/autoPilotPlanner'
 import { AutoPilotValidator, ValidatorOutput } from '@/directors/autoPilotValidator'
@@ -27,13 +27,13 @@ export class AutoPilot {
   systemMessage: ChatMessage
 
   constructor() {
-    this.context = readProjectContext() || ''
+    this.context = readConfig()?.description || ''
 
     const project = path.basename(process.cwd())
     const systemMessage = prompts.systemMessage({
       language: detectProjectLanguage() || 'unknown',
       project,
-      context: readProjectContext() || '',
+      context: this.context,
     })
     this.systemMessage = {
       role: 'system',
