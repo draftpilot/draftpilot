@@ -1,8 +1,9 @@
-import config, { overrideServer } from '@/config'
+import fs from 'fs'
+import path from 'path'
+
+import config from '@/config'
 import { ProjectConfig } from '@/types'
 import { findRoot } from '@/utils/utils'
-import path from 'path'
-import fs from 'fs'
 
 export function getConfigPath(root: string = findRoot()) {
   const folder = path.join(root, config.configFolder)
@@ -21,7 +22,6 @@ export function readConfig(root: string = findRoot()): ProjectConfig | null {
 
   const data = fs.readFileSync(configPath, 'utf-8')
   cached = JSON.parse(data)
-  if (cached!.server) overrideServer(config.server)
   return cached
 }
 

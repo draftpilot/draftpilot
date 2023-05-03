@@ -126,6 +126,7 @@ export class AutoPilotPlanner {
     const result = await openAIApi.streamChatWithHistory(messages, model, (response) => {
       process.stdout.write(typeof response == 'string' ? response : '\n')
     })
+    process.stdout.write('\n')
 
     history.push({ role: 'assistant', content: result })
 
