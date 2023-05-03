@@ -145,11 +145,11 @@ class OpenAI {
     }
   }
 
-  writeTempFile(data: ChatMessage[], requestNote: string, existingFile?: string) {
+  writeTempFile(data: ChatMessage[], model: string, existingFile?: string) {
     const file = existingFile || this.logFolder + '/request-' + new Date().toISOString() + '.txt'
     const output = data.map((d) => d.role + ':\n' + d.content).join('\n---\n')
     fs.writeFileSync(file, output)
-    if (!existingFile) log('wrote', requestNote, 'request to', file)
+    if (!existingFile) log('wrote', 'gpt-' + model, 'request to', file)
     return file
   }
   // --- fake requests
