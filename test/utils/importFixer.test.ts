@@ -1,5 +1,6 @@
-import { importFixer, extractImports, clearImportsMap } from '../../src/utils/importFixer'
 import * as assert from 'assert'
+
+import { clearImportsMap, extractImports, importFixer } from '../../src/utils/importFixer'
 
 describe('importFixer', () => {
   afterEach(() => {
@@ -8,22 +9,23 @@ describe('importFixer', () => {
 
   it('should extract absolute imports', () => {
     const content = `import React from 'react';\nimport { useState } from 'react';`
-    extractImports(content)
-    const result = importFixer(`import React from 'react';`)
-    assert.strictEqual(result, `import React from 'react';`)
+    const map = extractImports(content)
+
+    assert.strictEqual(map.size, 2)
+    assert.strictEqual(map.get('import React'), `import React from 'react';`)
   })
 
   it('should convert relative imports to absolute imports', () => {
-    const content = `import React from 'react';\nimport { useState } from 'react';`
+    const content = `import React from 'react';\nimport { fooBar } from '@/fooBar';`
     extractImports(content)
-    const result = importFixer(`import { useState } from './relative/path';`)
-    assert.strictEqual(result, `import { useState } from 'react';`)
+    const result = importFixer(`import { fooBar } from './relative/path';`)
+    assert.strictEqual(result, `import { fooBar } from '@/fooBar';`)
   })
 
   it('should support require()', () => {
-    const content = `const React = require('react');\nconst { useState } = require('react');`
+    const content = `const React = require('react');\nconst { fooBar } = require('@/fooBar');`
     extractImports(content)
-    const result = importFixer(`const { useState } = require('./relative/path');`)
-    assert.strictEqual(result, `const { useState } = require('react');`)
+    const result = importFixer(`const { fooBar } = require('./relative/path');`)
+    assert.strictEqual(result, `const { fooBar } = require('@/fooBar');`)
   })
 })

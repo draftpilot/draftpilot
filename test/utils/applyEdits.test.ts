@@ -28,7 +28,6 @@ code here
   })
 
   it('should handle input with line numbers', () => {
-    console.log('test start')
     const input = `---
 file: bar
 start: 56
