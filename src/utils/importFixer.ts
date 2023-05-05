@@ -1,6 +1,10 @@
 const importsMap = new Map<string, string>()
 const importRegex = /^import\s.+?\sfrom\s.+?;|^const\s.+?\s=\srequire\(.+?\);/gm
 
+export function clearImportsMap() {
+  importsMap.clear()
+}
+
 export function extractImports(contents: string) {
   let match
   while ((match = importRegex.exec(contents)) !== null) {
