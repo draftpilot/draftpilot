@@ -1,6 +1,7 @@
 import { HNSWLib } from '@/langchain/hnswlib'
 import { OpenAIEmbeddings } from '@/langchain/openai_embeddings'
 import { CodeDoc } from '@/types'
+
 import type { Document } from '@/langchain/document'
 
 export class VectorDB {
@@ -8,6 +9,7 @@ export class VectorDB {
   embeddings = new OpenAIEmbeddings({
     verbose: true,
     stripNewLines: true,
+    batchSize: 50,
   })
 
   loadEmbeddings = async (docs: CodeDoc[]) => {

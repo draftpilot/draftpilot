@@ -5,7 +5,7 @@ interface Props {
   referenceCode: string
 }
 ---
-Please generate 1 paragraph describing the essential libraries and code patterns in use in this project, so an AI can generate code and tests that fit in seamlessly. Do not evaluate whether anything is good or bad, but focus on describing the interesting and unusual aspects of the project to an AI language model.
+Please generate 1 very concise paragraph describing the essential libraries and code patterns in use in this project, so an AI can generate code and tests that fit in seamlessly. Do not evaluate whether anything is good or bad, but focus on describing the novel / unusual aspects of the project to an AI language model.
 
 For reference, here is the project's manifest:
 <%= props.manifest %>
@@ -27,5 +27,5 @@ The frontend uses React, Tailwind CSS, and is located in src/react. The backend 
 Here is another example:
 This project is a full-stack Next.js application using Prisma as the database and Inngest as the background job service. The frontend employs styled-components, react-router, and Redux. Jest is used for testing, and test files are located in the tests/ folder.
 
-Please describe the essential libraries and code patterns in this project, based on the provided package.json contents and key files/folders:
+Concise description of this project:
 ----------

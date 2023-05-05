@@ -19,6 +19,7 @@ export type PlanResult = {
   plan: string[]
   edits?: { [key: string]: string }
   tools?: { name: string; input: string }[]
+  references?: string[]
 }
 
 type FailedPlan = { failure: string }

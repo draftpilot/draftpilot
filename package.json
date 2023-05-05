@@ -17,6 +17,7 @@
     "init": "yarn go init",
     "prepare": "yarn build",
     "test": "yarn build-cli && mocha",
+    "test-watch": "nodemon -w src -w test -x mocha",
     "watch": "yarn clean && node esbuild.js --watch & yarn nodemon  --enable-source-maps -w dist cli.js --skip-open --dev-server",
     "watch-fe": "node esbuild.js && node esbuild.js --watch & node --enable-source-maps cli.js --skip-open --dev-server"
   },

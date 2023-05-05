@@ -21,7 +21,10 @@ Output Format schema - list of files to edit:
   "plan": [ "array of steps of changes to make" ],
   "edits": {
     "path/to/file": "detailed summary of changes the AI should make"
-  }
+  },
+  "references": [
+    "up to 3 files the AI should refer to for examples"
+  ]
 }
 
 OR if you are not able to fulfill the request, return:

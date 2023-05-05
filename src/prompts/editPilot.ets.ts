@@ -7,6 +7,7 @@
 /* eslint-disable */
 
 interface Props {
+  references: string;
   files: string;
   exampleJson: string;
 }
@@ -14,8 +15,10 @@ interface Props {
 export default function (props: Props): string {
   let result = "";
   result +=
-    "Given the request in the prior messages, make the requested changes to the files using the JSON operation format described. If there are no edits to make, don't include that file. New files will be created.\n\nHere is a list of files.\n";
+    "Given the request in the prior messages, make the requested changes to the files using the JSON operation format described. If there are no edits to make, don't include that file. New files will be created.\n\nHere is a list of files to edit.\n\n";
   result += props.files;
+  result += "\n\nRelated snippets within the codebase that may be helpful:\n\n";
+  result += props.references;
   result +=
     "\n\n---\nThis example shows all possible operations & thier inputs. ALWAYS follow this exact \nformat of operation names and input args, do not make up any ops or arguments. The line number and startLine should refer to the same line.\n\n ";
   result += preserveIndentation(props.exampleJson, " ");

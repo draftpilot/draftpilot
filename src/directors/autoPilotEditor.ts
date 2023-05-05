@@ -52,6 +52,7 @@ ${Object.keys(editPlan.edits!)
       filesToEdit,
       fileBodies,
       messages,
+      editPlan.references || [],
       postMessage
     )
     process.stdout.write('\n')

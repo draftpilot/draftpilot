@@ -192,8 +192,12 @@ function parseError(e: any) {
     const data = e.response?.data
     if (data) {
       const error = data.error
-      const dataResponse = JSON.stringify(error || data)
-      return new Error(dataResponse)
+      try {
+        const dataResponse = JSON.stringify(error || data)
+        return new Error(dataResponse)
+      } catch (e) {
+        // can't stringify, just return the error
+      }
     }
   }
   return e

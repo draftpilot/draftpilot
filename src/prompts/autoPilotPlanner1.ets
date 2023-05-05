@@ -10,6 +10,8 @@ interface Props {
 =======
 User's request: <%= props.message %>
 
+======
+
 Think step by step to come up with a plan of action. 
 - if you are using a web API, you may want to check on the latest API docs
 - if there are common follow-up steps to the request the user may not have thought of,
@@ -26,7 +28,10 @@ Or a list of files to edit, if you have all the context you need to fulfill the 
   "plan": [ "array of steps of changes to make" ],
   "edits": {
     "path/to/file": "detailed summary of changes the AI should make"
-  }
+  },
+  "references": [
+    "up to 3 files the AI should refer to for examples"
+  ]
 }
 
 If you are not able to fulfill the request:

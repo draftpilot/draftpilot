@@ -8,21 +8,21 @@ type Options = {}
 
 export default async function (options?: Options) {
   // build initial index
+  console.log('starting indexing')
   const indexer = new Indexer()
   await indexer.loadFilesIntoVectors()
+  console.log('done indexing')
 
   const config: ProjectConfig = readConfig() || {}
 
   config.files = indexer.files
 
-  if (!config.description) {
-    const contextGenerator = new GenerateContext(new Set())
-    const result = await contextGenerator.generate((msg) => {
-      process.stdout.write(typeof msg === 'string' ? msg : '\n')
-    })
-    config.description = result.content
-  }
+  const contextGenerator = new GenerateContext(new Set())
+  const result = await contextGenerator.generate((msg) => {
+    process.stdout.write(typeof msg === 'string' ? msg : '\n')
+  })
+  config.description = result.content
 
   writeConfig(config)
-  log('done.')
+  log('\ndone.')
 }

@@ -4,6 +4,7 @@ import { encode } from 'gpt-3-encoder'
 import path from 'path'
 
 import openAIApi, { getModel } from '@/ai/api'
+import { generateReferences } from '@/context/relevantFiles'
 import { indexer } from '@/db/indexer'
 import { compactMessageHistory } from '@/directors/helpers'
 import { IntentHandler } from '@/directors/intentHandler'
@@ -56,6 +57,7 @@ export class CodebaseEditor extends IntentHandler {
       filesToEdit,
       fileBodies,
       messages,
+      undefined,
       postMessage
     )
 
@@ -87,37 +89,36 @@ export class CodebaseEditor extends IntentHandler {
     filesToEdit: string[],
     fileBodies: string[],
     messages: ChatMessage[],
+    referenceFiles: undefined | string[],
     postMessage: PostMessage
   ) => {
-    const similar = await indexer.vectorDB.searchWithScores(plan, 6)
-    const similarFuncs =
-      similar
-        ?.filter((s) => {
-          const [doc, score] = s
-          if (score < 0.15) return false
-          const existing = filesToEdit.find((f) => doc.metadata.path.includes(f))
-          if (existing) return false
-          return true
-        })
-        .map((s) => s[0]) || []
-    const similarFuncText = similarFuncs.length
-      ? 'Related functions:\n' +
-        similarFuncs.map((s) => s.pageContent).join('\n\n') +
-        '\n\n------\n\n'
-      : ''
-
     const messageTokenCount = messages.reduce((acc, m) => acc + encode(m.content).length, 0)
     const tokenBudget = model == '3.5' ? 4000 : 8000
 
-    // check if entire sequence fits in my token count
-    const similarFuncLength = encode(similarFuncText).length
-    const estimatedOutput = encode(plan).length
     const allFileBodies = fileBodies.join('\n\n')
     const fileBodyTokens = encode(allFileBodies).length
+    const estimatedOutput = Math.max(encode(plan).length, fileBodyTokens / 5)
+
+    let referenceBudget = tokenBudget - messageTokenCount - estimatedOutput - fileBodyTokens
+    if (referenceBudget < 500) {
+      // if we don't have enough for references, give a budget with the biggest file only
+      const biggestFile = fileBodies.reduce((acc, f) => (f.length > acc.length ? f : acc), '')
+      referenceBudget =
+        tokenBudget - messageTokenCount - estimatedOutput - encode(biggestFile).length
+    }
+
+    const references = await generateReferences(
+      filesToEdit,
+      referenceFiles || [],
+      plan,
+      referenceBudget
+    )
+    const referencesLength = encode(references).length
 
     const editFileHelper = async (fileContent: string) => {
-      const fileData = similarFuncText + 'Files to edit (only edit these files):\n' + fileContent
+      const fileData = 'Files to edit (only edit these files):\n' + fileContent
       const editorPrompt = prompts.editPilot({
+        references,
         files: fileData,
         exampleJson: JSON.stringify(EXAMPLE_OPS),
       })
@@ -132,7 +133,7 @@ export class CodebaseEditor extends IntentHandler {
     }
 
     const promises: Promise<string>[] = []
-    if (messageTokenCount + similarFuncLength + estimatedOutput + fileBodyTokens < tokenBudget) {
+    if (messageTokenCount + referencesLength + estimatedOutput + fileBodyTokens < tokenBudget) {
       promises.push(editFileHelper(allFileBodies))
     } else {
       // we need to send files separately
@@ -141,7 +142,7 @@ export class CodebaseEditor extends IntentHandler {
         const nextFile = fileBodies.shift()!
         const nextFileTokens = encode(nextFile).length
 
-        const totalTokens = messageTokenCount + similarFuncLength + estimatedOutput + nextFileTokens
+        const totalTokens = messageTokenCount + referencesLength + estimatedOutput + nextFileTokens
         if (totalTokens > tokenBudget) {
           promises.push(editFileHelper(currentFileBodies.join('\n\n')))
           currentFileBodies = []
@@ -153,16 +154,9 @@ export class CodebaseEditor extends IntentHandler {
       }
     }
 
+    // results in yaml+markdown format
     const results = await Promise.all(promises)
-    const invalidJson = results.find((r) => !r.startsWith('{'))
-    if (invalidJson) {
-      console.log('ERROR: Failed to parse edit results')
-      return results.join('\n\n')
-    }
-
-    // fuzzy parse and merge all results
-    const merged = results.map((r) => fuzzyParseJSON(r)).reduce((acc, r) => ({ ...acc, ...r }), {})
-    return JSON.stringify(merged)
+    return results.join('\n\n')
   }
 
   followupRun = async (

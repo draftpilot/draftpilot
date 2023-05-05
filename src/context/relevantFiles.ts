@@ -1,8 +1,12 @@
 import fs from 'fs'
+import { encode } from 'gpt-3-encoder'
 
 import { Indexer, indexer } from '@/db/indexer'
+import { Model } from '@/types'
 import { findSimilarDocuments } from '@/utils/similarity'
 import { splitOnce } from '@/utils/utils'
+
+import type { Document } from '@/langchain/document'
 
 export async function getSimilarMethods(indexer: Indexer, prompt: string, count: number) {
   const similar = await indexer.vectorDB.search(prompt, count)
@@ -55,4 +59,101 @@ export function getManifestFiles() {
     }
   }
   return manifestFiles
+}
+
+const SIMILARITY_THRESHOLD = 0.15
+export type Snippet = { contents: string; path: string }
+
+export async function generateReferences(
+  excludeFiles: string[],
+  referenceFiles: string[],
+  plan: string,
+  tokenBudget: number
+) {
+  // find most similar functions within the provided reference files
+  const similarCode: Snippet[] = []
+  const similarPaths = new Set<string>()
+  let remainingBudget = tokenBudget
+
+  const addSnippets = (similar: [Document, number][]) => {
+    similar.map((s) => {
+      const [doc, score] = s
+      if (score < SIMILARITY_THRESHOLD) return
+      const snippet = { path: doc.metadata.path, contents: doc.pageContent }
+
+      if (similarPaths.has(snippet.path)) return
+      if (excludeFiles.find((f) => snippet.path.startsWith(f))) return
+
+      const length = encode(snippet.contents).length
+      if (length > remainingBudget) return
+      remainingBudget -= length
+      similarCode.push(snippet)
+      similarPaths.add(snippet.path)
+    })
+  }
+
+  // first, grab all the functions in the reference files
+  if (referenceFiles.length) {
+    const partialIndex = await indexer.createPartialIndex(referenceFiles)
+    const similar = await partialIndex.searchWithScores(plan, 6)
+    addSnippets(similar)
+  }
+
+  // then, grab all the functions in the rest of the codebase
+  const similar = await indexer.vectorDB.searchWithScores(plan, 6)
+  addSnippets(similar)
+
+  const combined = combineSnippets(similarCode)
+
+  return combined.map((s) => s.contents).join('\n\n')
+}
+
+// the path format is <filepath>:<function name>#line numbers
+
+export function combineSnippets(snippets: Snippet[]): Snippet[] {
+  // Group snippets by file+function
+  const groupedSnippets = snippets.reduce((groups: { [key: string]: Snippet[] }, snippet) => {
+    const [fileFunc, _] = splitOnce(snippet.path, '#')
+
+    if (!groups[fileFunc]) {
+      groups[fileFunc] = []
+    }
+    groups[fileFunc].push(snippet)
+    return groups
+  }, {})
+
+  // Combine snippets within each group
+  const combinedSnippets = Object.entries(groupedSnippets).map(([path, group]) => {
+    const lineMap: { [key: number]: string } = {}
+
+    group.forEach((snippet) => {
+      // the first line is the title of the snippet
+      const lines = snippet.contents.split('\n').slice(1)
+      const lineNumbers = snippet.path.split('#')[1].split('-').map(Number)
+
+      lines.forEach((line, index) => {
+        const lineNumber = lineNumbers[0] + index
+        lineMap[lineNumber] = line
+      })
+    })
+
+    const sortedLineNumbers = Object.keys(lineMap)
+      .map(Number)
+      .sort((a, b) => a - b)
+    const combinedLines: string[] = []
+    let lastLine = -1
+
+    sortedLineNumbers.forEach((lineNumber) => {
+      if (lastLine >= 0 && lineNumber - lastLine > 1) {
+        combinedLines.push('...')
+      }
+      combinedLines.push(lineMap[lineNumber])
+      lastLine = lineNumber
+    })
+    combinedLines.unshift(path)
+
+    return { path, contents: combinedLines.join('\n') }
+  })
+
+  return combinedSnippets
 }

@@ -46,11 +46,11 @@ export class AutoPilot {
 
     const baseCommit = opts.validate || git(['rev-parse', 'HEAD']).trim()
 
-    const edits = await this.edit(plan, opts)
+    const filesChanged = await this.edit(plan, opts)
 
-    this.commit(edits, request, opts)
+    this.commit(filesChanged, request, opts)
 
-    await this.validate(plan, baseCommit, edits, opts)
+    await this.validate(plan, baseCommit, filesChanged, opts)
   }
 
   plan = async (request: string, opts: AutopilotOpts) => {
@@ -93,18 +93,23 @@ export class AutoPilot {
       await this.editor.applyEdits(edits)
     }
 
-    return edits
+    return Object.keys(edits)
   }
 
-  commit = (edits: EditOps, message: string, opts: AutopilotOpts) => {
+  commit = (files: string[], message: string, opts: AutopilotOpts) => {
     // add all files
     if (!opts.skipGit) {
-      git(['add', ...Object.keys(edits)])
+      git(['add', ...files])
       git(['commit', '-m', message])
     }
   }
 
-  validate = async (plan: PlanResult, baseCommit: string, edits: EditOps, opts: AutopilotOpts) => {
+  validate = async (
+    plan: PlanResult,
+    baseCommit: string,
+    filesChanged: string[],
+    opts: AutopilotOpts
+  ) => {
     const history: ChatMessage[] = []
     for (let i = 0; i < 2; i++) {
       let validatedResult: ValidatorOutput
@@ -116,7 +121,7 @@ export class AutoPilot {
         validatedResult = await this.validator.validate(
           plan,
           history,
-          edits,
+          filesChanged,
           diff,
           this.systemMessage
         )

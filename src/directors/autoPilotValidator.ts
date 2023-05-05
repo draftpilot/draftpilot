@@ -23,7 +23,7 @@ export class AutoPilotValidator {
   validate = async (
     plan: PlanResult,
     history: ChatMessage[],
-    edits: EditOps,
+    filesChanged: string[],
     diff: string,
     systemMessage: ChatMessage
   ) => {
