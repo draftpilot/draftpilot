@@ -1,12 +1,14 @@
-import path from 'path'
 import fs from 'fs'
+import { isBinaryFileSync } from 'isbinaryfile'
+import path from 'path'
 import sqlite3 from 'sqlite3'
-import { fatal } from '@/utils/utils'
-import { verboseLog } from '@/utils/logger'
-import { CodeDoc, SourceFile } from '@/types'
+
 import config from '@/config'
 import { ExtractorService } from '@/parsing/extractorService'
-import { isBinaryFileSync } from 'isbinaryfile'
+import { CodeDoc, SourceFile } from '@/types'
+import { extractImports } from '@/utils/importFixer'
+import { verboseLog } from '@/utils/logger'
+import { fatal } from '@/utils/utils'
 
 const SQLITE_DB_NAME = 'docs.sqlite'
 
@@ -66,6 +68,7 @@ export default class FileDB {
         const size = fs.lstatSync(file).size
         if (size > 100_000) return // skip large files
         const contents = fs.readFileSync(file, 'utf-8')
+        extractImports(contents)
         if (isBinaryFileSync(file)) return
 
         const sourceFile: SourceFile = { name: file, contents }
