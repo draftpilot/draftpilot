@@ -1,6 +1,7 @@
 import fs from 'fs'
 import inquirer from 'inquirer'
 
+import { importFixer } from '@/utils/importFixer'
 import { isVerbose, log } from '@/utils/logger'
 
 // in debug mode, the editor stops between ops and waits for user input
@@ -51,7 +52,8 @@ export const applyOps = async (
         break
       }
       case 'new': {
-        lines = op.content.split('\n').concat(lines)
+        const content = op.content.split('\n').map(importFixer)
+        lines = lines.concat(content)
         break
       }
       case 'edit': {
@@ -90,7 +92,7 @@ export const applyOps = async (
       }
       case 'import': {
         const { content } = op
-        const insertLines = content.split('\n')
+        const insertLines = content.split('\n').map(importFixer)
         lines = insertLines.concat(lines)
         updateLines(insertLines.length)
         break
