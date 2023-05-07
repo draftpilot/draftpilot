@@ -11,8 +11,6 @@ import search from '@/commands/search'
 import tool from '@/commands/tool'
 import config, { overrideGPT4 } from '@/config'
 import { cache } from '@/db/cache'
-import serve from '@/server/server'
-import { updateGitIgnores } from '@/utils/git'
 import { log, setVerbose } from '@/utils/logger'
 import { tracker } from '@/utils/tracker'
 import { fatal } from '@/utils/utils'
@@ -42,30 +40,12 @@ export default function () {
     .action(actionWrapper(init))
 
   program
-    .command('index')
-    .description('Manually run file indexing')
-    .action(actionWrapper(index))
-    .option('--reindex', 'Re-build index from scratch')
-
-  program
     .command('search')
     .description('Perform semantic code search')
     .action(actionWrapper(search))
     .argument('<query>', 'The query to search for')
     .option('--k <k>', '# of results to return')
     .option('--reindex', 'Re-index the project before searching')
-
-  program
-    .command('tool [command]')
-    .description('Tester for agent tools')
-    .action(actionWrapper(tool))
-
-  program
-    .command('ops')
-    .description('Apply array of ops to a file')
-    .argument('<file>')
-    .argument('<ops>')
-    .action(actionWrapper(editOps))
 
   program
     .command('autopilot')
@@ -79,25 +59,28 @@ export default function () {
     .option('--diff <git branch or hash>', 'in initial planning, use the diff as context')
     .action(actionWrapper(autopilot))
 
-  program
-    .command('server', { isDefault: true })
-    .description('Server mode (runs when no command is specified))')
-    .action(
-      actionWrapper(async (opts) => {
-        updateGitIgnores()
-        const url = await serve(
-          opts.port ? parseInt(opts.port) : undefined,
-          opts.devServer ? 'development' : 'production'
-        )
-        if (!opts.skipOpen) open(url)
-      })
-    )
-    .option('--skip-open', 'Skip opening the browser')
-    .option('--port <port>', 'Listen on specific port')
-    .option('--dev-server', 'Use dev server (for development)')
+  // --- the following commands are for testing various parts of the system independently
 
   program
-    .command('edit')
+    .command('index', { hidden: true })
+    .description('Manually run file indexing')
+    .action(actionWrapper(index))
+    .option('--reindex', 'Re-build index from scratch')
+
+  program
+    .command('tool [command]', { hidden: true })
+    .description('Tester for agent tools')
+    .action(actionWrapper(tool))
+
+  program
+    .command('ops', { hidden: true })
+    .description('Apply array of ops to a file')
+    .argument('<file>')
+    .argument('<ops>')
+    .action(actionWrapper(editOps))
+
+  program
+    .command('edit', { hidden: true })
     .description('Perform autopilot editing')
     .argument('<planFile>')
     .action(actionWrapper(edit))
