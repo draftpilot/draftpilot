@@ -111,6 +111,23 @@ ${Object.keys(editPlan.edits!)
 
     if (!parsed) throw new Error('parser: Could not parse output')
 
+    // only acceptable format: { "/path/to/file": "new contents" or array }
+
+    Object.keys(parsed).forEach((key) => {
+      const value = parsed[key]
+      if (typeof value === 'string') return
+      if (Array.isArray(value)) return
+      // if it's an object, often there's only one key and the value is what we want
+      if (typeof value === 'object') {
+        const keys = Object.keys(value)
+        if (keys.length === 1) {
+          parsed[key] = value[keys[0]]
+          return
+        }
+      }
+      log('warning: invalid value for key', key, value)
+    })
+
     return parsed
   }
 

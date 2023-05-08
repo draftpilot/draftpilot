@@ -20,16 +20,9 @@ export default function (props: Props): string {
   result += "\n\nRelated snippets within the codebase that may be helpful:\n\n";
   result += props.references;
   result +=
-    "\n\n---\nThis example shows all possible operations & thier inputs. ALWAYS follow this exact \nformat of operation names and input args, do not make up any ops or arguments. The line number and startLine should refer to the same line.\n\n ";
-  result += preserveIndentation(props.exampleJson, " ");
+    '\n\n---\nThis example shows all possible operations & thier inputs. ONLY use these operation types and arguments, follow it exactly. The line number and startLine should refer to the same line.\n\n{\n  "file/name": ';
+  result += props.exampleJson;
   result +=
-    '\n\nYour return format is a JSON object with files as keys and arrays of operations as values. If the edit operations are long or require many changes, you can return the entire file as a string instead of array of operations.  \n{\n  "path/to/file": [edit operations],\n  "path/to/newfile": "new file as a string",\n  ...\n}\n\nResponse JSON:';
+    '\n}\n\nYour return format is a JSON object with files as keys and arrays of operations as values. If the edit operations are long or require many changes, you can return the entire file as a string instead of array of operations.  \n{\n  "path/to/file": [edit operations],\n  "path/to/newfile": "new file as a string",\n  ...\n}\n\nResponse JSON:';
   return result;
-}
-
-function preserveIndentation(text: string, indentation: string): string {
-  return text
-    .split("\n")
-    .map((line, idx) => (idx === 0 ? line : indentation + line))
-    .join("\n");
 }

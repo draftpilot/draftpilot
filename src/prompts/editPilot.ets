@@ -16,10 +16,11 @@ Related snippets within the codebase that may be helpful:
 <%= props.references %>
 
 ---
-This example shows all possible operations & thier inputs. ALWAYS follow this exact 
-format of operation names and input args, do not make up any ops or arguments. The line number and startLine should refer to the same line.
+This example shows all possible operations & thier inputs. ONLY use these operation types and arguments, follow it exactly. The line number and startLine should refer to the same line.
 
- <%= props.exampleJson %>
+{
+  "file/name": <%= props.exampleJson %>
+}
 
 Your return format is a JSON object with files as keys and arrays of operations as values. If the edit operations are long or require many changes, you can return the entire file as a string instead of array of operations.  
 {
