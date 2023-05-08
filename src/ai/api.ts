@@ -1,4 +1,3 @@
-import { isAxiosError } from 'axios'
 import chalk from 'chalk'
 import fs from 'fs'
 import { encode } from 'gpt-3-encoder'
@@ -188,7 +187,7 @@ class OpenAI {
 }
 
 function parseError(e: any) {
-  if (isAxiosError(e)) {
+  if (e.response) {
     const data = e.response?.data
     if (data) {
       const error = data.error

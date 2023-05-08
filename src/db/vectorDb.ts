@@ -10,6 +10,7 @@ export class VectorDB {
     verbose: true,
     stripNewLines: true,
     batchSize: 50,
+    timeout: 10000,
   })
 
   loadEmbeddings = async (docs: CodeDoc[]) => {

@@ -11,6 +11,7 @@ import search from '@/commands/search'
 import tool from '@/commands/tool'
 import config, { overrideGPT4 } from '@/config'
 import { cache } from '@/db/cache'
+import { indexer } from '@/db/indexer'
 import { log, setVerbose } from '@/utils/logger'
 import { tracker } from '@/utils/tracker'
 import { fatal } from '@/utils/utils'
@@ -23,7 +24,7 @@ export default function () {
     .name('draftpilot')
     .description('AI-assisted coding')
     .option('-v, --verbose', 'verbose logging', () => setVerbose(1))
-    .option('--skip-cache', 'skip cache for all requests', cache.skipCache)
+    .option('--skip-index', 'skip indexing', () => indexer.skipIndexing())
     .option('--fake', 'use fake api requests', () => openAIApi.setFakeMode())
     .option('--gpt4 <policy>', 'usage of gpt-4 (always, code-only, never)', overrideGPT4)
     .option('--temperature <number>', 'temperature for AI generations', (temperature) => {

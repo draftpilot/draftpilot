@@ -28,6 +28,7 @@ export const GLOB_EXCLUSIONS = [
   '!**/*.tar',
   '!**/*.tgz',
   '!**/*.pdf',
+  '!.draftpilot/**',
 ]
 
 export const DEFAULT_GLOB = ['**/*', ...GLOB_EXCLUSIONS]
@@ -105,6 +106,10 @@ export class Indexer {
     await this.index(updatedDocs)
     await this.loadVectors(docs)
 
+    this.indexed = true
+  }
+
+  skipIndexing = async () => {
     this.indexed = true
   }
 
