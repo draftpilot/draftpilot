@@ -34,11 +34,10 @@ export class AutoPilotValidator {
         const fullCompilerOutput = spawn('npx', ['tsc', '--noEmit', '--pretty', 'false'])
           .split('\n')
           .filter(Boolean)
-        compilerOutput = fullCompilerOutput
-          .slice(fullCompilerOutput.length - 200)
-          .filter((line) => {
-            return filesChanged.find((f) => line.startsWith(f))
-          })
+        compilerOutput = fullCompilerOutput.filter((line) => {
+          return filesChanged.find((f) => line.startsWith(f))
+        })
+        compilerOutput = compilerOutput.slice(0, 75) // take first 75 lines if lots of errors
         filesWithErrors = this.parseTSCOutput(compilerOutput)
       }
     } catch (e: any) {
@@ -47,6 +46,8 @@ export class AutoPilotValidator {
     }
 
     if (!compilerOutput || filesWithErrors.length == 0) return
+
+    log('fixing tsc errors: ' + compilerOutput.join('\n'))
 
     const fileEditMap: ValidatorOutput = { result: 'rewrite', comments: 'tsc errors' }
     compilerOutput.forEach((line) => {
