@@ -48,7 +48,7 @@ export class AutoPilot {
 
     const filesChanged = await this.edit(plan, opts)
 
-    this.commit(filesChanged, request, opts)
+    this.commit(filesChanged, plan.request, opts)
 
     await this.validate(plan, baseCommit, filesChanged, opts)
   }

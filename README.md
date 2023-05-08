@@ -4,7 +4,7 @@ Draftpilot writes code in your codebase based on your instructions.
 
 ## Goal & Philosophy
 
-Draftpilot does not aim to write code in one shot without intervention in every case (though it
+Draftpilot does not aim to write complete code without intervention in every case (though it
 would be nice to do so in simple cases). It aims to partner with the user to translate intent into
 code changes in a reliable way, and learn when it gets things wrong.
 
@@ -28,12 +28,8 @@ Or add the following alias to your `.bashrc`/`.zshrc` for convenience:
 
 You can see all commands with `--help`. Most commands are used only for debugging purposes.
 
-After initialization, the following files will be generated in the `.draftpilot` folder. This folder
-is automatically added to .gitignore.
-
-- context.txt - codebase context (if using without Draftpilot backend). You can check this into git if desired.
-- docs.sqlite - an index of all functions in the codebase
-- history.json - history of invocations
+After usage, configuration and temporary files will be generated in the `.draftpilot` folder.
+This folder can be inspected for partial output in case things go wrong.
 
 ## Tips for use / Limitations
 
@@ -48,11 +44,11 @@ context as possible - which files to read & edit, and how you want the changes m
 
 ## Development instructions
 
-Draftpilot uses yarn - run `yarn` to install dependencies, `yarn watch` to run the server and
-frontend in watch mode, and `yarn test` to run tests.
+Draftpilot uses npm - run `npm i` to install dependencies, `npm run watch` to run the server and
+frontend in watch mode, and `npm run test` to run tests.
 
 All prompts are in the `src/prompts` folder in embedded-typescript format. If you make changes to
-the .ets files, run `yarn ets` to regenerate the .ets.ts files, which provide type-safety
+the .ets files, run `npm run ets` to regenerate the .ets.ts files, which provide type-safety
 
 ## How it works
 
