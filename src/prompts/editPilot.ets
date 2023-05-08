@@ -16,7 +16,8 @@ Related snippets within the codebase that may be helpful:
 <%= props.references %>
 
 ---
-This example shows all possible operations & thier inputs. ONLY use these operation types and arguments, follow it exactly. The line number and startLine should refer to the same line.
+This example shows all possible operations & thier inputs. ONLY use these operation types and arguments, follow it exactly. The line number and startLine should refer to the same line. Be mindful to insert code in the correct place (inside a class 
+if it belongs there). With JSX, pay extra attention to where in the tree you are inserting, and get the line number correct. Errors will lead to bad code.
 
 {
   "file/name": <%= props.exampleJson %>

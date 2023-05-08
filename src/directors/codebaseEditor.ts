@@ -120,7 +120,7 @@ export class CodebaseEditor extends IntentHandler {
       const editorPrompt = prompts.editPilot({
         references,
         files: fileData,
-        exampleJson: JSON.stringify(EXAMPLE_OPS),
+        exampleJson: JSON.stringify(EXAMPLE_OPS, null, 1),
       })
 
       const editMessage = { role: 'user', content: editorPrompt } as ChatMessage

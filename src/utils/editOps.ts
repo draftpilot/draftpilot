@@ -236,6 +236,11 @@ export const EXAMPLE_OPS: Op[] = [
     after: 'new\ncontent',
   },
   {
+    op: 'delete',
+    line: 10,
+    content: 'delete this line\nand this line',
+  },
+  {
     op: 'edit',
     line: 10,
     before: 'prev content',
