@@ -68,10 +68,16 @@ export const applyOps = async (
         updateLines(insertLines.length - deleteLines.length)
         break
       }
+      case 'delete': {
+        const { content } = op
+        const contentLines = content ? content.split('\n') : []
+        lines = lines.slice(0, line).concat(lines.slice(line + contentLines.length))
+        break
+      }
       case 'shift': {
         const { content, moveLines } = op
         const contentLines = content ? content.split('\n') : []
-        lines = lines.slice(0, line).concat(lines.slice(line + content.length))
+        lines = lines.slice(0, line).concat(lines.slice(line + contentLines.length))
         const dest = line + moveLines
         matchIndent(lines[dest], contentLines)
         lines = lines
@@ -123,7 +129,8 @@ const findLineIndex = (lines: string[], op: OpWithLine) => {
   const { op: opName, line } = op
   if (!line) return -1
 
-  const lineRef = opName == 'edit' ? op.before : opName == 'shift' ? op.content : null
+  const lineRef =
+    opName == 'edit' ? op.before : opName == 'shift' || opName == 'delete' ? op.content : null
   if (!lineRef) return line
   const startLineSplit = lineRef.split('\n').map((l) => l.trim())
 
@@ -170,6 +177,12 @@ type EditOp = {
   after: string
 }
 
+type DeleteOp = {
+  op: 'delete'
+  line: number
+  content: string
+}
+
 type ShiftOp = {
   op: 'shift'
   line: number
@@ -199,7 +212,15 @@ type ImportOp = {
   content: string
 }
 
-export type Op = GlobalReplaceOp | EditOp | ShiftOp | NewOp | RenameFile | DeleteFile | ImportOp
+export type Op =
+  | GlobalReplaceOp
+  | EditOp
+  | ShiftOp
+  | NewOp
+  | RenameFile
+  | DeleteFile
+  | ImportOp
+  | DeleteOp
 
 export const EXAMPLE_OPS: Op[] = [
   {

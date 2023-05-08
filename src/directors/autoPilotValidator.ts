@@ -49,7 +49,11 @@ export class AutoPilotValidator {
 
     log('fixing tsc errors: ' + compilerOutput.join('\n'))
 
-    const fileEditMap: ValidatorOutput = { result: 'rewrite', comments: 'tsc errors' }
+    const fileEditMap: ValidatorOutput = {
+      result: 'rewrite',
+      comments:
+        'please fix the tsc errors due to AI generated code. the AI often inserts code in the wrong place, you can move the code around or fix any issues.',
+    }
     compilerOutput.forEach((line) => {
       const file = line.split('(')[0]
       if (filesWithErrors.includes(file)) {
