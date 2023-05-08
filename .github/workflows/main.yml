@@ -17,8 +17,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 18.15.0
-          cache: 'yarn'
-          cache-dependency-path: ./yarn.lock
       - name: Cache dependencies
         uses: actions/cache@v2
         with:
@@ -28,11 +26,11 @@ jobs:
             ${{ runner.os }}-node-
       - name: Install JS dependencies (workspace)
         run: |
-          yarn install --immutable
+          npm install
       - name: Compile
         run: |
-          yarn tsc
-          yarn build
+          npx tsc
+          npm run build
       - name: Run tests
         run: |
-          yarn test
+          npm run test
