@@ -25,5 +25,5 @@ export default async function editCommand(planFile: string, opts: any) {
 
   autopilot.commit(edits, plan.request, opts)
 
-  // await autopilot.validate(plan, baseCommit, edits, opts)
+  await autopilot.validate(plan, baseCommit, edits, opts)
 }

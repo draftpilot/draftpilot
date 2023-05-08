@@ -145,5 +145,5 @@ export function spawn(proc: string, args: string[], cwd?: string) {
   })
 
   if (result.error) throw result.error
-  return result.stdout
+  return result.stdout || result.stderr
 }
