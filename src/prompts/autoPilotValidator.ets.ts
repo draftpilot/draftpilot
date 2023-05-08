@@ -10,7 +10,6 @@ interface Props {
   request: string;
   plan: string;
   diff: string;
-  compilerOutput: string | null;
 }
 
 export default function (props: Props): string {
@@ -21,12 +20,7 @@ export default function (props: Props): string {
   result += props.plan;
   result += "\n\nAI generated changes:\n";
   result += props.diff;
-  result += "\n\n";
-  result += props.compilerOutput
-    ? "This was the compiler output:\n" +
-      (props.compilerOutput || "no output (probably successful)")
-    : "";
   result +=
-    '\n-------\nPoint out any problems with the generated code where it doesn\'t do what the user requested or has errors, and suggest any changes to make. Output in the following format:\n\nIf there are no problems:\n{\n  "result": "good",\n  "comments: "Any notes to pass to the user in a PR comment, e.g. what else needs to be done"\n}\n\nIf there are changes to make to fix issues or better match the user\'s request, use this format.\nThe keys are each file that you want to change (on top of the existing diff above), the value\nis the change to make to that file. Every file to change must be in the list.\n\nWhen requesting changes, you need to specify exactly how to change the file. Don\'t say "fix the import", say "import x from y". Don\'t say "pass the correct options object", say "pass {x: 1, y: 2}".\n{\n  "result": "rewrite",\n  "path/to/file": "detailed summary of changes the AI should make, with line numbers, e.g. change the call() on line 5 to callMe()",\n  ... more files ...\n}\n\nYour JSON output:';
+    '\n\n-------\nPoint out any problems with the generated code where it doesn\'t do what the user requested or has issues, and suggest any changes to make. Since you don\'t have the full file context, don\'t be overly specific, just the general type of change so that the editing agent, which can see the entire file, knows how to make the change. Output in the following format:\n\nIf there are no problems:\n{\n  "result": "good",\n  "comments: "Any notes to pass to the user in a PR comment, e.g. what else needs to be done"\n}\n\nIf there are changes to make to fix issues or better match the user\'s request, use this format.\nThe keys are each file that you want to change (on top of the existing diff above), the value\nis the change to make to that file. Every file to change must be in the list.\n\nWhen requesting changes, you need to specify exactly how to change the file. Don\'t say "fix the import", say "import x from y". Don\'t say "pass the correct options object", say "pass {x: 1, y: 2}".\n{\n  "result": "rewrite",\n  "path/to/file": "detailed summary of changes the AI should make, with line numbers, e.g. change the call() on line 5 to callMe()",\n  ... more files ...\n}\n\nYour JSON output:';
   return result;
 }

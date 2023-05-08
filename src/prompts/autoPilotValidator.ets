@@ -3,7 +3,6 @@ interface Props {
   request: string
   plan: string
   diff: string
-  compilerOutput: string | null
 }
 ---
 User's request: <%= props.request %>
@@ -14,10 +13,8 @@ AI Plan:
 AI generated changes:
 <%= props.diff %>
 
-<%= props.compilerOutput ? 'This was the compiler output:\n' + 
-  (props.compilerOutput|| 'no output (probably successful)') : '' %>
 -------
-Point out any problems with the generated code where it doesn't do what the user requested or has errors, and suggest any changes to make. Output in the following format:
+Point out any problems with the generated code where it doesn't do what the user requested or has issues, and suggest any changes to make. Since you don't have the full file context, don't be overly specific, just the general type of change so that the editing agent, which can see the entire file, knows how to make the change. Output in the following format:
 
 If there are no problems:
 {

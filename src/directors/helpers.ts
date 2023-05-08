@@ -1,10 +1,11 @@
+import fs from 'fs'
+import { encode } from 'gpt-3-encoder'
+import path from 'path'
+
+import { extToLanguage } from '@/context/language'
 import { indexer } from '@/db/indexer'
 import { Attachment, ChatMessage, Model } from '@/types'
 import { fuzzyMatchingFile } from '@/utils/utils'
-import { encode } from 'gpt-3-encoder'
-import path from 'path'
-import fs from 'fs'
-import { extToLanguage } from '@/context/language'
 
 export function pastMessages(history: ChatMessage[]) {
   const pastMessages: ChatMessage[] = []
@@ -34,11 +35,14 @@ export function compactMessageHistory(
     const msg = messages[i]
     if (systemMessage && msg.role == 'system') continue
 
-    tokenBudget -= encode(msg.content).length
+    // if this is a past user message, ok to truncate long messages.
+    const content =
+      msg.role == 'user' && i < messages.length - 1 ? msg.content.slice(0, 500) : msg.content
+    tokenBudget -= encode(content).length
     if (tokenBudget < 0) break
     history.push({
       role: msg.role,
-      content: msg.content,
+      content: content,
     })
   }
   if (history.length == 0) {

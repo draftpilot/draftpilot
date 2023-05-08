@@ -74,7 +74,6 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
 
     const embeddings: number[][] = []
 
-    console.log('meowgy')
     for (let i = 0; i < subPrompts.length; i += 1) {
       try {
         const input = subPrompts[i]
@@ -88,7 +87,6 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
       } catch (e: any) {
         console.error('Error in embedDocuments:', ServerAPI.unwrapError(e))
       }
-      console.log('dongy')
     }
 
     return embeddings
