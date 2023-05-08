@@ -6,7 +6,7 @@ import { verboseLog } from '@/utils/logger'
 import { spawn, splitOnce } from '@/utils/utils'
 
 export function git(args: string[], cwd?: string) {
-  return spawn('git', args, cwd)
+  return spawn('git', args, { cwd })
 }
 
 // walk up the tree until we find the .git folder

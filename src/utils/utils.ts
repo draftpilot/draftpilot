@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import child_process from 'child_process'
+import child_process, { SpawnSyncOptions } from 'child_process'
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
@@ -137,13 +137,13 @@ export function smartTruncate(input: string, truncationPoint: number) {
   return filesShortened.join(' ')
 }
 
-export function spawn(proc: string, args: string[], cwd?: string) {
+export function spawn(proc: string, args: string[], opts: SpawnSyncOptions = {}) {
   verboseLog('spawn', proc, ...args)
   const result = child_process.spawnSync(proc, args, {
-    cwd,
     encoding: 'utf-8',
+    ...opts,
   })
 
   if (result.error) throw result.error
-  return result.stdout || result.stderr
+  return result.stdout.toString() + result.stderr.toString()
 }

@@ -1,7 +1,8 @@
-import { Configuration, OpenAIApi, CreateEmbeddingRequest, ConfigurationParameters } from 'openai'
-import { chunkArray } from './util.js'
-import { Embeddings, EmbeddingsParams } from './embeddings.js'
+import { Configuration, ConfigurationParameters, CreateEmbeddingRequest, OpenAIApi } from 'openai'
+
 import { ServerAPI } from '../api.js'
+import { Embeddings, EmbeddingsParams } from './embeddings.js'
+import { chunkArray } from './util.js'
 
 interface ModelParams {
   /** Model name to use */
@@ -73,6 +74,7 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
 
     const embeddings: number[][] = []
 
+    console.log('meowgy')
     for (let i = 0; i < subPrompts.length; i += 1) {
       try {
         const input = subPrompts[i]
@@ -86,6 +88,7 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
       } catch (e: any) {
         console.error('Error in embedDocuments:', ServerAPI.unwrapError(e))
       }
+      console.log('dongy')
     }
 
     return embeddings

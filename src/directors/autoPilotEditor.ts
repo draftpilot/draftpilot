@@ -9,7 +9,7 @@ import prompts from '@/prompts'
 import { ChatMessage, Intent, PostMessage } from '@/types'
 import { applyOps, Op } from '@/utils/editOps'
 import { git } from '@/utils/git'
-import { log } from '@/utils/logger'
+import { log, verboseLog } from '@/utils/logger'
 import { fuzzyParseJSON, spawn } from '@/utils/utils'
 
 export type EditOps = {
@@ -67,6 +67,7 @@ ${Object.keys(editPlan.edits!)
       const baseDir = path.dirname(file)
       if (baseDir) fs.mkdirSync(baseDir, { recursive: true })
       const ops = edits[file]
+      verboseLog('  ops', ops)
       if (typeof ops == 'string') {
         fs.writeFileSync(file, ops)
       } else {
@@ -85,7 +86,9 @@ ${Object.keys(editPlan.edits!)
 
       // always run package manager to install deps, even if package.json didn't change
       try {
-        await spawn(packageManager, ['install'])
+        await spawn(packageManager, ['install', '--production=false'], {
+          env: { NODE_ENV: 'development' },
+        })
         git(['add', 'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'])
       } catch (e) {
         log('warning: failed to run package manager', e)
