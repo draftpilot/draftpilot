@@ -39,6 +39,8 @@ export default function () {
     .command('init')
     .description('Initialize draftpilot and generate a config file.')
     .action(actionWrapper(init))
+    .option('--batchSize <size>', '# of documents to send to openAI for embeddings at once')
+    .option('--timeout <millis>', 'timeout for a single openAI embedding request')
 
   program
     .command('search')

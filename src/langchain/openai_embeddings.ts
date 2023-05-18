@@ -31,6 +31,8 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
 
   timeout?: number
 
+  verbose: boolean = false
+
   private client?: OpenAIApi
 
   private clientConfig: ConfigurationParameters
@@ -55,6 +57,7 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
       throw new Error('OpenAI API key not found')
     }
 
+    this.verbose = fields?.verbose ?? this.verbose
     this.modelName = fields?.modelName ?? this.modelName
     this.batchSize = fields?.batchSize ?? this.batchSize
     this.stripNewLines = fields?.stripNewLines ?? this.stripNewLines
@@ -84,8 +87,10 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
         for (let j = 0; j < input.length; j += 1) {
           embeddings.push(data.data[j].embedding)
         }
+        if (this.verbose)
+          console.log('(embeddings): processed batch', i + 1, 'of', subPrompts.length)
       } catch (e: any) {
-        console.error('Error in embedDocuments:', ServerAPI.unwrapError(e))
+        console.error('(error in embeddings batch', i, ServerAPI.unwrapError(e))
       }
     }
 

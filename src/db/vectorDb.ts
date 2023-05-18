@@ -6,12 +6,17 @@ import type { Document } from '@/langchain/document'
 
 export class VectorDB {
   db?: HNSWLib
-  embeddings = new OpenAIEmbeddings({
-    verbose: true,
-    stripNewLines: true,
-    batchSize: 50,
-    timeout: 10000,
-  })
+
+  embeddings: OpenAIEmbeddings
+
+  constructor(verbose: boolean = false, batchSize: number = 512, timeout: number = 5000) {
+    this.embeddings = new OpenAIEmbeddings({
+      stripNewLines: true,
+      verbose,
+      batchSize,
+      timeout,
+    })
+  }
 
   loadEmbeddings = async (docs: CodeDoc[]) => {
     const texts = docs.map((d) => d.contents)
