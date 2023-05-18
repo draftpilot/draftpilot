@@ -13,7 +13,7 @@ User's request: <%= props.message %>
 ======
 
 Think step by step to come up with a plan of action. 
-- if you are using a web API, you may want to check on the latest API docs
+- if certain API information is missing / outdated, you may want to search the internet
 - if there are common follow-up steps to the request the user may not have thought of,
   you may want to add those to the plan
 

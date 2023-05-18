@@ -11,8 +11,8 @@ const showFiles: Tool = {
   description:
     'Shows the entire contents of the file. e.g. { name: "showFiles", input: "comma separated files" }',
 
-  run: async (input: string, overallGoal: string) => {
-    const files = input.split(',')
+  run: async (input: string | string[], overallGoal: string) => {
+    const files = Array.isArray(input) ? input : input.split(',')
     const output = await Promise.all(
       files.map(async (file) => {
         file = file.trim()
@@ -46,8 +46,8 @@ const searchCodeTool: Tool = {
   description:
     'Search for code snippets simliar to the input. e.g. { name: "searchCode", input: "comma-separated queries" }',
 
-  run: async (input: string) => {
-    const queries = input.split(',')
+  run: async (input: string | string[]) => {
+    const queries = Array.isArray(input) ? input : input.split(',')
     const output = await Promise.all(
       queries.map(async (query) => {
         const results = await indexer.vectorAndCodeSearch(query.trim(), 4)

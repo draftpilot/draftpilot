@@ -51,6 +51,13 @@ export default function () {
     .option('--reindex', 'Re-index the project before searching')
 
   program
+    .command('chat')
+    .description('Chat about your codebase')
+    .action(actionWrapper(chat))
+    .argument('<query>', 'The query to provide')
+    .option('--history', 'json payload with previous conversations')
+
+  program
     .command('autopilot')
     .description('Run autonomously from command line')
     .argument('<request>')

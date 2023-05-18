@@ -5,7 +5,7 @@ const askUserTool: Tool = {
   name: 'askUser',
   description: 'Ask the user to provide text input. Input: prompt',
   serial: true,
-  run: async (input: string) => {
+  run: async (input: string | string[]) => {
     const response = await inquirer.prompt([
       {
         type: 'input',
@@ -20,7 +20,7 @@ const tellUserTool: Tool = {
   name: 'tellUser',
   description: 'Tell the user to do something. Input: prompt',
   serial: true,
-  run: async (input: string) => {
+  run: async (input: string | string[]) => {
     const response = await inquirer.prompt([
       {
         type: 'list',
