@@ -6,7 +6,7 @@ import FileDB from '@/db/docsDb'
 import SearchDB from '@/db/searchDb'
 import { VectorDB } from '@/db/vectorDb'
 import { CodeDoc, ProjectConfig } from '@/types'
-import { verboseLog } from '@/utils/logger'
+import { log, verboseLog } from '@/utils/logger'
 import { findRoot } from '@/utils/utils'
 
 // things that glob should never return
@@ -51,10 +51,10 @@ export class Indexer {
   docs?: CodeDoc[]
   indexed: boolean = false
 
-  constructor() {
+  constructor(private verbose?: boolean, batchSize?: number, timeout?: number) {
     const root = findRoot()
     this.fileDB = new FileDB(root)
-    this.vectorDB = new VectorDB()
+    this.vectorDB = new VectorDB(verbose, batchSize, timeout)
     this.searchDB = new SearchDB()
     this.files = []
   }
@@ -69,6 +69,7 @@ export class Indexer {
     }
     const files = await FastGlob(globs)
     this.files = files
+    if (this.verbose) log('found', files.length, 'files')
     return files
   }
 
@@ -82,6 +83,7 @@ export class Indexer {
     const { docs, docsToDelete } = await this.fileDB.processFiles(files)
     if (!docs) return { docs: [], updatedDocs: [], existing: false }
     this.docs = docs
+    if (this.verbose) log('parsed files into ', docs.length, 'entries')
 
     if (!skipDelete) this.fileDB.deleteDocs(docsToDelete)
     const updatedDocs: CodeDoc[] = docs.filter((f) => !f.vectors)
@@ -92,6 +94,8 @@ export class Indexer {
     verboseLog(TAG, 'loading embeddings for', updatedDocs.length, 'updated docs')
     await this.vectorDB.loadEmbeddings(updatedDocs)
     await this.fileDB.saveVectors(updatedDocs)
+
+    this.indexed = true
   }
 
   loadVectors = async (docs: CodeDoc[]) => {
