@@ -17,6 +17,7 @@ import { tracker } from '@/utils/tracker'
 import { fatal } from '@/utils/utils'
 
 import packageJson from '../package.json'
+import chat from '@/commands/chat'
 
 export default function () {
   if (!process.env.OPENAI_API_KEY) return fatal('env variable OPENAI_API_KEY is not set')
@@ -49,6 +50,14 @@ export default function () {
     .argument('<query>', 'The query to search for')
     .option('--k <k>', '# of results to return')
     .option('--reindex', 'Re-index the project before searching')
+
+  program
+    .command('chat')
+    .description('Chat about your codebase')
+    .action(actionWrapper(chat))
+    .argument('<query>', 'The query to provide')
+    .option('--history <payload>', 'json payload with previous conversations')
+    .option('--json <file>', 'output resultant messages to json file')
 
   program
     .command('autopilot')

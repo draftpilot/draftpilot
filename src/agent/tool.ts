@@ -5,7 +5,7 @@ export interface Tool {
   description: string
   serial?: boolean
 
-  run: (input: string, overallGoal: string) => Promise<string>
+  run: (input: string[] | string, overallGoal: string) => Promise<string>
 }
 
 export const confirmPrompt = async (prompt: string, defaultVal?: boolean): Promise<boolean> => {

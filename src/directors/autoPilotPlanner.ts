@@ -18,7 +18,7 @@ export type PlanResult = {
   request: string
   plan: string[]
   edits?: { [key: string]: string }
-  tools?: { name: string; input: string }[]
+  tools?: ToolSpec[]
   references?: string[]
 }
 
@@ -27,6 +27,8 @@ type FailedPlan = { failure: string }
 type PlanOrFailure = PlanResult | FailedPlan
 
 export const isFailedPlan = (result: PlanOrFailure): result is FailedPlan => 'failure' in result
+
+export type ToolSpec = { name: string; input: string | string[] }
 
 const PLAN_LOOPS = 3
 
@@ -134,7 +136,7 @@ export class AutoPilotPlanner {
     return result
   }
 
-  runTools = async (tools: { name: string; input: string }[]) => {
+  runTools = async (tools: ToolSpec[]) => {
     const output = []
     for (const tool of tools) {
       const toolInstance = this.tools.find((t) => t.name == tool.name)

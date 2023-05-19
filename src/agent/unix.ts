@@ -11,7 +11,7 @@ const grepTool: Tool = {
   description:
     'Search inside files print the matching lines. e.g. { name: findAcrossFiles, input: hello }',
 
-  run: async (input: string) => {
+  run: async (input: string | string[]) => {
     const args = stringToArgs(input)
 
     // grep defaults:
@@ -55,10 +55,10 @@ const findTool: Tool = {
   description:
     'Find file names matching a name or pattern. e.g. { name: "findFileNames", input: "*.foo.js" }',
 
-  run: async (input: string) => {
-    const results = await Promise.all(
-      input.split(',').map((pattern) => FastGlob('**/' + pattern + '*'))
-    )
+  run: async (input: string | string[]) => {
+    if (typeof input == 'string') input = input.split(',')
+
+    const results = await Promise.all(input.map((pattern) => FastGlob('**/' + pattern + '*')))
     return results.flat().join('\n')
   },
 }
@@ -66,7 +66,7 @@ const findTool: Tool = {
 const lsTool: Tool = {
   name: 'listFiles',
   description: 'List files in a folder. e.g. { name: "listFiles", input: "folder1 folder2" }',
-  run: (input: string) => {
+  run: (input: string | string[]) => {
     const args = stringToArgs(input)
     return spawnPromise('ls', args)
   },
@@ -75,7 +75,7 @@ const lsTool: Tool = {
 const rmTool: Tool = {
   name: 'rm',
   description: 'Removes file. e.g. rm file1 file2',
-  run: async (input: string) => {
+  run: async (input: string | string[]) => {
     const args = stringToArgs(input)
     args.unshift('-rf')
 
@@ -90,7 +90,7 @@ const rmTool: Tool = {
 const cpTool: Tool = {
   name: 'cp',
   description: 'Copies files and folders. e.g. cp: -r src/folder dest/folder',
-  run: async (input: string) => {
+  run: async (input: string | string[]) => {
     const args = stringToArgs(input)
 
     return spawnPromise('cp', args)
@@ -100,7 +100,7 @@ const cpTool: Tool = {
 const mvTool: Tool = {
   name: 'mv',
   description: 'Moves files and folders. e.g. mv: src/file dest/file',
-  run: async (input: string) => {
+  run: async (input: string | string[]) => {
     const args = stringToArgs(input)
 
     if (await confirmPrompt(`Run mv ${args.join(' ')}?`)) {
@@ -114,7 +114,7 @@ const mvTool: Tool = {
 const sedTool: Tool = {
   name: 'sed',
   description: 'In-place stream editor. e.g. sed: s/foo/bar/ **/*.js',
-  run: async (input: string) => {
+  run: async (input: string | string[]) => {
     const args = stringToArgs(input).filter((arg) => arg != '-i')
 
     // deal with darwin sed
@@ -157,8 +157,9 @@ const sedTool: Tool = {
 //   },
 // }
 
-export const stringToArgs = (input: string) => {
+export const stringToArgs = (input: string | string[]) => {
   if (!input) return []
+  if (Array.isArray(input)) return input
 
   const args = []
   let currentArg = ''

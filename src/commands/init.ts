@@ -24,12 +24,16 @@ export default async function (options?: Options) {
 
     await indexer.index(updatedDocs)
 
-    const contextGenerator = new GenerateContext(new Set())
-    const result = await contextGenerator.generate((msg) => {
-      process.stdout.write(typeof msg === 'string' ? msg : '\n')
-    })
-    log('\n')
-    config.description = result.content
+    if (config.description) {
+      console.log('description already exists, skipping')
+    } else {
+      const contextGenerator = new GenerateContext(new Set())
+      const result = await contextGenerator.generate((msg) => {
+        process.stdout.write(typeof msg === 'string' ? msg : '\n')
+      })
+      log('\n')
+      config.description = result.content
+    }
   } catch (e) {
     console.log('error', e)
     console.log(
