@@ -1,20 +1,23 @@
 import { indexer } from '@/db/indexer'
+import { ChatPilot } from '@/directors/chatPilot'
 import { log } from '@/utils/logger'
+import fs from 'fs'
 
 type Options = {
-  k?: string
-  reindex: boolean
+  history?: string
+  json?: string
 }
 
 export default async function (query: string, options: Options) {
   await indexer.loadFilesIntoVectors()
 
-  const similar = await indexer.vectorDB.searchWithScores(
-    query,
-    options.k ? parseInt(options.k) : undefined
-  )
-  log('vector results:', similar)
+  const history = options.history ? JSON.parse(options.history) : []
 
-  const wordSearch = await indexer.searchDB.search(query)
-  log('word results:', wordSearch)
+  const chatPilot = new ChatPilot()
+  const result = await chatPilot.chat(query, history)
+
+  if (options.json) {
+    fs.writeFileSync(options.json, JSON.stringify(result))
+    log(`Wrote result to ${options.json}`)
+  }
 }

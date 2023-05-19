@@ -17,6 +17,7 @@ import { tracker } from '@/utils/tracker'
 import { fatal } from '@/utils/utils'
 
 import packageJson from '../package.json'
+import chat from '@/commands/chat'
 
 export default function () {
   if (!process.env.OPENAI_API_KEY) return fatal('env variable OPENAI_API_KEY is not set')
@@ -56,6 +57,7 @@ export default function () {
     .action(actionWrapper(chat))
     .argument('<query>', 'The query to provide')
     .option('--history', 'json payload with previous conversations')
+    .option('--json <file>', 'output resultant messages to json file')
 
   program
     .command('autopilot')
