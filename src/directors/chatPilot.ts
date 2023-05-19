@@ -55,12 +55,15 @@ export class ChatPilot {
     })
 
     const result = await this.runPrompt(prompt, history)
-    outputs.push(result)
 
     const hasTools = result.indexOf('TOOLS')
-    if (hasTools == -1) return outputs
+    if (hasTools == -1) {
+      return [result]
+    }
 
     const thought = result.slice(0, hasTools).trim()
+    outputs.push(thought)
+
     let tools = result.slice(hasTools + 6).trim()
     if (tools.startsWith(':')) tools = tools.slice(1).trim()
 
@@ -70,15 +73,17 @@ export class ChatPilot {
       return outputs
     }
 
-    const results = await this.planner.runTools(parsed)
+    const toolResults = await this.planner.runTools(parsed)
 
     prompt = prompts.chatPlanner2({
       message: request,
       thought,
-      toolResults: results,
+      toolResults,
     })
 
-    outputs.push(await this.runPrompt(prompt, history))
+    const response2 = await this.runPrompt(prompt, history)
+
+    outputs.push(response2)
 
     return outputs
   }

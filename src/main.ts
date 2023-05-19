@@ -56,7 +56,7 @@ export default function () {
     .description('Chat about your codebase')
     .action(actionWrapper(chat))
     .argument('<query>', 'The query to provide')
-    .option('--history', 'json payload with previous conversations')
+    .option('--history <payload>', 'json payload with previous conversations')
     .option('--json <file>', 'output resultant messages to json file')
 
   program
