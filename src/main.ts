@@ -76,6 +76,7 @@ export default function () {
     .command('interactive', { isDefault: true })
     .description('Prompt for request and execute')
     .option('--skip-git', 'skip git operations')
+    .option('--skip-init', 'skip initialization')
     .action(actionWrapper(interactive))
 
   // --- the following commands are for testing various parts of the system independently

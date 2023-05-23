@@ -2,6 +2,8 @@
 
 Draftpilot writes code in your codebase based on your instructions.
 
+This project is the standalone open-source "brains" behind [draftpilot.com](https://draftpilot.com). You can use this freely on your projects with your OpenAI API key.
+
 ## Goal & Philosophy
 
 Draftpilot does not aim to write complete code without intervention in every case (though it
@@ -14,9 +16,9 @@ a senior engineer. Draftpilot should also be able to use unix tools, git, and th
 
 ## How to use
 
-Draftpilot currently works best with Javascript & Typescript projects. For other projects, you
-may want to create a custom extractor (see `pyExtractor.ts` for an example).
-You'll need to set the environment variable `OPENAI_API_KEY` to your OpenAI key.
+You'll need to set the environment variable `OPENAI_API_KEY` to your OpenAI key. We recommend having GPT-4 API access, though you can use `--gpt4 never` to stick with 3.5.
+
+Draftpilot is currently focused on Javascript & Typescript projects, though it will work for other types of codebases. You may want to create a custom extractor (see `pyExtractor.ts` for an example) for best results.
 
 You can run draftpilot without installing in your codebase with npx:
 
@@ -26,18 +28,15 @@ Or add the following alias to your `.bashrc`/`.zshrc` for convenience:
 
 `alias dpt="npx -y draftpilot@latest"`
 
-You can see all commands with `--help`. Most commands are used only for debugging purposes.
+You can see all commands with `--help`.
 
-After usage, configuration and temporary files will be generated in the `.draftpilot` folder.
-This folder can be inspected for partial output in case things go wrong.
+After usage, configuration and temporary files will be generated in the `.draftpilot` folder. This folder can be inspected for partial output in case things go wrong, but should not be checked into git.
 
 ## Tips for use / Limitations
 
-Due to token limits, Draftpilot works on codebases with smaller files. If you have very large files,
-i.e. > 500 lines you may want to consider splitting them up if you want to work with them. In the
-future we will implement the ability to edit chunks of a file.
+Due to token limits, Draftpilot works on codebases with smaller files. If you have very large files, i.e. > 1000+ lines, Draftpilot will not be able to load as much context into the prompt. In the future we may support chunking file edits for large files.
 
-Draftpilot is not the best tool for large refactors - it will try to tell you so too.
+Draftpilot is not the best tool for large refactors.
 
 While you can give a vague request and hope it gets figured out, it's best to provide as much
 context as possible - which files to read & edit, and how you want the changes made.
