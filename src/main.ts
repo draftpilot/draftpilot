@@ -18,6 +18,7 @@ import { fatal } from '@/utils/utils'
 
 import packageJson from '../package.json'
 import chat from '@/commands/chat'
+import interactive from '@/commands/interactive'
 
 export default function () {
   if (!process.env.OPENAI_API_KEY) return fatal('env variable OPENAI_API_KEY is not set')
@@ -70,6 +71,12 @@ export default function () {
     .option('--validate <git branch or hash>', 'validate the code output against given branch')
     .option('--diff <git branch or hash>', 'in initial planning, use the diff as context')
     .action(actionWrapper(autopilot))
+
+  program
+    .command('interactive', { isDefault: true })
+    .description('Prompt for request and execute')
+    .option('--skip-git', 'skip git operations')
+    .action(actionWrapper(interactive))
 
   // --- the following commands are for testing various parts of the system independently
 
