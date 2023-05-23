@@ -75,6 +75,7 @@ export default function () {
   program
     .command('interactive', { isDefault: true })
     .description('Prompt for request and execute')
+    .argument('[request]', 'The request to execute')
     .option('--skip-git', 'skip git operations')
     .option('--skip-init', 'skip initialization')
     .action(actionWrapper(interactive))
