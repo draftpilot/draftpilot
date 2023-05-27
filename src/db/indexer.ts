@@ -29,6 +29,9 @@ export const GLOB_EXCLUSIONS = [
   '!**/*.tgz',
   '!**/*.pdf',
   '!.draftpilot/**',
+  '**/*.lock',
+  '**/*-lock.json',
+  '**/*-lock.yaml',
 ]
 
 export const DEFAULT_GLOB = ['**/*', ...GLOB_EXCLUSIONS]

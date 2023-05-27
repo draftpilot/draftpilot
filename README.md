@@ -41,6 +41,10 @@ Draftpilot is not the best tool for large refactors.
 While you can give a vague request and hope it gets figured out, it's best to provide as much
 context as possible - which files to read & edit, and how you want the changes made.
 
+If openAI embedding fails, try running with batch-size 1 to see what went wrong:
+
+`node cli.js index --verbose --batchSize 1`
+
 ## Development instructions
 
 Draftpilot uses npm - run `npm i` to install dependencies, `npm run watch` to run the server and

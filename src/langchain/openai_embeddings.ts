@@ -3,6 +3,7 @@ import { Configuration, ConfigurationParameters, CreateEmbeddingRequest, OpenAIA
 import { ServerAPI } from '../api.js'
 import { Embeddings, EmbeddingsParams } from './embeddings.js'
 import { chunkArray } from './util.js'
+import { verboseLog } from '@/utils/logger.js'
 
 interface ModelParams {
   /** Model name to use */
@@ -79,7 +80,7 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
 
     for (let i = 0; i < subPrompts.length; i += 1) {
       try {
-        const input = subPrompts[i]
+        const input = subPrompts[i].filter(Boolean)
         const { data } = await this.embeddingWithRetry({
           model: this.modelName,
           input,
@@ -90,7 +91,13 @@ export class OpenAIEmbeddings extends Embeddings implements ModelParams {
         if (this.verbose)
           console.log('(embeddings): processed batch', i + 1, 'of', subPrompts.length)
       } catch (e: any) {
-        console.error('(error in embeddings batch', i, ServerAPI.unwrapError(e))
+        console.error('error in embeddings batch', i)
+        if (this.verbose) {
+          const unwrapped = ServerAPI.unwrapError(e)
+          const message = typeof unwrapped === 'string' ? unwrapped : JSON.stringify(unwrapped)
+          process.stdout.write(message)
+          process.stdout.write('\n')
+        }
       }
     }
 

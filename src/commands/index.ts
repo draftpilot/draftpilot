@@ -1,12 +1,19 @@
 import { filesToDirectoryTree, updateFileManifest } from '@/context/manifest'
-import { indexer } from '@/db/indexer'
+import { Indexer, indexer } from '@/db/indexer'
 import { log } from '@/utils/logger'
 
 type Options = {
+  batchSize: number
   reindex: boolean
+  timeout: number
 }
 
 export default async function (options: Options) {
+  const batchSize = options?.batchSize || 256
+  const timeout = options?.timeout || 5000
+
+  const indexer = new Indexer(true, batchSize, timeout)
+
   const files = await indexer.getFiles()
   const { docs, updatedDocs, existing } = await indexer.load(files)
 

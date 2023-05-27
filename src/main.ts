@@ -87,6 +87,8 @@ export default function () {
     .description('Manually run file indexing')
     .action(actionWrapper(index))
     .option('--reindex', 'Re-build index from scratch')
+    .option('--batchSize <size>', '# of documents to send to openAI for embeddings at once')
+    .option('--timeout <millis>', 'timeout for a single openAI embedding request')
 
   program
     .command('tool [command]', { hidden: true })
