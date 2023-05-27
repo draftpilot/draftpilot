@@ -31,6 +31,6 @@ Or if you can answer the request:
 THOUGHT: I can answer this
 <answer goes here>
 
-Always return JSON for the tools section, and Markdown for text for the user.
+Always return JSON for the tools section, and Markdown for text for the user (surround code with ```language).
 
 Your output:
