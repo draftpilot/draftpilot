@@ -87,7 +87,7 @@ ${Object.keys(editPlan.edits!)
       // always run package manager to install deps, even if package.json didn't change
       try {
         await spawn(packageManager, ['install', '--production=false'], {
-          env: { NODE_ENV: 'development' },
+          env: { ...process.env, NODE_ENV: 'development' },
         })
         git(['add', 'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'])
       } catch (e) {
