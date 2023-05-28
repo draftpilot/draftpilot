@@ -60,7 +60,7 @@ export default class FileDB {
         `CREATE TABLE IF NOT EXISTS learnings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         learning TEXT NOT NULL,
-        vectors TEXT NOT NULL
+        vectors TEXT
       )`,
         promisedResult(res, rej)
       )
