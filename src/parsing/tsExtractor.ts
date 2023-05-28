@@ -32,7 +32,7 @@ export class TSExtractor implements Extractor {
           ts.isPropertyAssignment(parent) ||
           ts.isClassElement(parent)
         )
-          name = parent.name.getText()
+          name = parent.name?.getText() || 'arrowFunction'
         if (
           grandParent.kind == ts.SyntaxKind.ObjectLiteralExpression ||
           grandParent.kind == ts.SyntaxKind.VariableDeclarationList
