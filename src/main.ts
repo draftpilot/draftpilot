@@ -3,7 +3,8 @@ import { program } from 'commander'
 import open from 'open'
 
 import openAIApi from '@/ai/api'
-import index from '@/commands'
+import init from './commands/init';
+import learn from './commands/learn';
 import autopilot from '@/commands/autopilotCommand'
 import edit from '@/commands/editCommand'
 import editOps from '@/commands/editOps'
@@ -23,7 +24,11 @@ import interactive from '@/commands/interactive'
 
 export default function () {
   if (!process.env.OPENAI_API_KEY) return fatal('env variable OPENAI_API_KEY is not set')
-  program
+    case 'init':
+      await init();
+      break;
+    case 'learn':
+      await learn(args[0]);
     .name('draftpilot')
     .description('AI-assisted coding')
     .option('-v, --verbose', 'verbose logging', () => setVerbose(1))
@@ -40,6 +45,7 @@ export default function () {
 
   program
     .command('init')
+    .command('learn <lesson>', 'Teach the assistant a new lesson')
     .description('Initialize draftpilot and generate a config file.')
     .action(actionWrapper(init))
     .option('--batchSize <size>', '# of documents to send to openAI for embeddings at once')
