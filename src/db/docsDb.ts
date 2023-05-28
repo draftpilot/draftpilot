@@ -19,12 +19,7 @@ type DocRow = {
   vectors: string
   updated_at: string
 UNIQUE(path)
-);
 
-CREATE TABLE IF NOT EXISTS learnings (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  learning TEXT NOT NULL,
-  vectors TEXT NOT NULL
 );
 export default class FileDB {
   dbPath: string
@@ -57,7 +52,11 @@ export default class FileDB {
       UNIQUE(path)
     )`,
 
-        `CREATE TABLE IF NOT EXISTS learnings (
+        CREATE TABLE IF NOT EXISTS learnings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        learning TEXT NOT NULL,
+        vectors TEXT
+        );
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         learning TEXT NOT NULL,
         vectors TEXT
