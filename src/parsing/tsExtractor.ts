@@ -27,7 +27,11 @@ export class TSExtractor implements Extractor {
       } else if (ts.isArrowFunction(node)) {
         const parent = node.parent
         const grandParent = parent.parent
-        if (ts.isVariableDeclaration(parent) || ts.isPropertyAssignment(parent))
+        if (
+          ts.isVariableDeclaration(parent) ||
+          ts.isPropertyAssignment(parent) ||
+          ts.isClassElement(parent)
+        )
           name = parent.name.getText()
         if (
           grandParent.kind == ts.SyntaxKind.ObjectLiteralExpression ||
