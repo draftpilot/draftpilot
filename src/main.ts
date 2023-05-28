@@ -25,10 +25,6 @@ import interactive from '@/commands/interactive'
 export default function () {
   if (!process.env.OPENAI_API_KEY) return fatal('env variable OPENAI_API_KEY is not set')
     case 'init':
-      break;
-    case 'learn':
-    .description('AI-assisted coding')
-    .option('-v, --verbose', 'verbose logging', () => setVerbose(1))
     .option('--skip-index', 'skip indexing', () => indexer.skipIndexing())
     .option('--fake', 'use fake api requests', () => openAIApi.setFakeMode())
     .option('--gpt4 <policy>', 'usage of gpt-4 (always, code-only, never)', overrideGPT4)
