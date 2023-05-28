@@ -1,3 +1,4 @@
+import learn from '@/commands/learn'
 import { program } from 'commander'
 import open from 'open'
 
@@ -118,4 +119,9 @@ export default function () {
 
 function actionWrapper(fn: (...args: any[]) => Promise<any>) {
   return (...args: any[]) => fn(...args).catch(fatal)
+  program
+    .command('learn')
+    .description('Teach the assistant to get smarter')
+    .argument('<lesson>', 'The lesson to learn')
+    .action(actionWrapper(learn))
 }

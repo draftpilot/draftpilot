@@ -50,6 +50,12 @@ export default class FileDB {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(path)
     )`,
+
+        `CREATE TABLE IF NOT EXISTS learnings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        learning TEXT NOT NULL,
+        vectors TEXT NOT NULL
+      )`,
         promisedResult(res, rej)
       )
     )
