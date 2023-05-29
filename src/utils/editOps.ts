@@ -20,20 +20,25 @@ export const applyOps = async (
 
     if (op.op == 'new' && lines.length) {
       // sometimes chatgpt will use 'new' when it wants to add lines somewhere
-      if (op.line)
+      if (op.startLine)
         op = {
+          ...op,
           op: 'edit',
-          line: op.line,
+          startLine: op.startLine,
           before: '',
           after: op.content,
         }
-      else op = { op: 'edit', line: lines.length - 1, before: '}', after: (op as NewOp).content }
+      else
+        op = { op: 'edit', startLine: lines.length - 1, before: '}', after: (op as NewOp).content }
+    }
+    if ((op as any).line && !(op as OpWithLine).startLine) {
+      ;(op as OpWithLine).startLine = (op as any).line
     }
 
     const line = isOpWithLine(op) ? findLineIndex(lines, op) : 0
     const updateLines = (delta: number) => {
       ops.slice(i + 1).forEach((op2) => {
-        if (isOpWithLine(op2) && op2.line > line) op2.line += delta
+        if (isOpWithLine(op2) && op2.startLine > line) op2.startLine += delta
       })
     }
 
@@ -126,7 +131,7 @@ const matchIndent = (line: string, lines: string[]) => {
 }
 
 const findLineIndex = (lines: string[], op: OpWithLine) => {
-  const { op: opName, line } = op
+  const { op: opName, startLine: line } = op
   if (!line) return -1
 
   const lineRef =
@@ -161,31 +166,31 @@ type GlobalReplaceOp = {
 
 type OpWithLine = {
   op: string
-  line: number
+  startLine: number
   before?: string
   content?: string
 }
 
 function isOpWithLine(op: any): op is OpWithLine {
-  return !!(op as OpWithLine).line
+  return !!(op as OpWithLine).startLine
 }
 
 type EditOp = {
   op: 'edit'
-  line: number
+  startLine: number
   before: string
   after: string
 }
 
 type DeleteOp = {
   op: 'delete'
-  line: number
+  startLine: number
   content: string
 }
 
 type ShiftOp = {
   op: 'shift'
-  line: number
+  startLine: number
   content: string
   moveLines: number
 }
@@ -193,7 +198,7 @@ type ShiftOp = {
 type NewOp = {
   op: 'new'
   content: string
-  line: number
+  startLine: number
 }
 
 type RenameFile = {
@@ -228,27 +233,27 @@ export const EXAMPLE_OPS: Op[] = [
     search: 'text to search (case sensitive)',
     replace: 'global file text replacement',
   },
-  { op: 'new', content: 'text to insert in new file. use this for brand new files', line: 1 },
+  { op: 'new', content: 'text to insert in new file. use this for brand new files', startLine: 1 },
   {
     op: 'edit',
-    line: 5,
+    startLine: 5,
     before: 'previous\ncontent',
     after: 'new\ncontent',
   },
   {
     op: 'delete',
-    line: 10,
+    startLine: 10,
     content: 'delete this line\nand this line',
   },
   {
     op: 'edit',
-    line: 10,
+    startLine: 10,
     before: 'prev content',
     after: 'also use "edit" for inserting\nprev content',
   },
   {
     op: 'shift',
-    line: 3,
+    startLine: 3,
     content: 'use shift op to move\blines up and down',
     moveLines: -1,
   },
