@@ -76,6 +76,9 @@ export type LearningItem = {
 }
 
 export type LearningLog = {
+  content: string
+  createdAt: Date
+  embeddings: number[]
   planner: LearningItem[]
   executor: LearningItem[]
 }

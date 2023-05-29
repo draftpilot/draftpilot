@@ -3,6 +3,7 @@ import open from 'open'
 
 import openAIApi from '@/ai/api'
 import index from '@/commands'
+import learn from '@/commands/learn'
 import autopilot from '@/commands/autopilotCommand'
 import edit from '@/commands/editCommand'
 import editOps from '@/commands/editOps'
@@ -115,6 +116,12 @@ export default function () {
 
   tracker.launch(process.argv[2])
 }
+
+program
+  .command('learn')
+  .description('Teach the assistant a new lesson')
+  .argument('<lesson>', 'The lesson to learn')
+  .action(actionWrapper(learn))
 
 function actionWrapper(fn: (...args: any[]) => Promise<any>) {
   return (...args: any[]) => fn(...args).catch(fatal)
