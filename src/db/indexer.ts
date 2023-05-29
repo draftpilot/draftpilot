@@ -8,6 +8,7 @@ import { VectorDB } from '@/db/vectorDb'
 import { CodeDoc, ProjectConfig } from '@/types'
 import { log, verboseLog } from '@/utils/logger'
 import { findRoot } from '@/utils/utils'
+import { readLearning } from '@/context/learning'
 
 // things that glob should never return
 export const GLOB_EXCLUSIONS = [
@@ -50,6 +51,7 @@ export class Indexer {
   fileDB: FileDB
   vectorDB: VectorDB
   searchDB: SearchDB
+  learningDB: VectorDB
   files: string[]
   docs?: CodeDoc[]
   indexed: boolean = false
@@ -59,6 +61,7 @@ export class Indexer {
     this.fileDB = new FileDB(root)
     this.vectorDB = new VectorDB(verbose, batchSize, timeout)
     this.searchDB = new SearchDB()
+    this.learningDB = new VectorDB(verbose, batchSize, timeout)
     this.files = []
   }
 
@@ -112,6 +115,7 @@ export class Indexer {
     const { docs, updatedDocs } = await this.load(files)
     await this.index(updatedDocs)
     await this.loadVectors(docs)
+    this.loadLearnings()
 
     this.indexed = true
   }
@@ -138,6 +142,17 @@ export class Indexer {
       results
         .filter((r) => !vectorSet.has(r.path))
         .map((r) => ({ metadata: { path: r.path }, pageContent: r.contents }))
+    )
+  }
+
+  loadLearnings = async () => {
+    const learnings = readLearning()
+    await this.learningDB.init(
+      learnings.map((l) => ({
+        path: 'learning' + (l.context ? ` (context: ${l.context})` : ''),
+        contents: l.learning,
+        vectors: l.vectors,
+      }))
     )
   }
 }

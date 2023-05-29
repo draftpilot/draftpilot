@@ -105,7 +105,14 @@ export async function generateReferences(
 
   const combined = combineSnippets(similarCode)
 
-  return combined.map((s) => s.contents).join('\n\n')
+  const relevantLearnings = (await indexer.learningDB?.search(plan, 10)) || []
+  const learningStrings = relevantLearnings.map((l) => l.pageContent)
+  if (learningStrings.length) learningStrings.unshift('Past Learnings:')
+
+  return combined
+    .map((s) => s.contents)
+    .concat(learningStrings)
+    .join('\n\n')
 }
 
 // the path format is <filepath>:<function name>#line numbers

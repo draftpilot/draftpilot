@@ -26,10 +26,8 @@ export default async function learn(learning: string, opts: Options): Promise<vo
     learning,
     context: opts.context,
     createdAt: new Date(),
-    embeddings: contextEmbeddings[0],
+    vectors: contextEmbeddings[0],
   }
-
-  learningData.embeddings = contextEmbeddings[0]
 
   const logs = addToLearning(learningData)
   console.log('Lesson learned.', logs.length, 'learnings so far.')

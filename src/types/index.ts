@@ -72,7 +72,7 @@ export type LearningLog = {
   learning: string
   context?: string
   createdAt: Date
-  embeddings: number[]
+  vectors: number[]
 }
 
 export type MessagePayload = {
