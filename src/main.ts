@@ -81,6 +81,13 @@ export default function () {
     .option('--skip-init', 'skip initialization')
     .action(actionWrapper(interactive))
 
+  program
+    .command('learn')
+    .description('Teach the assistant a new lesson')
+    .argument('[learning]', 'The lesson to learn. If omitted, will print all learnings')
+    .option('--context', 'context for which this lesson applies')
+    .action(actionWrapper(learn))
+
   // --- the following commands are for testing various parts of the system independently
 
   program
@@ -116,12 +123,6 @@ export default function () {
 
   tracker.launch(process.argv[2])
 }
-
-program
-  .command('learn')
-  .description('Teach the assistant a new lesson')
-  .argument('<lesson>', 'The lesson to learn')
-  .action(actionWrapper(async (lesson: string) => learn(lesson)))
 
 function actionWrapper(fn: (...args: any[]) => Promise<any>) {
   return (...args: any[]) => fn(...args).catch(fatal)

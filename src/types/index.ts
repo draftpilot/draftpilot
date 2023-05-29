@@ -68,19 +68,11 @@ export type FileInfo = {
 
 export type FileManifest = { [file: string]: FileInfo }
 
-export type LearningItem = {
-  request: string
-  output: string
-  accepted: boolean
-  feedback?: string
-}
-
 export type LearningLog = {
-  content: string
+  learning: string
+  context?: string
   createdAt: Date
   embeddings: number[]
-  planner: LearningItem[]
-  executor: LearningItem[]
 }
 
 export type MessagePayload = {
