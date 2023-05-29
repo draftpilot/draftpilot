@@ -125,13 +125,18 @@ export class AutoPilotValidator {
     delete validationEdit.result
 
     const validationPlan: PlanResult = {
-      request: validationEdit.comments || plan.request,
+      request: validationEdit.comments || 'fix the validation result',
       plan: ['fix the validation result'],
       edits: validationEdit,
     }
     delete validationEdit.comments
 
-    const edits = await editor.generateEdits(plan.request, validationPlan, history, systemMessage)
+    const edits = await editor.generateEdits(
+      validationPlan.request,
+      validationPlan,
+      history,
+      systemMessage
+    )
     await editor.applyEdits(edits)
 
     const commitMessage = 'fixing output: ' + Object.values(validationEdit).join(', ')
