@@ -7,7 +7,7 @@ import ts from 'typescript'
 // parses a javascript / typescript file and returns functions
 export class TSExtractor implements Extractor {
   async parse(file: SourceFile): Promise<CodeDoc[]> {
-    const sourceFile = ts.createSourceFile(file.name, file.contents, ts.ScriptTarget.Latest, true)
+    const sourceFile = ts.createSourceFile(file.name, file.contents, ts.ScriptTarget.ES2022, true)
 
     const functions: ts.Node[] = []
     findNodeRecursive(
@@ -27,9 +27,16 @@ export class TSExtractor implements Extractor {
       } else if (ts.isArrowFunction(node)) {
         const parent = node.parent
         const grandParent = parent.parent
-        if (ts.isVariableDeclaration(parent) || ts.isPropertyAssignment(parent))
-          name = parent.name.getText()
         if (
+          ts.isVariableDeclaration(parent) ||
+          ts.isPropertyAssignment(parent) ||
+          ts.isPropertyDeclaration(parent)
+        )
+          name = parent.name.getText()
+
+        if (ts.isClassDeclaration(grandParent)) {
+          name = grandParent.name?.getText() + '.' + name
+        } else if (
           grandParent.kind == ts.SyntaxKind.ObjectLiteralExpression ||
           grandParent.kind == ts.SyntaxKind.VariableDeclarationList
         ) {
@@ -42,7 +49,7 @@ export class TSExtractor implements Extractor {
           }
         }
 
-        if (!node.body || node.body.getText().length < 100) return []
+        if (!node.body || node.body.getText().length < 50) return []
       } else if (ts.isMethodDeclaration(node)) {
         if (!node.body) return []
         const parent = node.parent
