@@ -121,7 +121,7 @@ program
   .command('learn')
   .description('Teach the assistant a new lesson')
   .argument('<lesson>', 'The lesson to learn')
-  .action(actionWrapper(learn))
+  .action(actionWrapper(async (lesson: string) => learn(lesson)))
 
 function actionWrapper(fn: (...args: any[]) => Promise<any>) {
   return (...args: any[]) => fn(...args).catch(fatal)

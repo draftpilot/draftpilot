@@ -8,6 +8,6 @@ export default function learn(lesson: string): void {
     embeddings: [],
   }
 
-  addToLearning('planner', learningData)
+  addToLearning(learningData)
   console.log('Lesson learned:', lesson)
 }
