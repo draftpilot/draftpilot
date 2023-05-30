@@ -32,6 +32,11 @@ export async function findRelevantDocs(query: string, files: string[], count: nu
   if (returnStrings.length && relevantFiles.length) returnStrings.push('Other related files:')
   if (relevantFiles.length) returnStrings.push(relevantFiles.join('\n'))
 
+  const relevantLearnings = await indexer.searchLearnings(query, 5)
+  const learningStrings = relevantLearnings.map((l) => l.pageContent)
+  if (learningStrings.length) learningStrings.unshift('Past Learnings:')
+  returnStrings.push(...learningStrings)
+
   return returnStrings.join('\n')
 }
 
@@ -105,7 +110,7 @@ export async function generateReferences(
 
   const combined = combineSnippets(similarCode)
 
-  const relevantLearnings = (await indexer.learningDB?.search(plan, 10)) || []
+  const relevantLearnings = await indexer.searchLearnings(plan, 10)
   const learningStrings = relevantLearnings.map((l) => l.pageContent)
   if (learningStrings.length) learningStrings.unshift('Past Learnings:')
 
