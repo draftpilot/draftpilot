@@ -145,15 +145,23 @@ export class Indexer {
     )
   }
 
+  hasLearnings = false
+
   loadLearnings = async () => {
     const learnings = readLearning()
-    await this.learningDB.init(
-      learnings.map((l) => ({
-        path: 'learning' + (l.context ? ` (context: ${l.context})` : ''),
-        contents: l.learning,
-        vectors: l.vectors,
-      }))
-    )
+
+    const learningDocs = learnings.map((l) => ({
+      path: 'learning' + (l.context ? ` (context: ${l.context})` : ''),
+      contents: l.learning,
+      vectors: l.vectors,
+    }))
+    this.hasLearnings = learningDocs.length > 0
+    if (this.hasLearnings) await this.learningDB.init(learningDocs)
+  }
+
+  searchLearnings = async (query: string, max: number) => {
+    if (this.hasLearnings) return (await this.learningDB.search(query, max)) || []
+    return []
   }
 }
 
