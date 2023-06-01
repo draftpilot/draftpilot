@@ -15,6 +15,7 @@ export const chunkLines = (baseName: string, lines: string[], docs: CodeDoc[]) =
     const contents = lines
       .slice(i, i + CHUNK_SIZE)
       .filter((l) => l.trim().length > 0)
+      .map(l => l.substring(0, 300)) // don't allow super long lines
       .join('\n')
     const hash = cyrb53(contents)
     docs.push({ path: name, contents, hash })

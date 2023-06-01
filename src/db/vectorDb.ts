@@ -19,7 +19,7 @@ export class VectorDB {
   }
 
   loadEmbeddings = async (docs: CodeDoc[]) => {
-    const texts = docs.map((d) => d.contents)
+    const texts = docs.map((d) => d.contents).filter(t => t.length < 10_000)
     const vectors = await this.embeddings.embedDocuments(texts)
     docs.forEach((d, i) => {
       if (vectors[i]) d.vectors = vectors[i]
